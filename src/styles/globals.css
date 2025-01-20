@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(170deg, #4F88FF, #003459) fixed;
+}
+
+/*
+.react-flow__node-selectorNode {
+  font-size: 12px;
+  background: #eee;
+  border: 1px solid #555;
+  border-radius: 5px;
+  text-align: center;
+}
+*/
+/*
+.react-flow__node {
+  border: 1px solid #EDEDED;
+  border-radius: 2px;
+}*/
+
+/* Override MUI Accordion expanded margins */
+.MuiAccordion-root.Mui-expanded {
+  margin: 0 !important;
+}
+
+/* This makes sure that edgesg are always on top of nodes */
+.react-flow__node {
+  z-index: -1 !important;
+}
+
+.react-flow__handle {
+  background-color: #ffffff;
+  border-color: #000000;
+}
+
+.react-flow__handle.connectionindicator:hover {
+  pointer-events: all;
+  border-color: black;
+  background-color: white;
+}
+
+.react-flow__handle.connectionindicator:focus , 
+.react-flow__handle.connectingfrom,
+.react-flow__handle.connectingto {
+  border-color: var(--xy-theme-edge-hover);
+}
+
+.react-flow__node-resizer {
+  border-radius: 0;
+  border: none;
+}
+
+.react-flow__resize-control.handle {
+  background-color: #ffffff;
+  border-color: #222222;
+  border-radius: 0;
+  width: 5px;
+  height: 5px;
+}
+
+/*
+https://coolors.co/00171f-003459-e26d5c-e0e3dd-4f88ff
+Theme:
+#00171F - Rich black
+#003459 - Prussian blue
+#4F88FF - Cornflower blue
+#F5F6F4 - White smoke (darker E0E3DD)
+#E26D5C - Bitter sweet
+
+*/
