@@ -1,8 +1,9 @@
-import React, { memo, ReactElement } from "react";
-import { Handle, NodeProps, NodeResizer, Position } from "@xyflow/react";
+import React, { memo, ReactElement, useRef, useEffect } from "react";
+import { Handle, NodeProps, NodeResizer, Position, useReactFlow } from "@xyflow/react";
 import clsx from "clsx";
 
 import { DiagramElement } from "@/model/types";
+import { logger } from "@/services/logger";
 
 export interface TextProperties {
   textAlign?: "left" | "center" | "right" | "justify";
@@ -21,35 +22,107 @@ interface BaseNodeProps extends NodeProps<DiagramElement> {
 
 export const BaseNode = memo(
   ({ id, data, selected, children, className = "", style }: BaseNodeProps) => {
+    const { setNodes } = useReactFlow();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Add effect to handle text selection when entering edit mode
+    useEffect(() => {
+      if (data.isEditing && textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(0, textareaRef.current.value.length);
+      }
+    }, [data.isEditing]);
+
+    const handleDoubleClick = () => {
+      logger.debug("BaseNode: handleDoubleClick");
+      setNodes((prev) =>
+        prev.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, isEditing: true } }
+            : node,
+        ),
+      );
+    };
+
+    const handleBlur = () => {
+      const newDescription = textareaRef.current?.value || "";
+      setNodes((prev) =>
+        prev.map((node) =>
+          node.id === id
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  description: newDescription,
+                  isEditing: false,
+                },
+              }
+            : node,
+        ),
+      );
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleBlur();
+      }
+    };
+
     // Create a function to wrap description text with proper styling
     const StyledDescription = () => {
-      if (!data.description) return null;
+      if (!data.isEditing) {
+        if (!data.description) return null;
 
-      const textProps = data.textProperties;
+        const textProps = data.textProperties;
 
+        return (
+          <div
+            onDoubleClick={handleDoubleClick}
+            className={clsx(
+              "text-sm text-gray-600 whitespace-pre-wrap h-full flex flex-col",
+              // Text alignment horizontal
+              textProps?.textAlign === "left" && "text-left",
+              textProps?.textAlign === "center" && "text-center",
+              textProps?.textAlign === "right" && "text-right",
+              textProps?.textAlign === "justify" && "text-justify",
+              // Text alignment vertical
+              textProps?.verticalAlign === "top" && "justify-start",
+              textProps?.verticalAlign === "middle" && "justify-center",
+              textProps?.verticalAlign === "bottom" && "justify-end",
+              // Font styles
+              textProps?.bold && "font-bold",
+              textProps?.italic && "italic",
+              textProps?.underline && "underline",
+              textProps?.strikethrough && "line-through",
+            )}
+            style={{ pointerEvents: "none" }} // Add this to prevent touch event interception
+          >
+            {data.description}
+          </div>
+        );
+      }
       return (
-        <div
+        <textarea
+          ref={textareaRef}
           className={clsx(
-            "text-xs text-gray-400 whitespace-pre-wrap h-full flex flex-col",
-            // Text alignment horizontal
-            textProps?.textAlign === "left" && "text-left",
-            textProps?.textAlign === "center" && "text-center",
-            textProps?.textAlign === "right" && "text-right",
-            textProps?.textAlign === "justify" && "text-justify",
-            // Text alignment vertical
-            textProps?.verticalAlign === "top" && "justify-start",
-            textProps?.verticalAlign === "middle" && "justify-center",
-            textProps?.verticalAlign === "bottom" && "justify-end",
+            "text-sm text-gray-600 whitespace-pre-wrap w-full h-full resize-none",
+            "bg-transparent outline-none border-none",
+            // Inherit text alignments from parent
+            data.textProperties?.textAlign === "left" && "text-left",
+            data.textProperties?.textAlign === "center" && "text-center",
+            data.textProperties?.textAlign === "right" && "text-right",
+            data.textProperties?.textAlign === "justify" && "text-justify",
             // Font styles
-            textProps?.bold && "font-bold",
-            textProps?.italic && "italic",
-            textProps?.underline && "underline",
-            textProps?.strikethrough && "line-through",
+            data.textProperties?.bold && "font-bold",
+            data.textProperties?.italic && "italic",
+            data.textProperties?.underline && "underline",
+            data.textProperties?.strikethrough && "line-through",
           )}
-          style={{ pointerEvents: "none" }} // Add this to prevent touch event interception
-        >
-          {data.description}
-        </div>
+          defaultValue={data.description}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+        />
       );
     };
 

@@ -1,130 +1,18 @@
 {
   "nodes": [
     {
-      "id": "c2d8ecf9-08bd-48b7-93a3-1f02cda58a8f",
-      "type": "azureResourceCollection",
-      "position": {
-        "x": 50,
-        "y": 180
-      },
-      "data": {
-        "resourceType": "Virtual Network",
-        "iconName": "VirtualNetworks",
-        "backgroundColor": "bg-collectionNodes-background200",
-        "resourceName": "vnet-cd-dev"
-      },
-      "style": {
-        "width": 200,
-        "height": 90
-      },
-      "selected": false,
-      "measured": {
-        "width": 630,
-        "height": 500
-      },
-      "dragging": false,
-      "width": 630,
-      "height": 500,
-      "resizing": false
-    },
-    {
-      "id": "cb102784-4766-4cbd-baa5-0a348c63a2dd",
-      "type": "azureResourceCollection",
-      "position": {
-        "x": 10,
-        "y": 50
-      },
-      "data": {
-        "resourceType": "Subnet",
-        "iconName": "Subnet",
-        "backgroundColor": "bg-collectionNodes-background300",
-        "resourceName": "snet-cd-dev-apps"
-      },
-      "style": {
-        "width": 200,
-        "height": 90
-      },
-      "selected": false,
-      "parentId": "c2d8ecf9-08bd-48b7-93a3-1f02cda58a8f",
-      "extent": "parent",
-      "measured": {
-        "width": 610,
-        "height": 180
-      },
-      "dragging": false,
-      "width": 610,
-      "height": 180,
-      "resizing": false
-    },
-    {
-      "id": "5fcfbf4c-2e73-40ff-ae62-5962d62f1709",
-      "type": "usersShape",
-      "position": {
-        "x": 280,
-        "y": 10
-      },
-      "data": {
-        "resourceType": "Users",
-        "iconName": "Users",
-        "backgroundColor": "",
-        "resourceName": "",
-        "description": "Users"
-      },
-      "style": {
-        "width": 200,
-        "height": 90
-      },
-      "selected": false,
-      "measured": {
-        "width": 80,
-        "height": 80
-      },
-      "dragging": false,
-      "width": 80,
-      "height": 80,
-      "resizing": false
-    },
-    {
-      "id": "487f93dd-efa2-464d-8468-b0a70520370a",
-      "type": "noteShape",
-      "position": {
-        "x": 530,
-        "y": 60
-      },
-      "data": {
-        "resourceType": "Note",
-        "iconName": "Note",
-        "backgroundColor": "",
-        "resourceName": "",
-        "description": "Application Gateway works as Web Application Firewall to secure the Node.js app."
-      },
-      "style": {
-        "width": 200,
-        "height": 90
-      },
-      "selected": false,
-      "measured": {
-        "width": 190,
-        "height": 80
-      },
-      "dragging": false,
-      "width": 190,
-      "height": 80,
-      "resizing": false
-    },
-    {
       "id": "f96570f4-7169-4c54-b4c0-eda38fa9e4ae",
       "type": "noteShape",
       "position": {
-        "x": 700,
-        "y": 220
+        "x": 240,
+        "y": 40
       },
       "data": {
         "resourceType": "Note",
         "iconName": "Note",
         "backgroundColor": "",
         "resourceName": "",
-        "description": "Twilio SendGrid service is used for sending out emails."
+        "description": "Start crafting your idea by starting to fill your mind map.\n\nClick a node and then use <tab> to add new sub node and use <enter> to add sibling node."
       },
       "style": {
         "width": 200,
@@ -132,27 +20,27 @@
       },
       "selected": false,
       "measured": {
-        "width": 190,
-        "height": 60
+        "width": 250,
+        "height": 140
       },
       "dragging": false,
-      "width": 190,
-      "height": 60,
+      "width": 250,
+      "height": 140,
       "resizing": false
     },
     {
-      "id": "8f95386d-e25f-4ab9-9502-60d25eae3221",
+      "id": "4b691c28-c114-4d3a-b5ac-ad989076f699",
       "type": "rectangleShape",
       "position": {
-        "x": 710,
-        "y": 320
+        "x": 320,
+        "y": 260
       },
       "data": {
         "resourceType": "Rectangle",
         "iconName": "Rectangle",
         "backgroundColor": "",
         "resourceName": "",
-        "description": "SendGrid Service",
+        "description": "Idea!",
         "textProperties": {
           "textAlign": "center",
           "verticalAlign": "middle"
@@ -170,307 +58,6 @@
       "dragging": false,
       "width": 100,
       "height": 60,
-      "resizing": false
-    },
-    {
-      "id": "82d92ae6-18a0-4b27-890a-852989125667",
-      "type": "emailShape",
-      "position": {
-        "x": 870,
-        "y": 320
-      },
-      "data": {
-        "resourceType": "Email",
-        "iconName": "Email",
-        "backgroundColor": "",
-        "resourceName": "",
-        "description": "Email"
-      },
-      "style": {
-        "width": 200,
-        "height": 90
-      },
-      "selected": false,
-      "measured": {
-        "width": 40,
-        "height": 60
-      },
-      "width": 40,
-      "height": 60,
-      "resizing": false,
-      "dragging": false
-    },
-    {
-      "id": "e9d89eda-ff54-4cae-b559-5ae6f419e99a",
-      "type": "azureResource",
-      "position": {
-        "x": 230,
-        "y": 130
-      },
-      "data": {
-        "resourceType": "Application Gateway",
-        "iconName": "ApplicationGateways",
-        "backgroundColor": "",
-        "resourceName": "agw-cd-dev",
-        "sku": "WAF V2"
-      },
-      "style": {
-        "width": 180,
-        "height": 40
-      },
-      "selected": false,
-      "measured": {
-        "width": 180,
-        "height": 70
-      },
-      "dragging": false,
-      "width": 180,
-      "height": 70,
-      "resizing": false
-    },
-    {
-      "id": "86466bae-a311-4d38-9b70-b92a4039f2a7",
-      "type": "azureResource",
-      "position": {
-        "x": 10,
-        "y": 50
-      },
-      "data": {
-        "resourceType": "App Service Plan",
-        "iconName": "AppServicePlans",
-        "backgroundColor": "",
-        "resourceName": "plan-cd-dev",
-        "textProperties": {
-          "textAlign": "left",
-          "verticalAlign": "middle"
-        },
-        "sku": "S1 Standard"
-      },
-      "style": {
-        "width": 180,
-        "height": 40
-      },
-      "selected": false,
-      "parentId": "cb102784-4766-4cbd-baa5-0a348c63a2dd",
-      "extent": "parent",
-      "measured": {
-        "width": 350,
-        "height": 110
-      },
-      "dragging": false,
-      "width": 350,
-      "height": 110,
-      "resizing": false
-    },
-    {
-      "id": "64190a2b-d42d-4388-8313-242b7cb710fa",
-      "type": "azureResourceCollection",
-      "position": {
-        "x": 10,
-        "y": 250
-      },
-      "data": {
-        "resourceType": "Subnet",
-        "iconName": "Subnet",
-        "backgroundColor": "bg-collectionNodes-background300",
-        "resourceName": "snet-cd-dev-data"
-      },
-      "style": {
-        "width": 200,
-        "height": 90
-      },
-      "selected": false,
-      "parentId": "c2d8ecf9-08bd-48b7-93a3-1f02cda58a8f",
-      "extent": "parent",
-      "measured": {
-        "width": 610,
-        "height": 240
-      },
-      "dragging": false,
-      "width": 610,
-      "height": 240,
-      "resizing": false
-    },
-    {
-      "id": "2",
-      "selected": false,
-      "position": {
-        "x": 20,
-        "y": 60
-      },
-      "style": {
-        "width": 180,
-        "height": 100
-      },
-      "data": {
-        "resourceType": "SQL Server",
-        "iconName": "SQLServer",
-        "resourceName": "sql-cd-dev"
-      },
-      "type": "azureResourceCollection",
-      "measured": {
-        "width": 260,
-        "height": 160
-      },
-      "width": 260,
-      "height": 160,
-      "resizing": false,
-      "parentId": "64190a2b-d42d-4388-8313-242b7cb710fa",
-      "extent": "parent",
-      "dragging": false
-    },
-    {
-      "id": "2.1",
-      "selected": false,
-      "position": {
-        "x": 10,
-        "y": 50
-      },
-      "data": {
-        "resourceType": "SQL Database",
-        "iconName": "SQLDatabase",
-        "resourceName": "sqldb-cd-dev",
-        "description": "Prisma ORM used for data persistence."
-      },
-      "parentId": "2",
-      "extent": "parent",
-      "type": "azureResource",
-      "measured": {
-        "width": 239,
-        "height": 96
-      },
-      "width": 239,
-      "height": 96,
-      "resizing": false,
-      "dragging": false
-    },
-    {
-      "id": "3",
-      "selected": false,
-      "position": {
-        "x": 310,
-        "y": 60
-      },
-      "data": {
-        "resourceType": "Storage Account",
-        "iconName": "StorageAccounts",
-        "resourceName": "stcddevprojects"
-      },
-      "type": "azureResource",
-      "measured": {
-        "width": 283,
-        "height": 160
-      },
-      "dragging": false,
-      "parentId": "64190a2b-d42d-4388-8313-242b7cb710fa",
-      "extent": "parent",
-      "width": 283,
-      "height": 160,
-      "resizing": false
-    },
-    {
-      "id": "3ad89ad1-04dd-4ee7-a90e-cda04682bb75",
-      "type": "azureResource",
-      "position": {
-        "x": 20,
-        "y": 50
-      },
-      "data": {
-        "resourceType": "Blob Storage",
-        "iconName": "BlobBlock",
-        "backgroundColor": "",
-        "resourceName": "projects",
-        "description": "Projects container with hierarchy:\n{org/user}/projects/{project}/{...files...}"
-      },
-      "style": {
-        "width": 180,
-        "height": 40
-      },
-      "selected": false,
-      "parentId": "3",
-      "measured": {
-        "width": 240,
-        "height": 90
-      },
-      "dragging": false,
-      "width": 240,
-      "height": 90,
-      "resizing": false
-    },
-    {
-      "id": "9f8a2685-c6ee-4df1-9149-610e9a9279cb",
-      "type": "azureResource",
-      "position": {
-        "x": 170,
-        "y": 60
-      },
-      "data": {
-        "resourceType": "App Service",
-        "iconName": "AppServices",
-        "backgroundColor": "",
-        "resourceName": "ase-cd-dev",
-        "description": "Docker image running MindMapFlow Next.js app."
-      },
-      "style": {
-        "width": 180,
-        "height": 40
-      },
-      "selected": false,
-      "parentId": "cb102784-4766-4cbd-baa5-0a348c63a2dd",
-      "extent": "parent",
-      "measured": {
-        "width": 180,
-        "height": 90
-      },
-      "dragging": false,
-      "width": 180,
-      "height": 90,
-      "resizing": false
-    },
-    {
-      "id": "62707587-f2df-412b-9880-45a52befba95",
-      "type": "azureResource",
-      "position": {
-        "x": 120,
-        "y": 60
-      },
-      "data": {
-        "resourceType": "Public IP Address",
-        "iconName": "PublicIPAddresses",
-        "backgroundColor": "",
-        "resourceName": "pip-cd-dev",
-        "showFrame": false,
-        "resourceOptions": [
-          {
-            "name": "IP Version",
-            "value": "IPv4",
-            "show": false
-          },
-          {
-            "name": "Tier",
-            "value": "Regional",
-            "show": false
-          },
-          {
-            "name": "Availability zone",
-            "value": "Zone-redundant",
-            "show": false
-          }
-        ],
-        "sku": "Standard"
-      },
-      "style": {
-        "width": 180,
-        "height": 40
-      },
-      "selected": false,
-      "measured": {
-        "width": 150,
-        "height": 70
-      },
-      "dragging": false,
-      "width": 150,
-      "height": 70,
       "resizing": false
     }
   ],

@@ -247,21 +247,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
                 </Select>
               </FormControl>
             )}
-            {selectedNode && (
-              <TextField
-                fullWidth
-                multiline
-                className="p-0 m-0 bg-white"
-                inputRef={descriptionRef}
-                label="Description"
-                margin="dense"
-                minRows={2}
-                placeholder="Enter resource description"
-                size="small"
-                value={selectedNode?.data.description || ""}
-                onChange={(e) => onDescriptionChange(e.target.value)}
-              />
-            )}
 
             {otherOptions.length > 0 && selectedNode && (
               <>

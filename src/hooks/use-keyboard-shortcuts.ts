@@ -7,6 +7,8 @@ interface KeyboardShortcutHandlers {
   onSearch?: () => void;
   onCopy?: () => void;
   onPaste?: () => void;
+  onTab?: () => void;  // Add new handler
+  onEnter?: () => void;  // Add new handler
 }
 
 export function useKeyboardShortcuts({
@@ -14,6 +16,8 @@ export function useKeyboardShortcuts({
   onSearch,
   onCopy,
   onPaste,
+  onTab,   // Add new handler
+  onEnter,  // Add new handler
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -32,6 +36,14 @@ export function useKeyboardShortcuts({
         case "/":
           event.preventDefault();
           onSearch?.();
+          break;
+        case "Tab":  // Add Tab handler
+          event.preventDefault();
+          onTab?.();
+          break;
+        case "Enter":
+          event.preventDefault();
+          onEnter?.();
           break;
         default:
           // Handle Copy & Paste
@@ -55,7 +67,7 @@ export function useKeyboardShortcuts({
           break;
       }
     },
-    [onDelete, onSearch, onCopy, onPaste],
+    [onDelete, onSearch, onCopy, onPaste, onTab, onEnter],  // Add onTab and onEnter to dependencies
   );
 
   useEffect(() => {

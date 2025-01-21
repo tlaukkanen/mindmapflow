@@ -54,11 +54,12 @@ export const Navbar = () => {
             >
               <Image
                 alt="Logo"
-                className="w-6 h-6 object-contain"
+                className="w-12 h-8 object-contain"
                 height={24}
-                src="/logo_cloud.svg"
+                src="/mindmapflow_icon_white.svg"
                 width={24}
               />
+              <Box width={12} />
               <p className="font-bold text-inherit">MindMapFlow</p>
             </Link>
           </Box>

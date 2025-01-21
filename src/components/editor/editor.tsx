@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Edge, MarkerType, useEdgesState, useNodesState } from "@xyflow/react";
+import { Edge, Node, MarkerType, useEdgesState, useNodesState, useReactFlow } from "@xyflow/react";
 import { toast } from "sonner";
 
 import { PropertiesPanelHandle } from "./properties-panel";
@@ -76,6 +76,49 @@ export const getDefaultTextProperties = (
   }
 
   return undefined;
+};
+
+// Add this helper function before the Editor component
+const findFreePosition = (
+  nodes: DiagramElement[],
+  basePosition: { x: number; y: number },
+  direction: 'horizontal' | 'vertical',
+  spacing: number = 100,
+  parentId: string | undefined,
+  getIntersectingNodes: (node: Node) => Node[],
+): { x: number; y: number } => {
+  // Create a temporary node to check intersections
+  const tempNode: Node = {
+    id: 'temp',
+    type: 'rectangleShape',
+    position: basePosition,
+    data: {},
+    width: 100,
+    height: 40,
+  };
+
+  // Filter siblings (nodes with same parent)
+  const siblingNodes = nodes.filter(node => node.parentId === parentId);
+  if (siblingNodes.length === 0) return basePosition;
+
+  let offset = 0;
+  const position = { ...basePosition };
+  tempNode.position = position;
+  
+  // Keep trying new positions until we find one with no intersections
+  while (getIntersectingNodes(tempNode).length > 0) {
+    offset += spacing;
+    if (direction === 'horizontal') {
+      // For horizontal layout, try alternating above and below
+      position.y = basePosition.y + (offset * (offset % 2 === 0 ? 1 : -1));
+    } else {
+      // For vertical layout, try alternating left and right
+      position.x = basePosition.x + (offset * (offset % 2 === 0 ? 1 : -1));
+    }
+    tempNode.position = position;
+  }
+
+  return position;
 };
 
 export default function Editor() {
@@ -276,9 +319,11 @@ export default function Editor() {
       } else if (selectedNode) {
         if (selectedNode.type?.startsWith("azure")) {
           propertiesPanelRef.current?.focusNameInput();
-        } else {
-          propertiesPanelRef.current?.focusDescriptionInput();
-        }
+        } 
+        // Comment or remove this else block to remove focusing description
+        // else {
+        //   propertiesPanelRef.current?.focusDescriptionInput();
+        // }
       }
     }, 20);
   }, [selectedEdgeId, selectedNode]);
@@ -369,11 +414,143 @@ export default function Editor() {
     [selectedEdgeId, setEdges],
   );
 
+  const { getIntersectingNodes } = useReactFlow();
+
+  const handleTabKey = useCallback(() => {
+    if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
+  
+    const rootNode = nodes.find(node => !node.parentId);
+    if (!rootNode) return;
+  
+    const isSelectedNodeRoot = selectedNode.id === rootNode.id;
+    const selectedNodePosition = selectedNode.position;
+    const rootPosition = rootNode.position;
+    const shouldAddToRight = isSelectedNodeRoot || selectedNodePosition.x > rootPosition.x;
+  
+    const basePosition = {
+      x: shouldAddToRight ? 200 : -200,
+      y: 0,
+    };
+
+    // Find a free position for the new node using getIntersectingNodes
+    const freePosition = findFreePosition(
+      nodes,
+      basePosition,
+      'horizontal',
+      100,
+      selectedNodeId,
+      getIntersectingNodes
+    );
+
+    const newNode: DiagramElement = {
+      id: crypto.randomUUID(),
+      type: 'rectangleShape',
+      position: freePosition,
+      data: {
+        description: '',
+        resourceType: 'generic',
+        textProperties: getDefaultTextProperties('generic'),
+        isEditing: true,
+      },
+      width: 100,
+      height: 40,
+      selected: true,
+      parentId: selectedNodeId,
+    };
+
+    // Create edge between selected node and new node with proper handles
+    const newEdge: Edge = {
+      id: `e-${selectedNodeId}-${newNode.id}`,
+      source: selectedNodeId,
+      target: newNode.id,
+      sourceHandle: shouldAddToRight ? `${selectedNodeId}-right-source` : `${selectedNodeId}-left-source`,
+      targetHandle: shouldAddToRight ? `${newNode.id}-left-target` : `${newNode.id}-right-target`,
+      type: 'default',
+    };
+  
+    // Update nodes and edges
+    setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
+    setEdges((eds) => [...eds, newEdge]);
+  
+    // Set the new node as selected
+    setSelectedNodeId(newNode.id);
+    setSelectedNodeIds([newNode.id]);
+  }, [selectedNodeId, selectedNode, nodes, setNodes, setEdges, getIntersectingNodes]);
+  
+  const handleEnterKey = useCallback(() => {
+    if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
+
+    const rootNode = nodes.find(node => !node.parentId);
+    if (!rootNode) return;
+
+    const parentNode = nodes.find(node => node.id === selectedNode.parentId);
+    const parentNodeId = parentNode?.id;
+    
+    const selectedNodePosition = selectedNode.position;
+    const rootPosition = rootNode.position;
+    const shouldAddAbove = selectedNodePosition.y > rootPosition.y;
+
+    const basePosition = {
+      x: 0,
+      y: shouldAddAbove ? -100 : 100,
+    };
+
+    // Find a free position for the new node using getIntersectingNodes
+    const freePosition = findFreePosition(
+      nodes,
+      basePosition,
+      'vertical',
+      100,
+      parentNodeId,
+      getIntersectingNodes
+    );
+
+    const newNode: DiagramElement = {
+      id: crypto.randomUUID(),
+      type: 'rectangleShape',
+      position: freePosition,
+      data: {
+        description: '',
+        resourceType: 'generic',
+        textProperties: getDefaultTextProperties('generic'),
+        isEditing: true,
+      },
+      width: 100,
+      height: 40,
+      selected: true,
+      parentId: selectedNode.parentId,
+    };
+
+    // Create edge between parent node and new node (if parent exists)
+    const newEdges = [...edges];
+    if (parentNodeId) {
+      const newEdge: Edge = {
+        id: `e-${parentNodeId}-${newNode.id}`,
+        source: parentNodeId,
+        target: newNode.id,
+        sourceHandle: `${parentNodeId}-right-source`,
+        targetHandle: `${newNode.id}-left-target`,
+        type: 'default',
+      };
+      newEdges.push(newEdge);
+    }
+
+    // Update nodes and edges
+    setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
+    setEdges(newEdges);
+
+    // Set the new node as selected
+    setSelectedNodeId(newNode.id);
+    setSelectedNodeIds([newNode.id]);
+  }, [selectedNodeId, selectedNode, nodes, edges, setNodes, setEdges, getIntersectingNodes]);
+
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
     onCopy: handleCopy,
     onPaste: handlePaste,
+    onTab: handleTabKey,  // Add the new handler
+    onEnter: handleEnterKey,  // Add the new handler
   });
 
   return (

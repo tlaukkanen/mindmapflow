@@ -16,13 +16,14 @@ export interface ResourceOption {
 export interface DiagramElement extends Node {
   data: {
     resourceType: string;
-    iconName: string;
+    iconName?: string;
     backgroundColor?: string;
     showFrame?: boolean;
     resourceName?: string;
     description?: string;
     showHandles?: boolean;
     sku?: string;
+    isEditing?: boolean;
     textProperties?: TextProperties;
     resourceOptions?: ResourceOption[];
   };
