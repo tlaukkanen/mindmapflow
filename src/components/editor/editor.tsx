@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Edge, Node, MarkerType, useEdgesState, useNodesState, useReactFlow, useNodeConnections } from "@xyflow/react";
+import { Edge, Node, MarkerType, useEdgesState, 
+  useNodesState, useReactFlow, useNodeConnections } from "@xyflow/react";
 import { toast } from "sonner";
 
 import { PropertiesPanelHandle } from "./properties-panel";
@@ -17,6 +18,7 @@ import { DiagramElement, ResourceOption } from "@/model/types";
 import { logger } from "@/services/logger";
 import { sampleData } from "@/model/example-data";
 import { ResourceNodeTypes } from "@/model/node-types";
+import { findClosestNodeInDirection, getAbsolutePosition } from "@/utils/node-utils";
 
 const initialNodes: DiagramElement[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
@@ -79,27 +81,6 @@ export const getDefaultTextProperties = (
   return undefined;
 };
 
-// Add this utility function to get absolute position
-const getAbsolutePosition = (
-  node: DiagramElement,
-  nodes: DiagramElement[],
-): { x: number; y: number } => {
-  const position = { x: node.position.x, y: node.position.y };
-  let currentNode = node;
-
-  // Traverse up the parent chain and accumulate positions
-  while (currentNode.parentId) {
-    const parent = nodes.find(n => n.id === currentNode.parentId);
-    if (!parent) break;
-    
-    position.x += parent.position.x;
-    position.y += parent.position.y;
-    currentNode = parent;
-  }
-
-  return position;
-};
-
 const findFreePosition = (
   nodes: DiagramElement[],
   basePosition: { x: number; y: number },
@@ -137,13 +118,15 @@ const findFreePosition = (
   tempNode.position = position;
   
   // Keep trying new positions until we find one with no intersections
+  let tries = 0;
   while (getIntersectingNodes(tempNode).length > 0) {
-    logger.debug(`Intersecting nodes found at position ${position.x}, ${position.y}`);
-    offset += spacing;
-    position.y = basePosition.y + (offset * (offset % 2 === 0 ? 1 : -1));
-    logger.debug(`Trying new vertical position ${position.x}, ${position.y}`);
-   
+    if (tries % 2 === 0) {
+      offset += spacing;
+    }
+    position.y = basePosition.y + (offset * (tries % 2 === 0 ? 1 : -1));
+    logger.debug(`Trying new vertical position ${position.x}, ${position.y}`);   
     tempNode.position = position;
+    tries++;
   }
 
   // Convert back to relative position if there's a parent
@@ -166,6 +149,8 @@ const findFreePosition = (
 
 export default function Editor() {
   const { isFullScreen, setIsFullScreen } = useEditor();
+  const { getIntersectingNodes, deleteElements } = useReactFlow();
+
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(true);
   const [isResourcePanelVisible, setIsResourcePanelVisible] = useState(true);
@@ -346,14 +331,17 @@ export default function Editor() {
   const handleDeleteNodeOrEdge = useCallback(() => {
     if (selectedNodeIds.length > 0) {
       logger.info("Deleting nodes", selectedNodeIds);
-      if(nodes.length <= 1) {
+      if(selectedNodeIds && selectedNodeIds.includes(rootNodeId)) {
         toast.warning("Cannot delete the root idea node 🙈")
         return
       }
 
-      setNodes((nodes) =>
-        nodes.filter((node) => !selectedNodeIds.includes(node.id)),
+      const deleteNodes = nodes.filter((node) =>
+        selectedNodeIds.includes(node.id),
       );
+
+      deleteElements({ nodes: deleteNodes, edges: [] });
+
       setSelectedNodeIds([]);
       setSelectedNodeId(null);
     } else if (selectedEdgeId) {
@@ -473,7 +461,7 @@ export default function Editor() {
     [selectedEdgeId, setEdges],
   );
 
-  const { getIntersectingNodes } = useReactFlow();
+  
   const handleTabKey = useCallback(() => {
 
     if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
@@ -482,12 +470,27 @@ export default function Editor() {
     if (!rootNode) return;
   
     console.debug(`Root node: ${rootNode.id} selected node: ${selectedNodeId}`);
-
     const isSelectedNodeRoot = selectedNode.id === rootNode.id;
     logger.debug(`Selected node is root: ${isSelectedNodeRoot}`);
     const selectedNodePosition = getAbsolutePosition( selectedNode, nodes);
     const rootPosition = rootNode.position;
-  
+
+    // Check how far from root we are, for example root -> node -> new node would be depth 2
+    const mindMapDepthLevel = (currentNode: DiagramElement): number => {
+      let depth = 0;
+      let node = currentNode;
+      
+      while (node.parentId) {
+      depth++;
+      node = nodes.find(n => n.id === node.parentId) || node;
+      }
+      
+      return depth;
+    };
+
+    const currentDepth = mindMapDepthLevel(selectedNode);
+    logger.debug(`Current depth level: ${currentDepth}`);
+    
     let shouldAddToRight = true;
     if (isSelectedNodeRoot) {
       // For root node, compare number of connections on each side
@@ -503,15 +506,19 @@ export default function Editor() {
     logger.debug(`Adding new node to ${shouldAddToRight ? 'right' : 'left'}`);
   
     const basePosition = {
-      x: shouldAddToRight ? 200 : -200,
+      x: shouldAddToRight ? 240 : -240,
       y: 0,
     };
   
+    const spacing = currentDepth == 0 ? 100 :
+    currentDepth == 1 ? 60 :
+    currentDepth == 2 ? 40 : 20;
+
     // Find a free position for the new node using getIntersectingNodes
     const freePosition = findFreePosition(
       nodes,
       basePosition,
-      100,
+      spacing,
       selectedNodeId,
       getIntersectingNodes
     );
@@ -526,8 +533,8 @@ export default function Editor() {
         textProperties: getDefaultTextProperties('generic'),
         isEditing: true,
       },
-      width: 100,
-      height: 40,
+      //width: 100,
+      //height: 40,
       selected: true,
       parentId: selectedNodeId,
     };
@@ -557,7 +564,7 @@ export default function Editor() {
     const rootNode = nodes.find(node => !node.parentId);
     if (!rootNode) return;
 
-    const isSelectedNodeRoot = selectedNode.id === rootNode.id;
+    const isSelectedNodeRoot = selectedNode.id === rootNodeId;
     if(isSelectedNodeRoot) return;
 
     const parentNode = nodes.find(node => node.id === selectedNode.parentId);
@@ -570,7 +577,7 @@ export default function Editor() {
     const shouldAddToRight = isSelectedNodeRoot || selectedNodePosition.x > rootPosition.x;
 
     const basePosition = {
-      x: shouldAddToRight ? 200 : -200,
+      x: shouldAddToRight ? 240 : -240,
       y: shouldAddAbove ? -60 : 60,
     };
 
@@ -593,8 +600,8 @@ export default function Editor() {
         textProperties: getDefaultTextProperties('generic'),
         isEditing: true,
       },
-      width: 100,
-      height: 40,
+      //width: 100,
+      //height: 40,
       selected: true,
       parentId: selectedNode.parentId,
     };
@@ -606,8 +613,8 @@ export default function Editor() {
         id: `e-${parentNodeId}-${newNode.id}`,
         source: parentNodeId,
         target: newNode.id,
-        sourceHandle: `${parentNodeId}-right-source`,
-        targetHandle: `${newNode.id}-left-target`,
+        sourceHandle: shouldAddToRight ? `${parentNodeId}-right-source` : `${parentNodeId}-left-source`,
+        targetHandle: shouldAddToRight ? `${newNode.id}-left-target` : `${newNode.id}-right-target`,
         type: 'default',
       };
       newEdges.push(newEdge);
@@ -622,6 +629,26 @@ export default function Editor() {
     setSelectedNodeIds([newNode.id]);
   }, [selectedNodeId, selectedNode, nodes, edges, setNodes, setEdges, getIntersectingNodes]);
 
+  const handleArrowNavigation = useCallback(
+    (direction: "left" | "right" | "up" | "down") => {
+      if (!selectedNode) return;
+
+      const closestNode = findClosestNodeInDirection(selectedNode, nodes, direction);
+      if (closestNode) {
+        // Unselect all nodes
+        setNodes((nds) =>
+          nds.map((node) => ({
+            ...node,
+            selected: node.id === closestNode.id,
+          }))
+        );
+        setSelectedNodeId(closestNode.id);
+        setSelectedNodeIds([closestNode.id]);
+      }
+    },
+    [selectedNode, nodes, setNodes]
+  );
+
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
@@ -629,6 +656,10 @@ export default function Editor() {
     onPaste: handlePaste,
     onTab: handleTabKey,  // Add the new handler
     onEnter: handleEnterKey,  // Add the new handler
+    onArrowLeft: () => handleArrowNavigation("left"),
+    onArrowRight: () => handleArrowNavigation("right"),
+    onArrowUp: () => handleArrowNavigation("up"),
+    onArrowDown: () => handleArrowNavigation("down"),
   });
 
   return (

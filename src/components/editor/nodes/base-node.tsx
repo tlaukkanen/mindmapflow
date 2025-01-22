@@ -25,6 +25,8 @@ export const BaseNode = memo(
     const { setNodes } = useReactFlow();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Remove the isNew effect
+
     // Add effect to handle text selection when entering edit mode
     useEffect(() => {
       if (data.isEditing && textareaRef.current) {
@@ -72,15 +74,13 @@ export const BaseNode = memo(
     // Create a function to wrap description text with proper styling
     const StyledDescription = () => {
       if (!data.isEditing) {
-        if (!data.description) return null;
-
+        // Always show editable area on double click, even if description is empty
         const textProps = data.textProperties;
-
         return (
           <div
             onDoubleClick={handleDoubleClick}
             className={clsx(
-              "text-sm text-gray-600 whitespace-pre-wrap h-full flex flex-col",
+              "text-sm text-gray-600 whitespace-pre-wrap h-full flex flex-col min-h-[24px]",
               // Text alignment horizontal
               textProps?.textAlign === "left" && "text-left",
               textProps?.textAlign === "center" && "text-center",
@@ -98,16 +98,18 @@ export const BaseNode = memo(
             )}
             style={{ pointerEvents: "none" }} // Add this to prevent touch event interception
           >
-            {data.description}
+            {data.description || ""}
           </div>
         );
       }
       return (
         <textarea
           ref={textareaRef}
+          autoFocus // Add this
           className={clsx(
             "text-sm text-gray-600 whitespace-pre-wrap w-full h-full resize-none",
             "bg-transparent outline-none border-none",
+          "font-['Roboto',_'Helvetica',_'Arial',_sans-serif']",  // Add this line
             // Inherit text alignments from parent
             data.textProperties?.textAlign === "left" && "text-left",
             data.textProperties?.textAlign === "center" && "text-center",
@@ -119,9 +121,11 @@ export const BaseNode = memo(
             data.textProperties?.underline && "underline",
             data.textProperties?.strikethrough && "line-through",
           )}
+          style={{ fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif" }}
           defaultValue={data.description}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
+          onFocus={(e) => e.currentTarget.select()} // Add this
         />
       );
     };
@@ -164,60 +168,60 @@ export const BaseNode = memo(
 
     return (
       <div
-        className={`group ${className} touch-none`}
+        className={`group ${className} ${selected ? 'border-2 border-stone-800' : 'border border-stone-200'} touch-none`}
         style={{ ...style, touchAction: "none", userSelect: "none" }}
       >
-        <NodeResizer
+        {/*<NodeResizer
           color="#000"
           isVisible={selected}
           minHeight={20}
           minWidth={20}
-        />
+        />*/}
         {renderContent()}
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-top-target`}
           position={Position.Top}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-top-source`}
           position={Position.Top}
           type="source"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-bottom-target`}
           position={Position.Bottom}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-bottom-source`}
           position={Position.Bottom}
           type="source"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-left-target`}
           position={Position.Left}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-left-source`}
           position={Position.Left}
           type="source"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-right-target`}
           position={Position.Right}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 group-hover:opacity-100"
+          className="w-3 h-3 opacity-0 "
           id={`${id}-right-source`}
           position={Position.Right}
           type="source"

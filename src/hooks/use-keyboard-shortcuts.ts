@@ -9,6 +9,10 @@ interface KeyboardShortcutHandlers {
   onPaste?: () => void;
   onTab?: () => void;  // Add new handler
   onEnter?: () => void;  // Add new handler
+  onArrowLeft?: () => void;
+  onArrowRight?: () => void;
+  onArrowUp?: () => void;
+  onArrowDown?: () => void;
 }
 
 export function useKeyboardShortcuts({
@@ -18,6 +22,10 @@ export function useKeyboardShortcuts({
   onPaste,
   onTab,   // Add new handler
   onEnter,  // Add new handler
+  onArrowLeft,
+  onArrowRight,
+  onArrowUp,
+  onArrowDown,
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -45,6 +53,22 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onEnter?.();
           break;
+        case "ArrowLeft":
+          event.preventDefault();
+          onArrowLeft?.();
+          break;
+        case "ArrowRight":
+          event.preventDefault();
+          onArrowRight?.();
+          break;
+        case "ArrowUp":
+          event.preventDefault();
+          onArrowUp?.();
+          break;
+        case "ArrowDown":
+          event.preventDefault();
+          onArrowDown?.();
+          break;
         default:
           // Handle Copy & Paste
           if (
@@ -67,7 +91,7 @@ export function useKeyboardShortcuts({
           break;
       }
     },
-    [onDelete, onSearch, onCopy, onPaste, onTab, onEnter],  // Add onTab and onEnter to dependencies
+    [onDelete, onSearch, onCopy, onPaste, onTab, onEnter, onArrowLeft, onArrowRight, onArrowUp, onArrowDown],  // Add onTab and onEnter to dependencies
   );
 
   useEffect(() => {

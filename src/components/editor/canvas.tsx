@@ -73,7 +73,7 @@ export default function Canvas({
   onNodesChange,
   onEdgesChange,
 }: CanvasProps) {
-  const { setNodes } = useReactFlow();
+  const { setNodes, fitView } = useReactFlow();
   const [isContextMenuOpen, setIsContextMenuOpen] = React.useState(false);
   const [contextMenuNode, setContextMenuNode] =
     React.useState<DiagramElement | null>(null);
@@ -105,6 +105,10 @@ export default function Canvas({
     },
     [onNodeSelect, onEdgeSelect],
   );
+
+  const onInit = useCallback((instance: ReactFlowInstance) => {
+    fitView({maxZoom: 1.0});
+  })
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -237,6 +241,8 @@ export default function Canvas({
         onNodesChange={onNodesChange}
         onSelectionChange={onSelectionChange}
         onNodeDoubleClick={handleNodeDoubleClick}
+        onInit={onInit}
+        disableKeyboardA11y={true}
       >
         <Background
           color="#aaaaaa"
