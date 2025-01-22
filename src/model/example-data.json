@@ -4,8 +4,8 @@
       "id": "f96570f4-7169-4c54-b4c0-eda38fa9e4ae",
       "type": "noteShape",
       "position": {
-        "x": 250,
-        "y": 440
+        "x": 280,
+        "y": 380
       },
       "data": {
         "resourceType": "Note",
@@ -40,14 +40,24 @@
         "iconName": "Rectangle",
         "backgroundColor": "",
         "resourceName": "",
-        "description": "Idea!",
+        "description": "Your great idea! ✨",
         "textProperties": {
           "textAlign": "center",
-          "verticalAlign": "middle"
-        }
+          "verticalAlign": "middle",
+          "bold": true,
+          "italic": false,
+          "underline": false,
+          "strikethrough": false
+        },
+        "isEditing": false
       },
       "dragging": false,
-      "resizing": false
+      "resizing": false,
+      "measured": {
+        "width": 161,
+        "height": 44
+      },
+      "selected": true
     }
   ],
   "edges": []

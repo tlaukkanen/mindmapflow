@@ -463,8 +463,12 @@ export default function Editor() {
 
   
   const handleTabKey = useCallback(() => {
+    if (!selectedNode || 
+        !selectedNodeId || 
+        selectedNode?.data.isEditing ||
+        selectedNode.type === 'noteShape') return;
 
-    if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
+    logger.debug(`selectedNode type ${selectedNode.type}`);
   
     const rootNode = nodes.find(node => node.id === rootNodeId);
     if (!rootNode) return;
@@ -559,7 +563,10 @@ export default function Editor() {
   }, [selectedNodeId, selectedNode, nodes, setNodes, setEdges, getIntersectingNodes, rootLeftConnections, rootRightConnections]);
   
   const handleEnterKey = useCallback(() => {
-    if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
+    if (!selectedNode || 
+        !selectedNodeId || 
+        selectedNode?.data.isEditing ||
+        selectedNode.type === 'noteShape') return;
 
     const rootNode = nodes.find(node => !node.parentId);
     if (!rootNode) return;

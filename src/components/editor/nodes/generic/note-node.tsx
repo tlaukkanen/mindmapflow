@@ -1,4 +1,4 @@
-import { NodeProps } from "@xyflow/react";
+import { NodeProps, NodeResizer } from "@xyflow/react";
 import { memo } from "react";
 import { PiNoteThin } from "react-icons/pi";
 
@@ -18,6 +18,12 @@ export default memo(function NoteNode(props: NodeProps<DiagramElement>) {
         className="absolute bottom-1 right-1 w-5 h-5 text-yellow-500"
         title="This is a free text note"
       />
+      <NodeResizer
+          color="#000"
+          isVisible={props.selected}
+          minHeight={20}
+          minWidth={20}
+        />
     </BaseNode>
   );
 });
