@@ -78,7 +78,27 @@ export const getDefaultTextProperties = (
   return undefined;
 };
 
-// Add this helper function before the Editor component
+// Add this utility function to get absolute position
+const getAbsolutePosition = (
+  node: DiagramElement,
+  nodes: DiagramElement[],
+): { x: number; y: number } => {
+  const position = { x: node.position.x, y: node.position.y };
+  let currentNode = node;
+
+  // Traverse up the parent chain and accumulate positions
+  while (currentNode.parentId) {
+    const parent = nodes.find(n => n.id === currentNode.parentId);
+    if (!parent) break;
+    
+    position.x += parent.position.x;
+    position.y += parent.position.y;
+    currentNode = parent;
+  }
+
+  return position;
+};
+
 const findFreePosition = (
   nodes: DiagramElement[],
   basePosition: { x: number; y: number },
@@ -87,7 +107,19 @@ const findFreePosition = (
   parentId: string | undefined,
   getIntersectingNodes: (node: Node) => Node[],
 ): { x: number; y: number } => {
-  // Create a temporary node to check intersections
+  // If there's a parent, convert basePosition to absolute coordinates
+  if (parentId) {
+    const parent = nodes.find(n => n.id === parentId);
+    if (parent) {
+    const parentAbsPos = getAbsolutePosition(parent, nodes);
+    basePosition = {
+      x: parentAbsPos.x + basePosition.x,
+      y: parentAbsPos.y + basePosition.y,
+    };
+    }
+  }
+
+  // Create a temporary node to check intersections with absolute position
   const tempNode: Node = {
     id: 'temp',
     type: 'rectangleShape',
@@ -97,10 +129,6 @@ const findFreePosition = (
     height: 40,
   };
 
-  // Filter siblings (nodes with same parent)
-  const siblingNodes = nodes.filter(node => node.parentId === parentId);
-  if (siblingNodes.length === 0) return basePosition;
-
   let offset = 0;
   const position = { ...basePosition };
   tempNode.position = position;
@@ -109,13 +137,23 @@ const findFreePosition = (
   while (getIntersectingNodes(tempNode).length > 0) {
     offset += spacing;
     if (direction === 'horizontal') {
-      // For horizontal layout, try alternating above and below
-      position.y = basePosition.y + (offset * (offset % 2 === 0 ? 1 : -1));
+    position.y = basePosition.y + (offset * (offset % 2 === 0 ? 1 : -1));
     } else {
-      // For vertical layout, try alternating left and right
-      position.x = basePosition.x + (offset * (offset % 2 === 0 ? 1 : -1));
+    position.x = basePosition.x + (offset * (offset % 2 === 0 ? 1 : -1));
     }
     tempNode.position = position;
+  }
+
+  // Convert back to relative position if there's a parent
+  if (parentId) {
+    const parent = nodes.find(n => n.id === parentId);
+    if (parent) {
+    const parentAbsPos = getAbsolutePosition(parent, nodes);
+    return {
+      x: position.x - parentAbsPos.x,
+      y: position.y - parentAbsPos.y,
+    };
+    }
   }
 
   return position;
