@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Edge, Node, MarkerType, useEdgesState, useNodesState, useReactFlow } from "@xyflow/react";
+import { Edge, Node, MarkerType, useEdgesState, useNodesState, useReactFlow, useNodeConnections } from "@xyflow/react";
 import { toast } from "sonner";
 
 import { PropertiesPanelHandle } from "./properties-panel";
@@ -20,6 +20,7 @@ import { ResourceNodeTypes } from "@/model/node-types";
 
 const initialNodes: DiagramElement[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
+const rootNodeId = "root";
 
 // Add this helper function before the Editor component
 const cleanNodesForStorage = (nodes: DiagramElement[]) => {
@@ -102,21 +103,23 @@ const getAbsolutePosition = (
 const findFreePosition = (
   nodes: DiagramElement[],
   basePosition: { x: number; y: number },
-  direction: 'horizontal' | 'vertical',
   spacing: number = 100,
   parentId: string | undefined,
   getIntersectingNodes: (node: Node) => Node[],
 ): { x: number; y: number } => {
   // If there's a parent, convert basePosition to absolute coordinates
+  logger.debug(`Finding free position for layout for base position ${basePosition.x}, ${basePosition.y}`);
+
   if (parentId) {
     const parent = nodes.find(n => n.id === parentId);
     if (parent) {
-    const parentAbsPos = getAbsolutePosition(parent, nodes);
-    basePosition = {
-      x: parentAbsPos.x + basePosition.x,
-      y: parentAbsPos.y + basePosition.y,
-    };
+      const parentAbsPos = getAbsolutePosition(parent, nodes);
+      basePosition = {
+        x: parentAbsPos.x + basePosition.x,
+        y: parentAbsPos.y + basePosition.y,
+      };
     }
+    logger.debug(`Converted base position to absolute coordinates ${basePosition.x}, ${basePosition.y}`);
   }
 
   // Create a temporary node to check intersections with absolute position
@@ -135,12 +138,11 @@ const findFreePosition = (
   
   // Keep trying new positions until we find one with no intersections
   while (getIntersectingNodes(tempNode).length > 0) {
+    logger.debug(`Intersecting nodes found at position ${position.x}, ${position.y}`);
     offset += spacing;
-    if (direction === 'horizontal') {
     position.y = basePosition.y + (offset * (offset % 2 === 0 ? 1 : -1));
-    } else {
-    position.x = basePosition.x + (offset * (offset % 2 === 0 ? 1 : -1));
-    }
+    logger.debug(`Trying new vertical position ${position.x}, ${position.y}`);
+   
     tempNode.position = position;
   }
 
@@ -148,14 +150,17 @@ const findFreePosition = (
   if (parentId) {
     const parent = nodes.find(n => n.id === parentId);
     if (parent) {
-    const parentAbsPos = getAbsolutePosition(parent, nodes);
-    return {
-      x: position.x - parentAbsPos.x,
-      y: position.y - parentAbsPos.y,
-    };
+      const parentAbsPos = getAbsolutePosition(parent, nodes);
+      const convertedPosition = {
+        x: position.x - parentAbsPos.x,
+        y: position.y - parentAbsPos.y,
+      };
+      logger.debug(`Found free position ${convertedPosition.x}, ${convertedPosition.y}`);
+      return convertedPosition;
     }
   }
 
+  logger.debug(`Found free position ${position.x}, ${position.y}`);
   return position;
 };
 
@@ -172,6 +177,18 @@ export default function Editor() {
   const propertiesPanelRef = useRef<PropertiesPanelHandle>(null);
   const [copiedNodes, setCopiedNodes] = useState<DiagramElement[]>([]);
   const [pasteCount, setPasteCount] = useState(0);
+
+  const rootLeftConnections = useNodeConnections({
+    id: rootNodeId,
+    handleType: 'source',
+    handleId: 'root-left-source',
+    
+  });
+  const rootRightConnections = useNodeConnections({
+    id: rootNodeId,
+    handleType: 'source',
+    handleId: 'root-right-source',
+  });
 
   // Derive selected node from selectedNodeId
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
@@ -329,17 +346,21 @@ export default function Editor() {
   const handleDeleteNodeOrEdge = useCallback(() => {
     if (selectedNodeIds.length > 0) {
       logger.info("Deleting nodes", selectedNodeIds);
+      if(nodes.length <= 1) {
+        toast.warning("Cannot delete the root idea node 🙈")
+        return
+      }
+
       setNodes((nodes) =>
         nodes.filter((node) => !selectedNodeIds.includes(node.id)),
       );
       setSelectedNodeIds([]);
       setSelectedNodeId(null);
     } else if (selectedEdgeId) {
-      logger.info("Deleting edge", selectedEdgeId);
-      setEdges((edges) => edges.filter((edge) => edge.id !== selectedEdgeId));
-      setSelectedEdgeId(null);
+      toast.warning("Can't delete the relations. Delete the node instead.")
+      return
     }
-  }, [selectedNodeIds, selectedEdgeId, setNodes, setEdges]);
+  }, [selectedNodeIds, selectedEdgeId, nodes, setNodes]);
 
   const handleSearchFocus = useCallback(() => {
     logger.info("Focusing search input");
@@ -453,33 +474,48 @@ export default function Editor() {
   );
 
   const { getIntersectingNodes } = useReactFlow();
-
   const handleTabKey = useCallback(() => {
+
     if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
   
-    const rootNode = nodes.find(node => !node.parentId);
+    const rootNode = nodes.find(node => node.id === rootNodeId);
     if (!rootNode) return;
   
+    console.debug(`Root node: ${rootNode.id} selected node: ${selectedNodeId}`);
+
     const isSelectedNodeRoot = selectedNode.id === rootNode.id;
-    const selectedNodePosition = selectedNode.position;
+    logger.debug(`Selected node is root: ${isSelectedNodeRoot}`);
+    const selectedNodePosition = getAbsolutePosition( selectedNode, nodes);
     const rootPosition = rootNode.position;
-    const shouldAddToRight = isSelectedNodeRoot || selectedNodePosition.x > rootPosition.x;
+  
+    let shouldAddToRight = true;
+    if (isSelectedNodeRoot) {
+      // For root node, compare number of connections on each side
+      const leftConnections = rootLeftConnections.length;
+      const rightConnections = rootRightConnections.length;
+      logger.debug(`Root node connections: left=${leftConnections}, right=${rightConnections}`);
+      shouldAddToRight = leftConnections >= rightConnections;
+    } else {
+      // For non-root nodes, use position relative to root
+      shouldAddToRight = selectedNodePosition.x > rootPosition.x;
+    }
+
+    logger.debug(`Adding new node to ${shouldAddToRight ? 'right' : 'left'}`);
   
     const basePosition = {
       x: shouldAddToRight ? 200 : -200,
       y: 0,
     };
-
+  
     // Find a free position for the new node using getIntersectingNodes
     const freePosition = findFreePosition(
       nodes,
       basePosition,
-      'horizontal',
       100,
       selectedNodeId,
       getIntersectingNodes
     );
-
+  
     const newNode: DiagramElement = {
       id: crypto.randomUUID(),
       type: 'rectangleShape',
@@ -495,7 +531,7 @@ export default function Editor() {
       selected: true,
       parentId: selectedNodeId,
     };
-
+  
     // Create edge between selected node and new node with proper handles
     const newEdge: Edge = {
       id: `e-${selectedNodeId}-${newNode.id}`,
@@ -513,7 +549,7 @@ export default function Editor() {
     // Set the new node as selected
     setSelectedNodeId(newNode.id);
     setSelectedNodeIds([newNode.id]);
-  }, [selectedNodeId, selectedNode, nodes, setNodes, setEdges, getIntersectingNodes]);
+  }, [selectedNodeId, selectedNode, nodes, setNodes, setEdges, getIntersectingNodes, rootLeftConnections, rootRightConnections]);
   
   const handleEnterKey = useCallback(() => {
     if (!selectedNode || !selectedNodeId || selectedNode?.data.isEditing) return;
@@ -521,24 +557,28 @@ export default function Editor() {
     const rootNode = nodes.find(node => !node.parentId);
     if (!rootNode) return;
 
+    const isSelectedNodeRoot = selectedNode.id === rootNode.id;
+    if(isSelectedNodeRoot) return;
+
     const parentNode = nodes.find(node => node.id === selectedNode.parentId);
     const parentNodeId = parentNode?.id;
     
-    const selectedNodePosition = selectedNode.position;
+    const selectedNodePosition = getAbsolutePosition( selectedNode, nodes);
     const rootPosition = rootNode.position;
     const shouldAddAbove = selectedNodePosition.y > rootPosition.y;
 
+    const shouldAddToRight = isSelectedNodeRoot || selectedNodePosition.x > rootPosition.x;
+
     const basePosition = {
-      x: 0,
-      y: shouldAddAbove ? -100 : 100,
+      x: shouldAddToRight ? 200 : -200,
+      y: shouldAddAbove ? -60 : 60,
     };
 
     // Find a free position for the new node using getIntersectingNodes
     const freePosition = findFreePosition(
       nodes,
       basePosition,
-      'vertical',
-      100,
+      60,
       parentNodeId,
       getIntersectingNodes
     );
