@@ -22,7 +22,7 @@ interface BaseNodeProps extends NodeProps<DiagramElement> {
 
 export const BaseNode = memo(
   ({ id, data, selected, children, className = "", style }: BaseNodeProps) => {
-    const { setNodes } = useReactFlow();
+    const { setNodes, getNodes, getEdges, deleteElements } = useReactFlow();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Remove the isNew effect
@@ -48,6 +48,34 @@ export const BaseNode = memo(
 
     const handleBlur = () => {
       const newDescription = textareaRef.current?.value || "";
+      
+      // Check if the node has any child nodes (connected edges where this node is the source)
+      const edges = getEdges();
+      const hasChildren = edges.some(edge => edge.source === id);
+
+      // If description is empty and node has no children, delete the node
+      if (!newDescription.trim() && !hasChildren) {
+        const nodeToDelete = getNodes().find(node => node.id === id);
+        if (nodeToDelete) {
+          // Find the parent node before deletion
+          const parentId = nodeToDelete.parentId;
+          
+          // Delete the node
+          deleteElements({ nodes: [nodeToDelete] });
+
+          // If there was a parent, select it
+          if (parentId) {
+            setNodes(nodes => 
+              nodes.map(node => ({
+                ...node,
+                selected: node.id === parentId
+              }))
+            );
+          }
+        }
+        return;
+      }
+
       setNodes((prev) =>
         prev.map((node) =>
           node.id === id

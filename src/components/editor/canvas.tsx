@@ -29,6 +29,7 @@ import { logger } from "@/services/logger";
 import { IconService } from "@/services/icon-service";
 import { getDefaultTextProperties } from "@/components/editor/editor";
 import { DiagramComponent, ResourceNodeTypes } from "@/model/node-types";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 declare global {
   interface Window {
@@ -218,6 +219,32 @@ export default function Canvas({
       )
     );
   }, [setNodes]);
+
+  const handleSpacePress = useCallback(() => {
+    const selectedNodes = nodes.filter(node => node.selected);
+    if (selectedNodes.length === 1) {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === selectedNodes[0].id
+            ? { ...n, data: { ...n.data, isEditing: true } }
+            : n
+        )
+      );
+    }
+  }, [nodes, setNodes]);
+
+  const handleEscapePress = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.data.isEditing ? { ...n, data: { ...n.data, isEditing: false } } : n
+      )
+    );
+  }, [setNodes]);
+
+  useKeyboardShortcuts({
+    onSpace: handleSpacePress,
+    onEscape: handleEscapePress,
+  });
 
   return (
     <div

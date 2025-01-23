@@ -13,6 +13,8 @@ interface KeyboardShortcutHandlers {
   onArrowRight?: () => void;
   onArrowUp?: () => void;
   onArrowDown?: () => void;
+  onSpace?: () => void;  // Add new handler
+  onEscape?: () => void;  // Add new handler
 }
 
 export function useKeyboardShortcuts({
@@ -26,13 +28,15 @@ export function useKeyboardShortcuts({
   onArrowRight,
   onArrowUp,
   onArrowDown,
+  onSpace,  // Add new handler
+  onEscape,  // Add new handler
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Ignore if focus is in an input field
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
+      // Allow Escape key even in input fields
+      if (event.key !== "Escape" && 
+          (event.target instanceof HTMLInputElement ||
+           event.target instanceof HTMLTextAreaElement)
       ) {
         return;
       }
@@ -69,6 +73,14 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onArrowDown?.();
           break;
+        case " ":  // Add Space handler
+          event.preventDefault();
+          onSpace?.();
+          break;
+        case "Escape":  // Add Escape handler
+          event.preventDefault();
+          onEscape?.();
+          break;
         default:
           // Handle Copy & Paste
           if (
@@ -91,7 +103,7 @@ export function useKeyboardShortcuts({
           break;
       }
     },
-    [onDelete, onSearch, onCopy, onPaste, onTab, onEnter, onArrowLeft, onArrowRight, onArrowUp, onArrowDown],  // Add onTab and onEnter to dependencies
+    [onDelete, onSearch, onCopy, onPaste, onTab, onEnter, onArrowLeft, onArrowRight, onArrowUp, onArrowDown, onSpace, onEscape],  // Add onTab, onEnter, and onEscape to dependencies
   );
 
   useEffect(() => {

@@ -4,7 +4,7 @@
       "id": "f96570f4-7169-4c54-b4c0-eda38fa9e4ae",
       "type": "noteShape",
       "position": {
-        "x": 280,
+        "x": 260,
         "y": 380
       },
       "data": {
@@ -12,7 +12,8 @@
         "iconName": "Note",
         "backgroundColor": "",
         "resourceName": "",
-        "description": "Start crafting your idea by starting to fill your mind map.\n\nClick a node and then use <tab> to add new sub node and use <enter> to add sibling node."
+        "description": "Start crafting your idea by starting to fill your mind map.\n\nClick a node and then use <tab> to add new sub node and use <enter> to add sibling node.\n\nPress <space>  to start editing the label.",
+        "isEditing": false
       },
       "style": {
         "width": 200,
@@ -20,12 +21,12 @@
       },
       "selected": false,
       "measured": {
-        "width": 250,
-        "height": 140
+        "width": 290,
+        "height": 200
       },
       "dragging": false,
-      "width": 250,
-      "height": 140,
+      "width": 290,
+      "height": 200,
       "resizing": false
     },
     {
@@ -49,7 +50,8 @@
           "underline": false,
           "strikethrough": false
         },
-        "isEditing": false
+        "isEditing": false,
+        "depth": 0
       },
       "dragging": false,
       "resizing": false,

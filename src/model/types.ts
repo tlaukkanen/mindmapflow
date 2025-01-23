@@ -26,6 +26,7 @@ export interface DiagramElement extends Node {
     isEditing?: boolean;
     textProperties?: TextProperties;
     resourceOptions?: ResourceOption[];
+    depth?: number; // Depth of the node in the tree
   };
 }
 
