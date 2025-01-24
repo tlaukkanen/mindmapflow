@@ -31,13 +31,27 @@ export default {
         prussianBlue: '#003459',
         richBlack: '#00171F',
 
+        // https://www.colourlovers.com/palette/292482/Terra
+        mindLight: '#E8DDCB',
+        mindMedium: '#CDB380',
+        mindDark: '#036564',
+        mindDarker: '#033649',
+        mindDarkest: '#031634',
+
+        // Fall https://colorhunt.co/palette/f8ede3dfd3c3d0b8a87d6e83
+        fallLight: '#F8EDE3',
+        fallMedium: '#DFD3C3',
+        fallDark: '#D0B8A8',
+        fallDarker: '#7D6E83',
+        fallDarkest: '#3E3A44',
+
         scrollbar: {
           thumb: 'panels-background',
           track: 'bg-gray-200',
         },
 
         // Brown to tea green
-        walnutBrown: '#6B6054',
+        lnutBrown: '#6B6054',
         battleshipGrey: '#929487',
         ashGray: '#A1B0AB',
         teaGreen: '#C3DAC3',
@@ -45,19 +59,25 @@ export default {
 
         // Editor colors
         panels: {
-          background: '#F0F6FA',
-          border: '#D6D9D4',
+          background: '#7D6E83',
+          border: '#3E3A44',
           text: '#00171F',
         },
 
         menuBar: {
-          background: '#EDF3F7',
-          border: '#d5d9d2',
-          text: '#00171F',
+          background: '#3E3A44',
+          border: '#3E3A44',
+          text: '#F8EDE3',
+        },
+
+        toolBar: {
+          background: '#7D6E83',
+          border: '#B08C45',
+          text: '#F8EDE3',
         },
 
         canvas: {
-          background: '#f7f9fb',
+          background: '#E8DDCB',
           backgroundBackup: '#FEFEFF',
           node: {
             background: '#FFFFFF',

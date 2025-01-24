@@ -174,10 +174,10 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
     };
 
     return (
-      <div className="w-max-56 w-56 h-full border-solid border-0 border-l border-gray-200 p-0 bg-panels-background flex flex-col">
+      <div className="w-max-56 w-56 [&_button]:text-fallLight text-fallLight h-full border-solid border-0 border-l border-gray-200 p-0 bg-panels-background flex flex-col">
         <div className="overflow-y-auto flex-1">
           <div className="p-2 border-b border-gray-200 space-y-2">
-            <Typography className="text-gray-500" variant="caption">
+            <Typography variant="caption">
               {selectedNode
                 ? selectedNode.data.resourceType
                 : selectedEdge
@@ -227,25 +227,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
                 value={selectedEdge.label || ""}
                 onChange={(e) => onEdgeLabelChange(e.target.value)}
               />
-            )}
-
-            {skuOptions.length > 0 && selectedNode && (
-              <FormControl fullWidth margin="dense" size="small">
-                <InputLabel>SKU</InputLabel>
-                <Select
-                  className="bg-white"
-                  disabled={!selectedNode}
-                  label="SKU"
-                  value={selectedNode?.data.sku || ""}
-                  onChange={(e) => onSkuChange(e.target.value)}
-                >
-                  {skuOptions.map((sku) => (
-                    <MenuItem key={sku} value={sku}>
-                      {sku}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
             )}
 
             {otherOptions.length > 0 && selectedNode && (
@@ -315,7 +296,7 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
             <Divider className="my-2" />
             {selectedEdge && (
               <>
-                <Typography className="text-gray-500" variant="caption">
+                <Typography variant="caption">
                   Line markers
                 </Typography>
                 <FormGroup>
@@ -399,7 +380,7 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
             )}
             {selectedNode && (
               <>
-                <Typography className="text-gray-500" variant="caption">
+                <Typography variant="caption">
                   Text properties
                 </Typography>
                 <FormGroup>

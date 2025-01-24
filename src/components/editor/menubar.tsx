@@ -100,12 +100,12 @@ export const Menubar = ({
   return (
     <>
       <AppBar
-        className="bg-menuBar-background text-panels-text border-b border-solid border-0 border-panels-border shadow-none"
+        className="bg-menuBar-background shadow-stone-800 shadow-md text-panels-text border-b border-solid border-0 border-panels-border"
         elevation={0}
         position="sticky"
       >
         <MUIToolbar
-          className="bg-panels-background border-b  border-b-panels-border text-black"
+          className="bg-menuBar-background border-b  border-b-panels-border text-menuBar-text"
           variant="dense"
         >
           <Box
@@ -125,11 +125,11 @@ export const Menubar = ({
                 alt="Logo"
                 className="w-10 h-6 object-contain"
                 height={24}
-                src="/mindmapflow_icon.svg"
+                src="/mindmapflow_icon_white.svg"
                 width={32}
               />
               <Box width={12} />
-              <Typography className="font-extrabold">MindMapFlow</Typography>
+              <Typography className="font-extrabold text-menuBar-text">MindMapFlow</Typography>
             </Link>
             <div className="flex gap-0">
               <Button

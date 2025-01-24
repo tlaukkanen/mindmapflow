@@ -32,7 +32,7 @@ export const Navbar = () => {
       position="sticky"
     >
       <Toolbar
-        className="bg-prussianBlue border-b border-b-panels-border text-white"
+        className="bg-menuBar-background shadow-md border-b border-b-panels-border text-white"
         variant="dense"
       >
         <Box
@@ -45,10 +45,10 @@ export const Navbar = () => {
         >
           <Box
             component="li"
-            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            sx={{ display: "flex", alignItems: "center", gap: 3 }}
           >
             <Link
-              className="flex text-white justify-start items-center gap-1"
+              className="flex text-white justify-start items-center gap-5"
               href="/"
               underline="none"
             >
@@ -81,14 +81,14 @@ export const Navbar = () => {
           </Box>
 
           <Button
-            color="primary"
+            className="bg-toolBar-background text-white"
             component={Link}
             href={siteConfig.internalLinks.editor}
             size="small"
             sx={{ display: { xs: "none", sm: "flex" } }}
             variant="contained"
           >
-            Try Alpha Editor 😊
+            Try early version 😊
           </Button>
         </Box>
 
@@ -123,13 +123,13 @@ export const Navbar = () => {
               <ListItem key={`${item}-${index}`} className="p-4">
                 {item.label === "Editor" ? (
                   <Button
-                    color="primary"
+                    className="bg-toolBar-background text-white"
                     component={Link}
                     href={siteConfig.internalLinks.editor}
                     size="large"
                     variant="contained"
                   >
-                    Alpha Editor!
+                    Try early version 😊
                   </Button>
                 ) : (
                   <Link

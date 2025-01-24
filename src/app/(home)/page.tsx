@@ -25,7 +25,7 @@ export default function Home() {
             alt="Diagram"
             className="object-contain w-full h-fit "
             height={962}
-            src="/screens/screely-2025-01-18.png"
+            src="/home/mindmapflow_2025-01-24.png"
             width={1382}
           />
         </div>

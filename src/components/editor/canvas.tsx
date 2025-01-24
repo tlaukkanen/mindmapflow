@@ -272,11 +272,11 @@ export default function Canvas({
         disableKeyboardA11y={true}
       >
         <Background
-          color="#aaaaaa"
+          color="#E8DDCB"
           gap={20}
           id="2"
           lineWidth={0.2}
-          variant={BackgroundVariant.Dots}
+          variant={BackgroundVariant.Lines}
         />
         <Controls />
       </ReactFlow>

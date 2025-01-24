@@ -36,12 +36,12 @@ export const Toolbar = ({
   onPaste,
 }: ToolbarProps) => {
   return (
-    <AppBar className="bg-panels-background" elevation={0} position="sticky">
+    <AppBar className="bg-toolBar-background shadow-stone-500 shadow-md" elevation={0} position="sticky">
       <MUIToolbar
-        className="bg-panels-background border-b border-solid border-0 border-b-panels-border"
+        className="bg-toolBar-background border-b border-solid border-0 border-b-panels-border text-toolBar-text"
         variant="dense"
       >
-        <Box className="flex-1">
+        <Box className="flex-1 [&_button]:text-fallLight">
           <IconButton
             aria-label="Save to memory"
             size="medium"
