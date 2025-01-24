@@ -4,8 +4,8 @@
       "id": "f96570f4-7169-4c54-b4c0-eda38fa9e4ae",
       "type": "noteShape",
       "position": {
-        "x": 260,
-        "y": 380
+        "x": 210,
+        "y": -40
       },
       "data": {
         "resourceType": "Note",
@@ -41,7 +41,7 @@
         "iconName": "Rectangle",
         "backgroundColor": "",
         "resourceName": "",
-        "description": "Your great idea! ✨",
+        "description": "Mind Map Benefits\n ✨",
         "textProperties": {
           "textAlign": "center",
           "verticalAlign": "middle",
@@ -56,11 +56,619 @@
       "dragging": false,
       "resizing": false,
       "measured": {
-        "width": 161,
-        "height": 44
+        "width": 155,
+        "height": 58
       },
-      "selected": true
+      "selected": false
+    },
+    {
+      "id": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 0
+      },
+      "data": {
+        "description": "Visualize Ideas",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 1
+      },
+      "selected": false,
+      "parentId": "root",
+      "measured": {
+        "width": 130,
+        "height": 42
+      }
+    },
+    {
+      "id": "07ae0025-870a-426e-9e14-e6962d170042",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 0
+      },
+      "data": {
+        "description": "Clarity",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "measured": {
+        "width": 73,
+        "height": 40
+      }
+    },
+    {
+      "id": "c1cb0d7c-d9c2-49fa-8474-997fafc0a065",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 30
+      },
+      "data": {
+        "description": "Organization",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "measured": {
+        "width": 113,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "c02d164c-c2bd-4720-82ed-0c62a8c3afbd",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": -40
+      },
+      "data": {
+        "description": "Big Picture",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "measured": {
+        "width": 101,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "type": "rectangleShape",
+      "position": {
+        "x": -220,
+        "y": -50
+      },
+      "data": {
+        "description": "Brainstorm Efficiently",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 1
+      },
+      "selected": false,
+      "parentId": "root",
+      "measured": {
+        "width": 171,
+        "height": 42
+      },
+      "dragging": false
+    },
+    {
+      "id": "59db0d79-4023-4ebe-af85-38645328a9bd",
+      "type": "rectangleShape",
+      "position": {
+        "x": -230,
+        "y": 0
+      },
+      "data": {
+        "description": "Fast Idea Generation",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "measured": {
+        "width": 163,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "f75b5f0b-efbf-40e0-afab-e3aa296dba60",
+      "type": "rectangleShape",
+      "position": {
+        "x": -230,
+        "y": 40
+      },
+      "data": {
+        "description": "Creativity Boost",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "measured": {
+        "width": 132,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "f35697c9-acc3-44b1-bb72-cf0a30ef2263",
+      "type": "rectangleShape",
+      "position": {
+        "x": -230,
+        "y": -40
+      },
+      "data": {
+        "description": "Collaboration",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "measured": {
+        "width": 117,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "type": "rectangleShape",
+      "position": {
+        "x": 210,
+        "y": 130
+      },
+      "data": {
+        "description": "Improve Productivity",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 1
+      },
+      "selected": false,
+      "parentId": "root",
+      "measured": {
+        "width": 165,
+        "height": 42
+      },
+      "dragging": false
+    },
+    {
+      "id": "ffbcedfc-1a80-4d6e-9e99-bc9ac5d342ea",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": -40
+      },
+      "data": {
+        "description": "Task Management",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "measured": {
+        "width": 150,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "e9dd3da7-3b25-4de0-b320-20f9d5ce2c01",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 0
+      },
+      "data": {
+        "description": "Prioritization",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "measured": {
+        "width": 113,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "7bf9d920-b370-48fb-a561-59695b045226",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 40
+      },
+      "data": {
+        "description": "Time Management",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "measured": {
+        "width": 152,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "type": "rectangleShape",
+      "position": {
+        "x": -170,
+        "y": 120
+      },
+      "data": {
+        "description": "Easy to Use",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 1
+      },
+      "selected": false,
+      "parentId": "root",
+      "measured": {
+        "width": 108,
+        "height": 42
+      },
+      "dragging": false
+    },
+    {
+      "id": "6843f176-4132-404b-ad82-0ec5d7812f99",
+      "type": "rectangleShape",
+      "position": {
+        "x": -250,
+        "y": -40
+      },
+      "data": {
+        "description": "Intuitive Interface",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "measured": {
+        "width": 143,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "f4c655d2-c22d-4b94-8d93-a6e52d360c1e",
+      "type": "rectangleShape",
+      "position": {
+        "x": -250,
+        "y": 0
+      },
+      "data": {
+        "description": "User-Friendly Features",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "measured": {
+        "width": 174,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "c5eae718-cbef-492a-98f2-2429f068f1dc",
+      "type": "rectangleShape",
+      "position": {
+        "x": -250,
+        "y": 40
+      },
+      "data": {
+        "description": "Quick Learning Curve",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "measured": {
+        "width": 167,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "type": "rectangleShape",
+      "position": {
+        "x": 230,
+        "y": -130
+      },
+      "data": {
+        "description": "Versatility",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 1
+      },
+      "selected": false,
+      "parentId": "root",
+      "measured": {
+        "width": 97,
+        "height": 42
+      },
+      "dragging": false
+    },
+    {
+      "id": "8b36977a-f01b-4a08-a6a0-37346424fafa",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 40
+      },
+      "data": {
+        "description": "Personal Projects",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "measured": {
+        "width": 144,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "155549c0-0b61-4683-8e17-38c6331f77b5",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": 0
+      },
+      "data": {
+        "description": "Team Projects",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "measured": {
+        "width": 124,
+        "height": 40
+      },
+      "dragging": false
+    },
+    {
+      "id": "21c1f582-3dcd-42ad-b89c-55e86eb91f26",
+      "type": "rectangleShape",
+      "position": {
+        "x": 240,
+        "y": -40
+      },
+      "data": {
+        "description": "Professional Use",
+        "resourceType": "generic",
+        "isEditing": false,
+        "depth": 2
+      },
+      "selected": false,
+      "parentId": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "measured": {
+        "width": 140,
+        "height": 40
+      },
+      "dragging": false
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "id": "e-root-4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "source": "root",
+      "target": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "sourceHandle": "root-right-source",
+      "targetHandle": "4ae038af-073f-48b0-9ed7-89975f01ddd7-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-4ae038af-073f-48b0-9ed7-89975f01ddd7-07ae0025-870a-426e-9e14-e6962d170042",
+      "source": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "target": "07ae0025-870a-426e-9e14-e6962d170042",
+      "sourceHandle": "4ae038af-073f-48b0-9ed7-89975f01ddd7-right-source",
+      "targetHandle": "07ae0025-870a-426e-9e14-e6962d170042-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-4ae038af-073f-48b0-9ed7-89975f01ddd7-c1cb0d7c-d9c2-49fa-8474-997fafc0a065",
+      "source": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "target": "c1cb0d7c-d9c2-49fa-8474-997fafc0a065",
+      "sourceHandle": "4ae038af-073f-48b0-9ed7-89975f01ddd7-right-source",
+      "targetHandle": "c1cb0d7c-d9c2-49fa-8474-997fafc0a065-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-4ae038af-073f-48b0-9ed7-89975f01ddd7-c02d164c-c2bd-4720-82ed-0c62a8c3afbd",
+      "source": "4ae038af-073f-48b0-9ed7-89975f01ddd7",
+      "target": "c02d164c-c2bd-4720-82ed-0c62a8c3afbd",
+      "sourceHandle": "4ae038af-073f-48b0-9ed7-89975f01ddd7-right-source",
+      "targetHandle": "c02d164c-c2bd-4720-82ed-0c62a8c3afbd-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-root-c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "source": "root",
+      "target": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "sourceHandle": "root-left-source",
+      "targetHandle": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-c2d2d7b0-76d4-4bed-b882-701b752c4bc6-59db0d79-4023-4ebe-af85-38645328a9bd",
+      "source": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "target": "59db0d79-4023-4ebe-af85-38645328a9bd",
+      "sourceHandle": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6-left-source",
+      "targetHandle": "59db0d79-4023-4ebe-af85-38645328a9bd-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-c2d2d7b0-76d4-4bed-b882-701b752c4bc6-f75b5f0b-efbf-40e0-afab-e3aa296dba60",
+      "source": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "target": "f75b5f0b-efbf-40e0-afab-e3aa296dba60",
+      "sourceHandle": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6-left-source",
+      "targetHandle": "f75b5f0b-efbf-40e0-afab-e3aa296dba60-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-c2d2d7b0-76d4-4bed-b882-701b752c4bc6-f35697c9-acc3-44b1-bb72-cf0a30ef2263",
+      "source": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6",
+      "target": "f35697c9-acc3-44b1-bb72-cf0a30ef2263",
+      "sourceHandle": "c2d2d7b0-76d4-4bed-b882-701b752c4bc6-left-source",
+      "targetHandle": "f35697c9-acc3-44b1-bb72-cf0a30ef2263-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-root-0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "source": "root",
+      "target": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "sourceHandle": "root-right-source",
+      "targetHandle": "0db1af3f-e8d8-45b5-a7a4-b759539f962e-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-0db1af3f-e8d8-45b5-a7a4-b759539f962e-ffbcedfc-1a80-4d6e-9e99-bc9ac5d342ea",
+      "source": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "target": "ffbcedfc-1a80-4d6e-9e99-bc9ac5d342ea",
+      "sourceHandle": "0db1af3f-e8d8-45b5-a7a4-b759539f962e-right-source",
+      "targetHandle": "ffbcedfc-1a80-4d6e-9e99-bc9ac5d342ea-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-0db1af3f-e8d8-45b5-a7a4-b759539f962e-e9dd3da7-3b25-4de0-b320-20f9d5ce2c01",
+      "source": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "target": "e9dd3da7-3b25-4de0-b320-20f9d5ce2c01",
+      "sourceHandle": "0db1af3f-e8d8-45b5-a7a4-b759539f962e-right-source",
+      "targetHandle": "e9dd3da7-3b25-4de0-b320-20f9d5ce2c01-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-0db1af3f-e8d8-45b5-a7a4-b759539f962e-7bf9d920-b370-48fb-a561-59695b045226",
+      "source": "0db1af3f-e8d8-45b5-a7a4-b759539f962e",
+      "target": "7bf9d920-b370-48fb-a561-59695b045226",
+      "sourceHandle": "0db1af3f-e8d8-45b5-a7a4-b759539f962e-right-source",
+      "targetHandle": "7bf9d920-b370-48fb-a561-59695b045226-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-root-78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "source": "root",
+      "target": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "sourceHandle": "root-left-source",
+      "targetHandle": "78a66116-bd08-4eb1-add6-cdee95d183a1-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-78a66116-bd08-4eb1-add6-cdee95d183a1-6843f176-4132-404b-ad82-0ec5d7812f99",
+      "source": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "target": "6843f176-4132-404b-ad82-0ec5d7812f99",
+      "sourceHandle": "78a66116-bd08-4eb1-add6-cdee95d183a1-left-source",
+      "targetHandle": "6843f176-4132-404b-ad82-0ec5d7812f99-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-78a66116-bd08-4eb1-add6-cdee95d183a1-f4c655d2-c22d-4b94-8d93-a6e52d360c1e",
+      "source": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "target": "f4c655d2-c22d-4b94-8d93-a6e52d360c1e",
+      "sourceHandle": "78a66116-bd08-4eb1-add6-cdee95d183a1-left-source",
+      "targetHandle": "f4c655d2-c22d-4b94-8d93-a6e52d360c1e-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-78a66116-bd08-4eb1-add6-cdee95d183a1-c5eae718-cbef-492a-98f2-2429f068f1dc",
+      "source": "78a66116-bd08-4eb1-add6-cdee95d183a1",
+      "target": "c5eae718-cbef-492a-98f2-2429f068f1dc",
+      "sourceHandle": "78a66116-bd08-4eb1-add6-cdee95d183a1-left-source",
+      "targetHandle": "c5eae718-cbef-492a-98f2-2429f068f1dc-right-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-root-eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "source": "root",
+      "target": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "sourceHandle": "root-right-source",
+      "targetHandle": "eb2b5b83-3321-438f-b699-0eeb446aea52-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-eb2b5b83-3321-438f-b699-0eeb446aea52-8b36977a-f01b-4a08-a6a0-37346424fafa",
+      "source": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "target": "8b36977a-f01b-4a08-a6a0-37346424fafa",
+      "sourceHandle": "eb2b5b83-3321-438f-b699-0eeb446aea52-right-source",
+      "targetHandle": "8b36977a-f01b-4a08-a6a0-37346424fafa-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-eb2b5b83-3321-438f-b699-0eeb446aea52-155549c0-0b61-4683-8e17-38c6331f77b5",
+      "source": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "target": "155549c0-0b61-4683-8e17-38c6331f77b5",
+      "sourceHandle": "eb2b5b83-3321-438f-b699-0eeb446aea52-right-source",
+      "targetHandle": "155549c0-0b61-4683-8e17-38c6331f77b5-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "id": "e-eb2b5b83-3321-438f-b699-0eeb446aea52-21c1f582-3dcd-42ad-b89c-55e86eb91f26",
+      "source": "eb2b5b83-3321-438f-b699-0eeb446aea52",
+      "target": "21c1f582-3dcd-42ad-b89c-55e86eb91f26",
+      "sourceHandle": "eb2b5b83-3321-438f-b699-0eeb446aea52-right-source",
+      "targetHandle": "21c1f582-3dcd-42ad-b89c-55e86eb91f26-left-target",
+      "type": "default",
+      "selected": false
+    },
+    {
+      "source": "root",
+      "sourceHandle": "root-bottom-source",
+      "target": "root",
+      "targetHandle": "root-bottom-target",
+      "animated": false,
+      "id": "e-root-root-bottom-source-root-root-bottom-target-2180e359-1dff-47d0-9466-b7158a908af3",
+      "selected": false
+    }
+  ]
 }

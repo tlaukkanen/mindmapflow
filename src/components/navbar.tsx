@@ -88,7 +88,7 @@ export const Navbar = () => {
             sx={{ display: { xs: "none", sm: "flex" } }}
             variant="contained"
           >
-            Try early version 😊
+            Try it out 😊
           </Button>
         </Box>
 
@@ -129,7 +129,7 @@ export const Navbar = () => {
                     size="large"
                     variant="contained"
                   >
-                    Try early version 😊
+                    Try it out 😊
                   </Button>
                 ) : (
                   <Link

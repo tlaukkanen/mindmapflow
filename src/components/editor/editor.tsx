@@ -152,8 +152,8 @@ export default function Editor() {
   const { getIntersectingNodes, deleteElements } = useReactFlow();
 
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
-    useState(true);
-  const [isResourcePanelVisible, setIsResourcePanelVisible] = useState(true);
+    useState(false);
+  const [isResourcePanelVisible, setIsResourcePanelVisible] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -514,15 +514,14 @@ export default function Editor() {
       y: 0,
     };
   
-    const spacing = currentDepth == 0 ? 100 :
-    currentDepth == 1 ? 60 :
-    currentDepth == 2 ? 40 : 20;
+    const verticalSpace = currentDepth == 0 ? 60 : 
+    currentDepth == 1 ? 20 : 20;
 
     // Find a free position for the new node using getIntersectingNodes
     const freePosition = findFreePosition(
       nodes,
       basePosition,
-      spacing,
+      verticalSpace,
       selectedNodeId,
       getIntersectingNodes
     );
@@ -584,16 +583,19 @@ export default function Editor() {
 
     const shouldAddToRight = isSelectedNodeRoot || selectedNodePosition.x > rootPosition.x;
 
+    const verticalSpace = parentNode?.data.depth == 0 ? 60 : 
+     parentNode?.data.depth == 1 ? 20 : 20;
+
     const basePosition = {
       x: shouldAddToRight ? 240 : -240,
-      y: shouldAddAbove ? -60 : 60,
+      y: shouldAddAbove ? -verticalSpace : verticalSpace,
     };
 
     // Find a free position for the new node using getIntersectingNodes
     const freePosition = findFreePosition(
       nodes,
       basePosition,
-      60,
+      verticalSpace,
       parentNodeId,
       getIntersectingNodes
     );
