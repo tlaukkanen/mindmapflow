@@ -838,9 +838,11 @@ export default function Editor() {
 
       // If we have a last direction, prefer that or its opposite based on number of connections
       if (lastDirection) {
-        const opposite = oppositeDirections[lastDirection];
+        const opposite = oppositeDirections[lastDirection] as Direction;
+        const lastDirConnections = connections[lastDirection];
+        const oppositeConnections = connections[opposite];
 
-        return connections[lastDirection] <= connections[opposite]
+        return lastDirConnections <= oppositeConnections
           ? lastDirection
           : opposite;
       }

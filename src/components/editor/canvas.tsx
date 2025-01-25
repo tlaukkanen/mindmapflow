@@ -14,6 +14,7 @@ import {
   Edge,
   OnEdgesChange,
   useReactFlow,
+  ReactFlowInstance,
 } from "@xyflow/react";
 import { ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { PiArrowLineDownThin, PiArrowLineUpThin } from "react-icons/pi";
@@ -78,7 +79,6 @@ export default function Canvas({
     x: 0,
     y: 0,
   });
-  const { screenToFlowPosition } = useReactFlow();
 
   // Move onSelectionChange up with other callbacks
   const onSelectionChange = useCallback(
@@ -103,9 +103,12 @@ export default function Canvas({
     [onNodeSelect, onEdgeSelect],
   );
 
-  const onInit = useCallback((instance: ReactFlowInstance) => {
-    fitView({ maxZoom: 1.0 });
-  });
+  const onInit = useCallback(
+    (instance: ReactFlowInstance<DiagramElement, Edge>) => {
+      fitView({ maxZoom: 1.0 });
+    },
+    [fitView],
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {

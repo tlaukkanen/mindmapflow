@@ -129,7 +129,9 @@ export const Menubar = ({
                 width={32}
               />
               <Box width={12} />
-              <Typography className="font-extrabold text-menuBar-text">MindMapFlow</Typography>
+              <Typography className="font-extrabold text-menuBar-text">
+                MindMapFlow
+              </Typography>
             </Link>
             <div className="flex gap-0">
               <Button

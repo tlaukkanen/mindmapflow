@@ -154,6 +154,7 @@ export const BaseNode = memo(
           {/* Wrapper div with padding */}
           <textarea
             ref={textareaRef}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             className={clsx(
               "text-gray-600 whitespace-pre-wrap w-full resize-none",
@@ -255,8 +256,8 @@ export const BaseNode = memo(
           <AddNodeButtons
             childButtonOnRight={childButtonOnRight}
             isRoot={data.depth === 0}
-            onAddChild={onAddChild}
-            onAddSibling={onAddSibling}
+            onAddChild={onAddChild || (() => {})}
+            onAddSibling={onAddSibling || (() => {})}
           />
         )}
         {renderContent()}
