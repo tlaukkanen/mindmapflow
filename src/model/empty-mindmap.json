@@ -1,0 +1,37 @@
+{
+  "nodes": [
+    {
+      "id": "root",
+      "type": "rectangleShape",
+      "position": {
+        "x": 320,
+        "y": 260
+      },
+      "data": {
+        "resourceType": "Rectangle",
+        "iconName": "Rectangle",
+        "backgroundColor": "",
+        "resourceName": "",
+        "description": "Start here\n 😊",
+        "textProperties": {
+          "textAlign": "center",
+          "verticalAlign": "middle",
+          "bold": true,
+          "italic": false,
+          "underline": false,
+          "strikethrough": false
+        },
+        "isEditing": false,
+        "depth": 0
+      },
+      "dragging": false,
+      "resizing": false,
+      "measured": {
+        "width": 155,
+        "height": 58
+      },
+      "selected": false
+    }
+  ],
+  "edges": []
+}

@@ -20,6 +20,8 @@ import { sampleData } from "@/model/example-data";
 import { ResourceNodeTypes } from "@/model/node-types";
 import { findClosestNodeInDirection, getAbsolutePosition } from "@/utils/node-utils";
 
+import { emptyProject } from "@/model/example-data";
+
 const initialNodes: DiagramElement[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
 const rootNodeId = "root";
@@ -149,7 +151,7 @@ const findFreePosition = (
 
 export default function Editor() {
   const { isFullScreen, setIsFullScreen } = useEditor();
-  const { getIntersectingNodes, deleteElements } = useReactFlow();
+  const { getIntersectingNodes, deleteElements, fitView } = useReactFlow();
 
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(false);
@@ -192,8 +194,9 @@ export default function Editor() {
   const onNewProject = () => {
     logger.info("Creating new project");
 
-    setNodes([]);
-    setEdges([]);
+    // Reset to new project
+    setNodes(emptyProject.nodes);
+    setEdges(emptyProject.edges);
   };
 
   const saveDiagram = () => {
@@ -317,6 +320,13 @@ export default function Editor() {
 
     // Update the single selected node for properties panel
     setSelectedNodeId(nodeIds.length > 0 ? nodeIds[nodeIds.length - 1] : null);
+
+    // Make sure that selected nodes are visible
+    fitView({
+      nodes,
+      duration: 1500,
+      maxZoom: 1.0,
+    });
   }, []);
 
   const handleEdgeSelection = (edge: Edge | null) => {
@@ -560,6 +570,9 @@ export default function Editor() {
     // Set the new node as selected
     setSelectedNodeId(newNode.id);
     setSelectedNodeIds([newNode.id]);
+
+    
+
   }, [selectedNodeId, selectedNode, nodes, setNodes, setEdges, getIntersectingNodes, rootLeftConnections, rootRightConnections]);
   
   const handleEnterKey = useCallback(() => {
@@ -638,6 +651,8 @@ export default function Editor() {
     // Set the new node as selected
     setSelectedNodeId(newNode.id);
     setSelectedNodeIds([newNode.id]);
+
+
   }, [selectedNodeId, selectedNode, nodes, edges, setNodes, setEdges, getIntersectingNodes]);
 
   const handleArrowNavigation = useCallback(

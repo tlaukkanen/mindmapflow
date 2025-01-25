@@ -56,7 +56,7 @@ export const BaseNode = memo(
       // If description is empty and node has no children, delete the node
       if (!newDescription.trim() && !hasChildren) {
         const nodeToDelete = getNodes().find(node => node.id === id);
-        if (nodeToDelete) {
+        if (nodeToDelete && nodeToDelete.data.depth !== 0) {
           // Find the parent node before deletion
           const parentId = nodeToDelete.parentId;
           
