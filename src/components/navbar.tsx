@@ -45,7 +45,7 @@ export const Navbar = () => {
         >
           <Box
             component="li"
-            sx={{ display: "flex", alignItems: "center", gap: 3 }}
+            sx={{ display: "flex", alignItems: "center", gap: 2 }}
           >
             <Link
               className="flex text-white justify-start items-center gap-5"
@@ -54,9 +54,9 @@ export const Navbar = () => {
             >
               <Image
                 alt="Logo"
-                className="w-12 h-8 object-contain"
+                className="w-8 h-8 object-contain"
                 height={24}
-                src="/mindmapflow_icon_white.svg"
+                src="/mindmapflow_favicon.svg"
                 width={24}
               />
               <Box width={12} />
@@ -64,7 +64,7 @@ export const Navbar = () => {
             </Link>
           </Box>
 
-          <Box className="hidden sm:flex gap-2" component="ul">
+          <Box className="hidden sm:flex gap-5" component="ul">
             {siteConfig.navItems.map((item) => (
               <ListItem key={item.href} className="w-auto p-0">
                 <Link

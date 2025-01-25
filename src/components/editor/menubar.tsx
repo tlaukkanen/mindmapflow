@@ -123,10 +123,10 @@ export const Menubar = ({
             >
               <Image
                 alt="Logo"
-                className="w-10 h-6 object-contain"
+                className="w-6 h-6 object-contain"
                 height={24}
-                src="/mindmapflow_icon_white.svg"
-                width={32}
+                src="/mindmapflow_favicon.svg"
+                width={24}
               />
               <Box width={12} />
               <Typography className="font-extrabold text-menuBar-text">

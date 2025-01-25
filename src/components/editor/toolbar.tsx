@@ -1,9 +1,6 @@
 import { AppBar, Toolbar as MUIToolbar, Box } from "@mui/material";
 import { IconButton } from "@mui/material";
-import {
-  TbLayoutSidebarLeftCollapseFilled,
-  TbLayoutSidebarRightCollapseFilled,
-} from "react-icons/tb";
+import { TbLayoutSidebarRightCollapseFilled } from "react-icons/tb";
 import { MdFullscreen } from "react-icons/md";
 import { toast } from "sonner";
 import {
@@ -36,12 +33,16 @@ export const Toolbar = ({
   onPaste,
 }: ToolbarProps) => {
   return (
-    <AppBar className="bg-toolBar-background shadow-stone-500 shadow-md" elevation={0} position="sticky">
+    <AppBar
+      className="bg-toolBar-background shadow-stone-500 shadow-md"
+      elevation={0}
+      position="sticky"
+    >
       <MUIToolbar
         className="bg-toolBar-background border-b border-solid border-0 border-b-panels-border text-toolBar-text"
         variant="dense"
       >
-        <Box className="flex-1 [&_button]:text-fallLight">
+        <Box className="flex-1 flex flex-nowrap [&_button]:text-fallLight">
           <IconButton
             aria-label="Save to memory"
             size="medium"
@@ -64,7 +65,7 @@ export const Toolbar = ({
           >
             <PiDownloadThin />
           </IconButton>
-          <div className="h-3 mx-2 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
+          <div className="h-6 my-4 mx-2 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
           <IconButton
             aria-label="Copy selected nodes"
             size="medium"
@@ -82,7 +83,7 @@ export const Toolbar = ({
             <PiClipboardThin />
           </IconButton>
 
-          <div className="h-3 mx-2 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
+          <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
           <IconButton
             aria-label="Delete selected node or edge"
             size="medium"
