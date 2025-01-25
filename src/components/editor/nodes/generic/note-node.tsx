@@ -10,7 +10,7 @@ export default memo(function NoteNode(props: NodeProps<DiagramElement>) {
   return (
     <BaseNode
       {...props}
-      className="p-2 h-full shadow-lg rounded-sm bg-yellow-100 border border-solid border-stone-300"
+      className="p-2 h-full text-sm shadow-lg rounded-sm bg-yellow-100 border border-solid border-stone-300"
       style={{ transform: "rotate(-2deg)" }}
     >
       <div className="text-xs text-gray-800 whitespace-pre-wrap w-full" />
@@ -19,11 +19,11 @@ export default memo(function NoteNode(props: NodeProps<DiagramElement>) {
         title="This is a free text note"
       />
       <NodeResizer
-          color="#000"
-          isVisible={props.selected}
-          minHeight={20}
-          minWidth={20}
-        />
+        color="#000"
+        isVisible={props.selected}
+        minHeight={20}
+        minWidth={20}
+      />
     </BaseNode>
   );
 });

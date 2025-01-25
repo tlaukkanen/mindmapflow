@@ -8,7 +8,7 @@ on:
 
 env:
   ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
-  IMAGE_NAME: clouddrawings
+  IMAGE_NAME: mindmapflow
 
 jobs:
   build-and-push:

@@ -16,7 +16,6 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { toast } from "sonner";
 import { PiArrowLineDownThin, PiArrowLineUpThin } from "react-icons/pi";
 
 import rectangleNode from "./nodes/generic/rectangle-node";
@@ -26,9 +25,6 @@ import textNode from "./nodes/generic/text-node";
 
 import { DiagramElement } from "@/model/types";
 import { logger } from "@/services/logger";
-import { IconService } from "@/services/icon-service";
-import { getDefaultTextProperties } from "@/components/editor/editor";
-import { DiagramComponent, ResourceNodeTypes } from "@/model/node-types";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 declare global {
@@ -108,8 +104,8 @@ export default function Canvas({
   );
 
   const onInit = useCallback((instance: ReactFlowInstance) => {
-    fitView({maxZoom: 1.0});
-  })
+    fitView({ maxZoom: 1.0 });
+  });
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -130,7 +126,6 @@ export default function Canvas({
   );
 
   const canvasRef = useRef<HTMLDivElement>(null);
-
 
   const getRelativePosition = useCallback(
     (position: { x: number; y: number }, parentNode?: DiagramElement) => {
@@ -211,24 +206,28 @@ export default function Canvas({
     setContextMenuNode(null);
   };
 
-  const handleNodeDoubleClick = useCallback((event: React.MouseEvent, node: DiagramElement) => {
-    logger.debug("Canvas: onNodeDoubleClick", node);
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === node.id ? { ...n, data: { ...n.data, isEditing: true } } : n
-      )
-    );
-  }, [setNodes]);
+  const handleNodeDoubleClick = useCallback(
+    (event: React.MouseEvent, node: DiagramElement) => {
+      logger.debug("Canvas: onNodeDoubleClick", node);
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === node.id ? { ...n, data: { ...n.data, isEditing: true } } : n,
+        ),
+      );
+    },
+    [setNodes],
+  );
 
   const handleSpacePress = useCallback(() => {
-    const selectedNodes = nodes.filter(node => node.selected);
+    const selectedNodes = nodes.filter((node) => node.selected);
+
     if (selectedNodes.length === 1) {
       setNodes((nds) =>
         nds.map((n) =>
           n.id === selectedNodes[0].id
             ? { ...n, data: { ...n.data, isEditing: true } }
-            : n
-        )
+            : n,
+        ),
       );
     }
   }, [nodes, setNodes]);
@@ -236,8 +235,8 @@ export default function Canvas({
   const handleEscapePress = useCallback(() => {
     setNodes((nds) =>
       nds.map((n) =>
-        n.data.isEditing ? { ...n, data: { ...n.data, isEditing: false } } : n
-      )
+        n.data.isEditing ? { ...n, data: { ...n.data, isEditing: false } } : n,
+      ),
     );
   }, [setNodes]);
 
@@ -256,20 +255,20 @@ export default function Canvas({
       <ReactFlow
         snapToGrid
         defaultViewport={defaultViewport}
+        disableKeyboardA11y={true}
         edges={edges}
         nodeTypes={nodeTypes}
-        nodes={nodes}
+        nodes={nodes} // <-- This is the key change. We're now using the nodes directly which include the callbacks
         proOptions={proOptions}
         selectionOnDrag={true}
         snapGrid={[10, 10]}
         onConnect={onConnect}
         onEdgesChange={onEdgesChange}
+        onInit={onInit}
         onNodeContextMenu={onNodeContextMenu}
+        onNodeDoubleClick={handleNodeDoubleClick}
         onNodesChange={onNodesChange}
         onSelectionChange={onSelectionChange}
-        onNodeDoubleClick={handleNodeDoubleClick}
-        onInit={onInit}
-        disableKeyboardA11y={true}
       >
         <Background
           color="#E8DDCB"
