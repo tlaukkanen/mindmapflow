@@ -1,0 +1,54 @@
+name: Build and Push to ACR
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
+  IMAGE_NAME: clouddrawings
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Generate version tag
+      id: version
+      run: |
+        VERSION="v0.$(date +'%y%m%d.%H%M')"
+        echo "VERSION_TAG=$VERSION" >> $GITHUB_ENV
+        echo "Generated version tag: $VERSION"
+
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ secrets.ACR_REGISTRY }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        docker build \
+          --build-arg NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING="${{ secrets.APPINSIGHTS_CONNECTION_STRING }}" \
+          --build-arg NEXT_PUBLIC_VERSION_TAG="${{ env.VERSION_TAG }}" \
+          -t ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+        docker tag ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        docker push ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+    
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'mindmapflow-dev'
+        images: '${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
+        slot-name: 'production'
+        resource-group-name: 'rg-mindmapflow-dev'
