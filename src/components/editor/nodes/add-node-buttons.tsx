@@ -31,12 +31,12 @@ export const AddNodeButtons = memo(
       ...buttonStyles,
       top: "50%",
       transform: "translateY(-50%)",
-      ...(childButtonOnRight ? { right: "-20px" } : { left: "-20px" }),
+      ...(childButtonOnRight ? { right: "-30px" } : { left: "-30px" }),
     };
 
     const siblingButtonPosition = {
       ...buttonStyles,
-      top: "-20px",
+      top: "-30px",
       left: "50%",
       transform: "translateX(-50%)",
     };

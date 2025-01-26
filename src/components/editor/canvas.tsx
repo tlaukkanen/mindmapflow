@@ -14,7 +14,6 @@ import {
   Edge,
   OnEdgesChange,
   useReactFlow,
-  ReactFlowInstance,
 } from "@xyflow/react";
 import { ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import { PiArrowLineDownThin, PiArrowLineUpThin } from "react-icons/pi";
@@ -103,12 +102,9 @@ export default function Canvas({
     [onNodeSelect, onEdgeSelect],
   );
 
-  const onInit = useCallback(
-    (instance: ReactFlowInstance<DiagramElement, Edge>) => {
-      fitView({ maxZoom: 1.0 });
-    },
-    [fitView],
-  );
+  const onInit = useCallback(() => {
+    fitView({ maxZoom: 1.0 });
+  }, [fitView]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -129,32 +125,6 @@ export default function Canvas({
   );
 
   const canvasRef = useRef<HTMLDivElement>(null);
-
-  const getRelativePosition = useCallback(
-    (position: { x: number; y: number }, parentNode?: DiagramElement) => {
-      if (!canvasRef.current) {
-        return position; // or a safe fallback, e.g. { x: 0, y: 0 }
-      }
-
-      if (!parentNode || !canvasRef.current) return position;
-
-      const parentElement = document.querySelector(
-        `[data-id="${parentNode.id}"]`,
-      );
-
-      if (!parentElement) return position;
-
-      const parentRect = parentElement.getBoundingClientRect();
-      const canvasRect = canvasRef.current.getBoundingClientRect();
-
-      // Calculate position relative to parent's top-left corner
-      return {
-        x: position.x - (parentRect.left - canvasRect.left),
-        y: position.y - (parentRect.top - canvasRect.top),
-      };
-    },
-    [],
-  );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

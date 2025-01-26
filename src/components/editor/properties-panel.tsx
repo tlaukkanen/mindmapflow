@@ -39,7 +39,6 @@ import {
 import { TextProperties } from "./nodes/base-node";
 
 import { DiagramElement } from "@/model/types";
-import { ResourceNodeTypes } from "@/model/node-types";
 import { getNamePrefixSuggestion } from "@/services/name-prefix-suggestions-service";
 
 export interface PropertiesPanelHandle {
@@ -52,17 +51,10 @@ interface PropertiesPanelProps {
   selectedNode: DiagramElement | undefined;
   selectedEdge: Edge | undefined;
   onNameChange: (newName: string) => void;
-  onSkuChange: (newSku: string) => void;
   onEdgeLabelChange: (newLabel: string) => void;
-  onDescriptionChange: (newDescription: string) => void;
   onTextPropertiesChange: (props: Partial<TextProperties>) => void;
   onEdgeAnimatedChange: (animated: boolean) => void;
   onEdgeDirectionSwitch: () => void;
-  onResourceOptionChange: (
-    optionName: string,
-    value: string,
-    show?: boolean,
-  ) => void;
   onEdgeMarkerChange: (markerStart: boolean, markerEnd: boolean) => void;
 }
 
@@ -72,13 +64,10 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
       selectedNode,
       selectedEdge,
       onNameChange,
-      onSkuChange,
       onEdgeLabelChange,
-      onDescriptionChange,
       onTextPropertiesChange,
       onEdgeAnimatedChange,
       onEdgeDirectionSwitch,
-      onResourceOptionChange,
       onEdgeMarkerChange,
     },
     ref,
@@ -99,37 +88,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
         descriptionRef.current?.focus();
       },
     }));
-
-    // Find SKU options for the selected resource
-    const getSkuOptions = () => {
-      if (!selectedNode) return [];
-
-      const resourceName = selectedNode.data.resourceType;
-      const resource = ResourceNodeTypes.find((r) => r.name === resourceName);
-
-      if (resource?.sku) {
-        return resource.sku;
-      }
-
-      return [];
-    };
-
-    const skuOptions = getSkuOptions();
-
-    // Add this helper function after getSkuOptions
-    const getOtherOptions = () => {
-      if (!selectedNode) return [];
-      const resourceName = selectedNode.data.resourceType;
-      const resource = ResourceNodeTypes.find((r) => r.name === resourceName);
-
-      if (resource?.otherOptions) {
-        return resource.otherOptions;
-      }
-
-      return [];
-    };
-
-    const otherOptions = getOtherOptions();
 
     // Maintain focus when selectedNode changes
     // useEffect(() => {
@@ -229,76 +187,10 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
               />
             )}
 
-            {otherOptions.length > 0 && selectedNode && (
-              <>
-                <Divider className="my-2" />
-                <Typography
-                  className="text-gray-500 flex justify-between items-center"
-                  variant="caption"
-                >
-                  <span>Additional options</span>
-                  <span>Show</span>
-                </Typography>
-                {otherOptions.map((option) => {
-                  const resourceOption =
-                    selectedNode.data.resourceOptions?.find(
-                      (opt) => opt.name === option.name,
-                    );
-                  const currentValue = resourceOption?.value || "";
-                  const isShown = resourceOption?.show || false;
-
-                  return (
-                    <FormControl
-                      key={option.name}
-                      fullWidth
-                      margin="dense"
-                      size="small"
-                    >
-                      <InputLabel>{option.name}</InputLabel>
-                      <Box
-                        sx={{ display: "flex", gap: 1, alignItems: "center" }}
-                      >
-                        <Select
-                          className="bg-white"
-                          label={option.name}
-                          sx={{ flex: 1 }}
-                          value={currentValue}
-                          onChange={(e) =>
-                            onResourceOptionChange(option.name, e.target.value)
-                          }
-                        >
-                          {option.options.map((value) => (
-                            <MenuItem key={value} value={value}>
-                              {value}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        <Checkbox
-                          checked={isShown}
-                          size="small"
-                          sx={{ padding: "1px", margin: 0 }}
-                          title="Show on diagram"
-                          onChange={(e) =>
-                            onResourceOptionChange(
-                              option.name,
-                              currentValue,
-                              e.target.checked,
-                            )
-                          }
-                        />
-                      </Box>
-                    </FormControl>
-                  );
-                })}
-              </>
-            )}
-
             <Divider className="my-2" />
             {selectedEdge && (
               <>
-                <Typography variant="caption">
-                  Line markers
-                </Typography>
+                <Typography variant="caption">Line markers</Typography>
                 <FormGroup>
                   <Box
                     sx={{
@@ -380,9 +272,7 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
             )}
             {selectedNode && (
               <>
-                <Typography variant="caption">
-                  Text properties
-                </Typography>
+                <Typography variant="caption">Text properties</Typography>
                 <FormGroup>
                   <ToggleButtonGroup
                     exclusive

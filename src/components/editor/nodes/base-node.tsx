@@ -158,7 +158,7 @@ export const BaseNode = memo(
             autoFocus
             className={clsx(
               "text-gray-600 whitespace-pre-wrap w-full resize-none",
-              "bg-transparent outline-none border-solid border-red",
+              "bg-transparent outline-none border-0",
               "font-['Roboto',_'Helvetica',_'Arial',_sans-serif']",
               "overflow-hidden min-h-[16px]", // Add min-height
               // Inherit text alignments from parent
@@ -235,12 +235,15 @@ export const BaseNode = memo(
       const leftSource = edges.some(
         (e) => e.source === id && e.sourceHandle === `${id}-left-source`,
       );
+      const rightTarget = edges.some(
+        (e) => e.target === id && e.targetHandle === `${id}-right-target`,
+      );
 
-      return { rightSource, leftSource };
+      return { rightSource, leftSource, rightTarget };
     };
 
-    const { rightSource, leftSource } = getConnectedHandles();
-    const childButtonOnRight = !rightSource || (leftSource && !rightSource);
+    const { rightSource, leftSource, rightTarget } = getConnectedHandles();
+    const childButtonOnRight = !rightTarget;
 
     return (
       <div
@@ -252,7 +255,7 @@ export const BaseNode = memo(
           minHeight: "16px", // Add minimum height
         }}
       >
-        {selected && (
+        {selected && data.resourceType !== "Note" && (
           <AddNodeButtons
             childButtonOnRight={childButtonOnRight}
             isRoot={data.depth === 0}

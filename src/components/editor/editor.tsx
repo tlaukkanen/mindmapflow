@@ -9,6 +9,8 @@ import {
   useNodesState,
   useReactFlow,
   useNodeConnections,
+  OnNodesChange,
+  NodeChange, // Add this import
 } from "@xyflow/react";
 import { toast } from "sonner";
 
@@ -21,13 +23,14 @@ import { TextProperties } from "./nodes/base-node";
 
 import { useEditor } from "@/store/editor-context";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { DiagramElement, ResourceOption } from "@/model/types";
+import { DiagramElement } from "@/model/types";
 import { logger } from "@/services/logger";
 import { sampleData } from "@/model/example-data";
 import { ResourceNodeTypes } from "@/model/node-types";
 import {
   findClosestNodeInDirection,
   getAbsolutePosition,
+  updateEdgeConnections,
 } from "@/utils/node-utils";
 import { emptyProject } from "@/model/example-data";
 
@@ -185,7 +188,6 @@ export default function Editor() {
 
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(false);
-  const [isResourcePanelVisible, setIsResourcePanelVisible] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -252,15 +254,6 @@ export default function Editor() {
     );
   };
 
-  const handleNodeSkuChange = (newSku: string) => {
-    setNodes((prev) =>
-      updateSelectedNodeData(prev, selectedNodeId, (data) => ({
-        ...data,
-        sku: newSku,
-      })),
-    );
-  };
-
   const handleEdgeLabelChange = (newLabel: string) => {
     if (!selectedEdgeId) return;
 
@@ -281,15 +274,6 @@ export default function Editor() {
     );
   };
 
-  const handleNodeDescriptionChange = (newDescription: string) => {
-    setNodes((prev) =>
-      updateSelectedNodeData(prev, selectedNodeId, (data) => ({
-        ...data,
-        description: newDescription,
-      })),
-    );
-  };
-
   const handleTextPropertiesChange = (props: Partial<TextProperties>) => {
     setNodes((prev) =>
       updateSelectedNodeData(prev, selectedNodeId, (data) => ({
@@ -299,38 +283,6 @@ export default function Editor() {
           ...props,
         },
       })),
-    );
-  };
-
-  const handleResourceOptionChange = (
-    optionName: string,
-    value: string,
-    show?: boolean,
-  ) => {
-    setNodes((prev) =>
-      updateSelectedNodeData(prev, selectedNodeId, (data) => {
-        const currentOptions = data.resourceOptions || [];
-        const optionIndex = currentOptions.findIndex(
-          (opt: ResourceOption) => opt.name === optionName,
-        );
-
-        const newOptions =
-          optionIndex >= 0
-            ? currentOptions.map((opt: ResourceOption, i: number) =>
-                i === optionIndex
-                  ? { ...opt, value, show: show ?? opt.show }
-                  : opt,
-              )
-            : [
-                ...currentOptions,
-                { name: optionName, value, show: show ?? false },
-              ];
-
-        return {
-          ...data,
-          resourceOptions: newOptions,
-        };
-      }),
     );
   };
 
@@ -464,22 +416,56 @@ export default function Editor() {
       prev.map((node) => (node.selected ? { ...node, selected: false } : node)),
     );
 
-    const newNodes = copiedNodes.map((node) => ({
-      ...node,
-      id: crypto.randomUUID(),
-      position: {
-        x: node.position.x + 20 * (pasteCount + 1),
-        y: node.position.y + 20 * (pasteCount + 1),
-      },
-      selected: true,
-    }));
+    // Create a mapping of old node IDs to new node IDs
+    const idMapping = new Map<string, string>();
+
+    const newNodes = copiedNodes.map((node) => {
+      const newId = crypto.randomUUID();
+
+      idMapping.set(node.id, newId);
+
+      return {
+        ...node,
+        id: newId,
+        position: {
+          x: node.position.x + 20 * (pasteCount + 1),
+          y: node.position.y + 20 * (pasteCount + 1),
+        },
+        selected: true,
+      };
+    });
+
+    // Copy edges that connect copied nodes (both internal and to parents)
+    const newEdges = edges
+      .filter((edge) => {
+        // Include edges where at least the target node is in the copied selection
+        // This ensures we maintain connections to parent nodes
+        const targetNode = copiedNodes.find((node) => node.id === edge.target);
+
+        return targetNode !== undefined;
+      })
+      .map((edge) => {
+        const newTarget = idMapping.get(edge.target)!;
+        // Use either the mapped source (if it was copied) or keep the original source (for parent connections)
+        const newSource = idMapping.get(edge.source) || edge.source;
+
+        return {
+          ...edge,
+          id: `e-${newSource}-${newTarget}`,
+          source: newSource,
+          target: newTarget,
+          sourceHandle: edge.sourceHandle?.replace(edge.source, newSource),
+          targetHandle: edge.targetHandle?.replace(edge.target, newTarget),
+        };
+      });
 
     setNodes((prev) => [...prev, ...newNodes]);
+    setEdges((prev) => [...prev, ...newEdges]);
     setPasteCount((count) => count + 1);
     toast.success(
       `Pasted ${newNodes.length} node${newNodes.length > 1 ? "s" : ""}`,
     );
-  }, [copiedNodes, setNodes, pasteCount]);
+  }, [copiedNodes, setNodes, setEdges, edges, pasteCount]);
 
   const handleEdgeDirectionSwitch = useCallback(() => {
     if (!selectedEdgeId) return;
@@ -1010,6 +996,29 @@ export default function Editor() {
     [handleAddChildNode, handleAddSiblingNode],
   );
 
+  // Update the existing onNodesChange handler to include edge updates
+  const handleNodesChange: OnNodesChange = useCallback(
+    (changes) => {
+      // Apply node changes first
+      onNodesChange(changes as NodeChange<DiagramElement>[]);
+
+      // Check for position changes
+      const positionChanges = changes.filter(
+        (change) => change.type === "position" && change.dragging,
+      );
+
+      if (positionChanges.length > 0) {
+        // Update edges for each moved node
+        positionChanges.forEach((change) => {
+          if (change.type === "position" && change.dragging === true) {
+            setEdges((edges) => updateEdgeConnections(nodes, edges, change.id));
+          }
+        });
+      }
+    },
+    [nodes, setEdges, onNodesChange],
+  );
+
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
@@ -1039,9 +1048,6 @@ export default function Editor() {
         onToggleProperties={() =>
           setIsPropertiesPanelVisible(!isPropertiesPanelVisible)
         }
-        onToggleResources={() =>
-          setIsResourcePanelVisible(!isResourcePanelVisible)
-        }
       />
       <div className="flex flex-1 overflow-hidden">
         <div
@@ -1055,7 +1061,7 @@ export default function Editor() {
             onEdgeSelect={handleEdgeSelection}
             onEdgesChange={onEdgesChange}
             onNodeSelect={handleNodeSelection}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange} // Use the new handler here
           />
         </div>
         {isPropertiesPanelVisible && (
@@ -1063,14 +1069,11 @@ export default function Editor() {
             ref={propertiesPanelRef}
             selectedEdge={edges.find((edge) => edge.id === selectedEdgeId)}
             selectedNode={selectedNode}
-            onDescriptionChange={handleNodeDescriptionChange}
             onEdgeAnimatedChange={handleEdgeAnimatedChange}
             onEdgeDirectionSwitch={handleEdgeDirectionSwitch}
             onEdgeLabelChange={handleEdgeLabelChange}
             onEdgeMarkerChange={handleEdgeMarkerChange}
             onNameChange={handleNodeNameChange}
-            onResourceOptionChange={handleResourceOptionChange}
-            onSkuChange={handleNodeSkuChange}
             onTextPropertiesChange={handleTextPropertiesChange}
           />
         )}
