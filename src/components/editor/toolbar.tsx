@@ -13,7 +13,6 @@ import {
 
 interface ToolbarProps {
   onToggleProperties: () => void;
-  onToggleResources: () => void;
   onToggleFullScreen: () => void;
   onSaveDiagram: () => void;
   onRestoreDiagram: () => void;
@@ -24,7 +23,6 @@ interface ToolbarProps {
 
 export const Toolbar = ({
   onToggleProperties,
-  onToggleResources,
   onToggleFullScreen,
   onSaveDiagram,
   onRestoreDiagram,

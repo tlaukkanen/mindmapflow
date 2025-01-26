@@ -7,14 +7,14 @@ interface KeyboardShortcutHandlers {
   onSearch?: () => void;
   onCopy?: () => void;
   onPaste?: () => void;
-  onTab?: () => void;  // Add new handler
-  onEnter?: () => void;  // Add new handler
+  onTab?: () => void; // Add new handler
+  onEnter?: () => void; // Add new handler
   onArrowLeft?: () => void;
   onArrowRight?: () => void;
   onArrowUp?: () => void;
   onArrowDown?: () => void;
-  onSpace?: () => void;  // Add new handler
-  onEscape?: () => void;  // Add new handler
+  onSpace?: () => void; // Add new handler
+  onEscape?: () => void; // Add new handler
 }
 
 export function useKeyboardShortcuts({
@@ -22,21 +22,22 @@ export function useKeyboardShortcuts({
   onSearch,
   onCopy,
   onPaste,
-  onTab,   // Add new handler
-  onEnter,  // Add new handler
+  onTab, // Add new handler
+  onEnter, // Add new handler
   onArrowLeft,
   onArrowRight,
   onArrowUp,
   onArrowDown,
-  onSpace,  // Add new handler
-  onEscape,  // Add new handler
+  onSpace, // Add new handler
+  onEscape, // Add new handler
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       // Allow Escape key even in input fields
-      if (event.key !== "Escape" && 
-          (event.target instanceof HTMLInputElement ||
-           event.target instanceof HTMLTextAreaElement)
+      if (
+        event.key !== "Escape" &&
+        (event.target instanceof HTMLInputElement ||
+          event.target instanceof HTMLTextAreaElement)
       ) {
         return;
       }
@@ -49,7 +50,7 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onSearch?.();
           break;
-        case "Tab":  // Add Tab handler
+        case "Tab": // Add Tab handler
           event.preventDefault();
           onTab?.();
           break;
@@ -73,11 +74,11 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onArrowDown?.();
           break;
-        case " ":  // Add Space handler
+        case " ": // Add Space handler
           event.preventDefault();
           onSpace?.();
           break;
-        case "Escape":  // Add Escape handler
+        case "Escape": // Add Escape handler
           event.preventDefault();
           onEscape?.();
           break;
@@ -103,7 +104,20 @@ export function useKeyboardShortcuts({
           break;
       }
     },
-    [onDelete, onSearch, onCopy, onPaste, onTab, onEnter, onArrowLeft, onArrowRight, onArrowUp, onArrowDown, onSpace, onEscape],  // Add onTab, onEnter, and onEscape to dependencies
+    [
+      onDelete,
+      onSearch,
+      onCopy,
+      onPaste,
+      onTab,
+      onEnter,
+      onArrowLeft,
+      onArrowRight,
+      onArrowUp,
+      onArrowDown,
+      onSpace,
+      onEscape,
+    ], // Add onTab, onEnter, and onEscape to dependencies
   );
 
   useEffect(() => {

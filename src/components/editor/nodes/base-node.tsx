@@ -259,50 +259,58 @@ export const BaseNode = memo(
         )}
         {renderContent()}
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-top-target`}
+          isConnectable={false}
           position={Position.Top}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-top-source`}
+          isConnectable={false}
           position={Position.Top}
           type="source"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-bottom-target`}
+          isConnectable={false}
           position={Position.Bottom}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-bottom-source`}
+          isConnectable={false}
           position={Position.Bottom}
           type="source"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-left-target`}
+          isConnectable={false}
           position={Position.Left}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-left-source`}
+          isConnectable={false}
           position={Position.Left}
           type="source"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-right-target`}
+          isConnectable={false}
           position={Position.Right}
           type="target"
         />
         <Handle
-          className="w-3 h-3 opacity-0 "
+          className="w-0 h-0 opacity-0 "
           id={`${id}-right-source`}
+          isConnectable={false}
           position={Position.Right}
           type="source"
         />

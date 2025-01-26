@@ -37,9 +37,9 @@ body {
   margin: 0 !important;
 }
 
-/* This makes sure that edgesg are always on top of nodes */
-.react-flow__node {
-  z-index: -1 !important;
+/* Add new rule to put edges behind other elements */
+.react-flow__edges {
+  z-index: 0 !important;
 }
 
 .react-flow__handle {
@@ -47,11 +47,13 @@ body {
   border-color: #000000;
 }
 
+/*
 .react-flow__handle.connectionindicator:hover {
   pointer-events: all;
   border-color: black;
   background-color: white;
 }
+  */
 
 .react-flow__handle.connectionindicator:focus , 
 .react-flow__handle.connectingfrom,
@@ -68,8 +70,8 @@ body {
   background-color: #ffffff;
   border-color: #222222;
   border-radius: 0;
-  width: 5px;
-  height: 5px;
+  width: 15px;
+  height: 15px;
 }
 
 /*

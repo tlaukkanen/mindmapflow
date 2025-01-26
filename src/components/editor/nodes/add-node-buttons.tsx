@@ -18,7 +18,7 @@ export const AddNodeButtons = memo(
   }: AddNodeButtonsProps) => {
     const buttonStyles = {
       position: "absolute",
-      zIndex: 10,
+      zIndex: 9999, // Increased z-index value even further
       backgroundColor: "white",
       border: "1px solid #e2e8f0",
       padding: "4px",
@@ -36,7 +36,7 @@ export const AddNodeButtons = memo(
 
     const siblingButtonPosition = {
       ...buttonStyles,
-      top: "-30px",
+      bottom: "-30px",
       left: "50%",
       transform: "translateX(-50%)",
     };

@@ -26,10 +26,8 @@ const iconComponentMap: IconMap = {
   Comment: PiChatThin,
 };
 
-
 export class IconService {
   static getIconComponent(name: string): ComponentType | undefined {
     return iconComponentMap[name];
   }
-
 }

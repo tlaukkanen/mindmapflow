@@ -40,15 +40,15 @@ export const Navbar = () => {
             flex: "2 1 auto",
             display: "flex",
             alignItems: "center",
-            gap: 2,
+            gap: 1,
           }}
         >
           <Box
             component="li"
-            sx={{ display: "flex", alignItems: "center", gap: 2 }}
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
           >
             <Link
-              className="flex text-white justify-start items-center gap-5"
+              className="flex text-white justify-start items-center gap-1"
               href="/"
               underline="none"
             >
@@ -79,7 +79,7 @@ export const Navbar = () => {
               </ListItem>
             ))}
           </Box>
-
+          <Box width={12} />
           <Button
             className="bg-toolBar-background text-white"
             component={Link}
