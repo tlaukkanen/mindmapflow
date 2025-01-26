@@ -67,8 +67,8 @@ export const Menubar = ({
     const nodesBounds = getNodesBounds(getNodes());
 
     logger.debug("Nodes bounds", nodesBounds);
-    const imageWidth = 1024;
-    const imageHeight = 768;
+    const imageWidth = nodesBounds.width + 200;
+    const imageHeight = nodesBounds.height + 200;
     const viewport = getViewportForBounds(
       nodesBounds,
       imageWidth,
@@ -89,7 +89,9 @@ export const Menubar = ({
       width: imageWidth,
       height: imageHeight,
       style: {
-        transform: `translate(0, 0) scale(1)`,
+        width: String(imageWidth),
+        height: String(imageHeight),
+        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
       },
     }).then(downloadImage);
 
