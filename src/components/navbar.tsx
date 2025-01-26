@@ -56,7 +56,7 @@ export const Navbar = () => {
                 alt="Logo"
                 className="w-8 h-8 object-contain"
                 height={24}
-                src="/mindmapflow_favicon.svg"
+                src="/mindmapflow_icon.svg"
                 width={24}
               />
               <Box width={12} />

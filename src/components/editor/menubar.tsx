@@ -21,6 +21,7 @@ import {
 import { toPng } from "html-to-image";
 
 import { useEditor } from "@/store/editor-context";
+import { logger } from "@/services/logger";
 
 interface MenubarProps {
   onNewProject: () => void;
@@ -64,6 +65,8 @@ export const Menubar = ({
   const handleCopyAsImage = () => {
     handleMenuClose();
     const nodesBounds = getNodesBounds(getNodes());
+
+    logger.debug("Nodes bounds", nodesBounds);
     const imageWidth = 1024;
     const imageHeight = 768;
     const viewport = getViewportForBounds(
@@ -75,7 +78,7 @@ export const Menubar = ({
       0.03,
     );
 
-    toast.info(`Image copied to clipboard: ${viewport.x}x${viewport.y}`);
+    logger.debug("Viewport", viewport);
 
     const element = document.querySelector(".react-flow__viewport");
 
@@ -86,11 +89,11 @@ export const Menubar = ({
       width: imageWidth,
       height: imageHeight,
       style: {
-        width: `${imageWidth}px`,
-        height: `${imageHeight}px`,
-        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        transform: `translate(0, 0) scale(1)`,
       },
     }).then(downloadImage);
+
+    toast.info(`Downloading image: ${viewport.x}x${viewport.y}`);
   };
 
   if (isFullScreen) {
@@ -125,7 +128,7 @@ export const Menubar = ({
                 alt="Logo"
                 className="w-6 h-6 object-contain"
                 height={24}
-                src="/mindmapflow_favicon.svg"
+                src="/mindmapflow_icon.svg"
                 width={24}
               />
               <Box width={12} />
@@ -160,13 +163,13 @@ export const Menubar = ({
                   New Project
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
-                  Open Project
+                  Open Project (Coming soon)
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
-                  Save Project
+                  Save Project (Coming soon)
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
-                  Save As
+                  Export (Coming later)
                 </MenuItem>
               </Menu>
               <Button
@@ -186,15 +189,15 @@ export const Menubar = ({
                 open={editMenuOpen}
                 onClose={handleMenuClose}
               >
-                <MenuItem onClick={handleCopyAsImage}>Export as image</MenuItem>
+                <MenuItem onClick={handleCopyAsImage}>Save as image</MenuItem>
                 <MenuItem onClick={onCopyJsonToClipboard}>
                   Copy as JSON to clipboard
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
-                  ...
+                  Still in progress
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
-                  ...
+                  Still in progress
                 </MenuItem>
               </Menu>
             </div>
@@ -207,7 +210,7 @@ export const Menubar = ({
             }}
           >
             <Box className="gap-3 border-1 rounded-md py-1 px-2 text-xs text-gray-400">
-              ⚠️Early alpha {process.env.NEXT_PUBLIC_VERSION_TAG || "v0.0.0"}
+              ⚠️ Beta {process.env.NEXT_PUBLIC_VERSION_TAG || "v0.0.0"}
             </Box>
           </Box>
         </MUIToolbar>
