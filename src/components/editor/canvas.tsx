@@ -226,7 +226,7 @@ export default function Canvas({
       onDragOver={handleDragOver}
     >
       <ReactFlow
-        snapToGrid
+        snapToGrid={false}
         defaultViewport={defaultViewport}
         disableKeyboardA11y={true}
         edges={edges}
