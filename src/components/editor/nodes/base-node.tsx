@@ -229,20 +229,14 @@ export const BaseNode = memo(
     // Helper to determine which side has connections
     const getConnectedHandles = () => {
       const edges = getEdges();
-      const rightSource = edges.some(
-        (e) => e.source === id && e.sourceHandle === `${id}-right-source`,
-      );
-      const leftSource = edges.some(
-        (e) => e.source === id && e.sourceHandle === `${id}-left-source`,
-      );
       const rightTarget = edges.some(
         (e) => e.target === id && e.targetHandle === `${id}-right-target`,
       );
 
-      return { rightSource, leftSource, rightTarget };
+      return { rightTarget };
     };
 
-    const { rightSource, leftSource, rightTarget } = getConnectedHandles();
+    const { rightTarget } = getConnectedHandles();
     const childButtonOnRight = !rightTarget;
 
     return (
