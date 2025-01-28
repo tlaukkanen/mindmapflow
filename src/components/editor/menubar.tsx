@@ -19,6 +19,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { toPng } from "html-to-image";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 import { useEditor } from "@/store/editor-context";
 import { logger } from "@/services/logger";
@@ -40,6 +41,7 @@ export const Menubar = ({
   );
   const projectMenuOpen = Boolean(anchorEl);
   const editMenuOpen = Boolean(editAnchorEl);
+  const { data: session } = useSession();
 
   const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -211,9 +213,32 @@ export const Menubar = ({
               justifyContent: "flex-end",
             }}
           >
-            <Box className="gap-3 border-1 rounded-md py-1 px-2 text-xs text-gray-400">
+            <Box className="flex items-center gap-3 border-1 rounded-md px-2 text-xs text-gray-400">
               ⚠️ Beta {process.env.NEXT_PUBLIC_VERSION_TAG || "v0.0.0"}
             </Box>
+            {session ? (
+              <Button
+                className="bg-toolBar-background text-white"
+                size="small"
+                variant="contained"
+                onClick={() => {
+                  signOut();
+                }}
+              >
+                Sign out
+              </Button>
+            ) : (
+              <Button
+                className="bg-toolBar-background text-white"
+                size="small"
+                variant="contained"
+                onClick={() => {
+                  signIn();
+                }}
+              >
+                Sign in
+              </Button>
+            )}
           </Box>
         </MUIToolbar>
       </AppBar>

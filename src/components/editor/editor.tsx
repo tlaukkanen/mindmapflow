@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Edge,
   Node,
@@ -13,6 +13,8 @@ import {
   NodeChange, // Add this import
 } from "@xyflow/react";
 import { toast } from "sonner";
+import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import { PropertiesPanelHandle } from "./properties-panel";
 import Canvas from "./canvas";
@@ -33,6 +35,7 @@ import {
   updateEdgeConnections,
 } from "@/utils/node-utils";
 import { emptyProject } from "@/model/example-data";
+import { useAutoSave } from "@/hooks/use-auto-save";
 
 const initialNodes: DiagramElement[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
@@ -196,6 +199,45 @@ export default function Editor() {
   const propertiesPanelRef = useRef<PropertiesPanelHandle>(null);
   const [copiedNodes, setCopiedNodes] = useState<DiagramElement[]>([]);
   const [pasteCount, setPasteCount] = useState(0);
+  const params = useParams();
+  const mindMapId = params?.id as string;
+  const { data: session } = useSession();
+
+  // Add the auto-save hook
+  useAutoSave(nodes, edges, mindMapId);
+
+  const loadMindMap = useCallback(async () => {
+    if (!mindMapId) return;
+
+    try {
+      const response = await fetch(`/api/diagrams?id=${mindMapId}`);
+
+      if (response.status === 401) {
+        toast.error("Please sign in to access your diagram");
+
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to load diagram");
+      }
+
+      const data = await response.json();
+
+      setNodes(data.nodes);
+      setEdges(data.edges);
+    } catch (error) {
+      logger.error("Error loading diagram:", error);
+      //toast.error("Failed to load diagram");
+    }
+  }, [mindMapId, setNodes, setEdges]);
+
+  // Add useEffect to load diagram on mount
+  useEffect(() => {
+    if (session?.user) {
+      loadMindMap();
+    }
+  }, [loadMindMap]);
 
   const rootLeftConnections = useNodeConnections({
     id: rootNodeId,

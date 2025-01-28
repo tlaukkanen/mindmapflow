@@ -4,8 +4,8 @@ import { Metadata } from "next";
 import clsx from "clsx";
 import { CssBaseline } from "@mui/material";
 import { Toaster } from "sonner";
-import { GoogleAnalytics } from "@next/third-parties/google";
 
+import SessionProvider from "@/components/providers/SessionProvider";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 
@@ -28,21 +28,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <CssBaseline>
-      <html suppressHydrationWarning lang="en">
-        <head />
-        {/*<GoogleAnalytics gaId="G-FRF..." /> */}
-        <body
-          className={clsx(
-            "h-[100dvh] overflow-hidden font-sans antialiased",
-            fontSans.variable,
-          )}
-          id="root"
-        >
-          <Toaster expand position="top-right" />
-          {children}
-        </body>
-      </html>
-    </CssBaseline>
+    <SessionProvider>
+      <CssBaseline>
+        <html suppressHydrationWarning lang="en">
+          <head />
+          {/*<GoogleAnalytics gaId="G-FRF..." /> */}
+          <body
+            className={clsx(
+              "h-[100dvh] overflow-hidden font-sans antialiased",
+              fontSans.variable,
+            )}
+            id="root"
+          >
+            <Toaster expand position="top-right" />
+            {children}
+          </body>
+        </html>
+      </CssBaseline>
+    </SessionProvider>
   );
 }

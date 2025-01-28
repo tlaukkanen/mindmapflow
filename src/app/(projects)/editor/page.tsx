@@ -1,20 +1,17 @@
 "use client";
 
-import { ReactFlowProvider } from "@xyflow/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { nanoid } from "nanoid";
 
-import Editor from "@/components/editor/editor";
-import { AppInsightService } from "@/services/app-insight-service";
-import { EditorProvider } from "@/store/editor-context";
+export default function EditorRootPage() {
+  const router = useRouter();
 
-export default function EditorPage() {
-  return (
-    <ReactFlowProvider>
-      <EditorProvider>
-        <AppInsightService />
-        <div className="h-[100dvh]">
-          <Editor />
-        </div>
-      </EditorProvider>
-    </ReactFlowProvider>
-  );
+  useEffect(() => {
+    const newMindMapId = nanoid(10);
+
+    router.replace(`/editor/${newMindMapId}`);
+  }, [router]);
+
+  return null;
 }
