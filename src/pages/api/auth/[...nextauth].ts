@@ -32,6 +32,15 @@ export const authOptions: NextAuthOptions = {
 
       return false;
     },
+    async jwt({ token, user }) {
+      if (user) {
+        token.email = user.email;
+      }
+
+      logger.info(`JWT callback: ${token.email}`);
+
+      return token;
+    },
   },
 };
 
