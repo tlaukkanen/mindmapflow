@@ -16,6 +16,9 @@ export const authOptions: NextAuthOptions = {
     }),
     // ...add more providers here
   ],
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async signIn({ user, account, profile, email }) {
       if (email === process.env.ALLOWED_USERS) {
