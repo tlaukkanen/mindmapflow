@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 import { AddNodeButtons } from "./add-node-buttons";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 
 export interface TextProperties {
@@ -16,7 +16,7 @@ export interface TextProperties {
   strikethrough?: boolean;
 }
 
-interface BaseNodeProps extends NodeProps<DiagramElement> {
+interface BaseNodeProps extends NodeProps<MindMapNode> {
   className?: string;
   children?: React.ReactNode;
   style?: React.CSSProperties; // Add style prop support

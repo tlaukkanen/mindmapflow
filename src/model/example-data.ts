@@ -1,11 +1,11 @@
 import { Edge } from "@xyflow/react";
 
-import { DiagramElement } from "./types";
+import { MindMapNode } from "./types";
 import exampleDataJson from "./example-data.json";
 import emptyProjectJson from "./empty-mindmap.json";
 
 interface ExampleData {
-  nodes: DiagramElement[];
+  nodes: MindMapNode[];
   edges: Edge[];
 }
 

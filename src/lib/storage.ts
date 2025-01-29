@@ -2,6 +2,7 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { Edge } from "@xyflow/react";
 
 import { MindMapNode } from "@/model/types";
+import { logger } from "@/services/logger";
 
 const containerName = "user-mindmaps";
 
@@ -53,7 +54,7 @@ export class StorageService {
     try {
       // ...existing download code...
     } catch (error) {
-      console.error("Error loading diagram:", error);
+      logger.error("Error loading diagram:", error);
 
       return null;
     }

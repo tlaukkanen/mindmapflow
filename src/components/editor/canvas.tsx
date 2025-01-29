@@ -23,7 +23,7 @@ import commentNode from "./nodes/generic/comment-node";
 import noteNode from "./nodes/generic/note-node";
 import textNode from "./nodes/generic/text-node";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
@@ -41,12 +41,12 @@ declare global {
 }
 
 interface CanvasProps {
-  nodes: DiagramElement[];
+  nodes: MindMapNode[];
   edges: Edge[];
   setEdges: (edges: Edge[]) => void;
-  onNodeSelect: (nodes: DiagramElement[]) => void; // Changed from (node: DiagramElement | null) => void
+  onNodeSelect: (nodes: MindMapNode[]) => void; // Changed from (node: DiagramElement | null) => void
   onEdgeSelect: (edge: Edge | null) => void;
-  onNodesChange: OnNodesChange<DiagramElement>;
+  onNodesChange: OnNodesChange<MindMapNode>;
   onEdgesChange: OnEdgesChange<Edge>;
 }
 
@@ -73,7 +73,7 @@ export default function Canvas({
   const { setNodes, fitView } = useReactFlow();
   const [isContextMenuOpen, setIsContextMenuOpen] = React.useState(false);
   const [contextMenuNode, setContextMenuNode] =
-    React.useState<DiagramElement | null>(null);
+    React.useState<MindMapNode | null>(null);
   const [contextMenuPosition, setContextMenuPosition] = React.useState({
     x: 0,
     y: 0,
@@ -95,7 +95,7 @@ export default function Canvas({
       }
 
       // Update this part to handle multiple node selection
-      const diagramNodes = selectedNodes as DiagramElement[];
+      const diagramNodes = selectedNodes as MindMapNode[];
 
       onNodeSelect(diagramNodes);
     },
@@ -131,7 +131,7 @@ export default function Canvas({
   }, []);
 
   const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: DiagramElement) => {
+    (event: React.MouseEvent, node: MindMapNode) => {
       logger.debug("Node context menu:", node);
       logger.debug("Context menu mouse event:", event);
       setContextMenuPosition({ x: event.clientX, y: event.clientY });
@@ -180,7 +180,7 @@ export default function Canvas({
   };
 
   const handleNodeDoubleClick = useCallback(
-    (event: React.MouseEvent, node: DiagramElement) => {
+    (event: React.MouseEvent, node: MindMapNode) => {
       logger.debug("Canvas: onNodeDoubleClick", node);
       setNodes((nds) =>
         nds.map((n) =>
@@ -226,7 +226,6 @@ export default function Canvas({
       onDragOver={handleDragOver}
     >
       <ReactFlow
-        snapToGrid={false}
         defaultViewport={defaultViewport}
         disableKeyboardA11y={true}
         edges={edges}
@@ -235,6 +234,7 @@ export default function Canvas({
         proOptions={proOptions}
         selectionOnDrag={true}
         snapGrid={[10, 10]}
+        snapToGrid={false}
         onConnect={onConnect}
         onEdgesChange={onEdgesChange}
         onInit={onInit}

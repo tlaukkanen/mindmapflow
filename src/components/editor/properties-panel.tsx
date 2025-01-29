@@ -38,7 +38,7 @@ import {
 
 import { TextProperties } from "./nodes/base-node";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 import { getNamePrefixSuggestion } from "@/services/name-prefix-suggestions-service";
 
 export interface PropertiesPanelHandle {
@@ -48,7 +48,7 @@ export interface PropertiesPanelHandle {
 }
 
 interface PropertiesPanelProps {
-  selectedNode: DiagramElement | undefined;
+  selectedNode: MindMapNode | undefined;
   selectedEdge: Edge | undefined;
   onNameChange: (newName: string) => void;
   onEdgeLabelChange: (newLabel: string) => void;

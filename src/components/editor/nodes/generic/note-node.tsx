@@ -4,9 +4,9 @@ import { PiNoteThin } from "react-icons/pi";
 
 import { BaseNode } from "../base-node";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 
-export default memo(function NoteNode(props: NodeProps<DiagramElement>) {
+export default memo(function NoteNode(props: NodeProps<MindMapNode>) {
   return (
     <BaseNode
       {...props}

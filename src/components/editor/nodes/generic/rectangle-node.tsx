@@ -3,10 +3,10 @@ import { memo } from "react";
 
 import { BaseNode } from "../base-node";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 
 // Create a new interface that extends NodeProps and includes our additional props
-interface RectangleNodeProps extends NodeProps<DiagramElement> {
+interface RectangleNodeProps extends NodeProps<MindMapNode> {
   onAddChild?: () => void;
   onAddSibling?: () => void;
 }

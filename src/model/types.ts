@@ -13,7 +13,7 @@ export interface ResourceOption {
   show: boolean;
 }
 
-export interface DiagramElement extends Node {
+export interface MindMapNode extends Node {
   data: {
     resourceType: string;
     iconName?: string;
@@ -36,5 +36,5 @@ export interface DiagramElement extends Node {
 export interface Project {
   id: string;
   name: string;
-  elements: DiagramElement[];
+  elements: MindMapNode[];
 }

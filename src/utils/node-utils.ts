@@ -1,6 +1,6 @@
 import { Edge } from "@xyflow/react";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 
 const ANGLE_THRESHOLD = 45; // 45 degrees on each side = 90 degree scope
 
@@ -45,8 +45,8 @@ function isNodeInDirection(
 }
 
 export const getAbsolutePosition = (
-  node: DiagramElement,
-  nodes: DiagramElement[],
+  node: MindMapNode,
+  nodes: MindMapNode[],
 ): { x: number; y: number } => {
   const position = { x: node.position.x, y: node.position.y };
   let currentNode = node;
@@ -66,11 +66,11 @@ export const getAbsolutePosition = (
 };
 
 export function findClosestNodeInDirection(
-  currentNode: DiagramElement,
-  nodes: DiagramElement[],
+  currentNode: MindMapNode,
+  nodes: MindMapNode[],
   direction: "left" | "right" | "up" | "down",
-): DiagramElement | null {
-  let closestNode: DiagramElement | null = null;
+): MindMapNode | null {
+  let closestNode: MindMapNode | null = null;
   let minDistance = Infinity;
 
   const currentAbsPos = getAbsolutePosition(currentNode, nodes);
@@ -103,9 +103,9 @@ export function findClosestNodeInDirection(
 type Direction = "left" | "right" | "top" | "bottom";
 
 export function getOptimalHandlePair(
-  parentNode: DiagramElement,
-  childNode: DiagramElement,
-  nodes: DiagramElement[],
+  parentNode: MindMapNode,
+  childNode: MindMapNode,
+  nodes: MindMapNode[],
 ): { sourceHandle: string; targetHandle: string } {
   const parentPos = getAbsolutePosition(parentNode, nodes);
   const childPos = getAbsolutePosition(childNode, nodes);
@@ -155,7 +155,7 @@ export function getOptimalHandlePair(
 }
 
 export function updateEdgeConnections(
-  nodes: DiagramElement[],
+  nodes: MindMapNode[],
   edges: Edge[],
   movedNodeId: string,
 ): Edge[] {

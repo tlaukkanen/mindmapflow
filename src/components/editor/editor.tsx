@@ -25,7 +25,7 @@ import { TextProperties } from "./nodes/base-node";
 
 import { useEditor } from "@/store/editor-context";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 import { sampleData } from "@/model/example-data";
 import { ResourceNodeTypes } from "@/model/node-types";
@@ -37,12 +37,12 @@ import {
 import { emptyProject } from "@/model/example-data";
 import { useAutoSave } from "@/hooks/use-auto-save";
 
-const initialNodes: DiagramElement[] = sampleData.nodes;
+const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
 const rootNodeId = "root";
 
 // Add this helper function before the Editor component
-const cleanNodesForStorage = (nodes: DiagramElement[]) => {
+const cleanNodesForStorage = (nodes: MindMapNode[]) => {
   return nodes.map((node) => ({
     ...node,
     data: {
@@ -56,7 +56,7 @@ const cleanNodesForStorage = (nodes: DiagramElement[]) => {
 
 /** Helper to update data for a selected node */
 function updateSelectedNodeData(
-  nodes: DiagramElement[],
+  nodes: MindMapNode[],
   selectedNodeId: string | null,
   updater: (data: any) => any,
 ) {
@@ -68,7 +68,7 @@ function updateSelectedNodeData(
 }
 
 // Abstracted local storage logic
-function saveToLocalStorage(nodes: DiagramElement[], edges: Edge[]) {
+function saveToLocalStorage(nodes: MindMapNode[], edges: Edge[]) {
   const cleanedNodes = cleanNodesForStorage(nodes);
 
   localStorage.setItem("nodes", JSON.stringify(cleanedNodes));
@@ -99,7 +99,7 @@ export const getDefaultTextProperties = (
 };
 
 const findFreePosition = (
-  nodes: DiagramElement[],
+  nodes: MindMapNode[],
   basePosition: { x: number; y: number },
   spacing: number = 100,
   parentId: string | undefined,
@@ -197,7 +197,7 @@ export default function Editor() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const propertiesPanelRef = useRef<PropertiesPanelHandle>(null);
-  const [copiedNodes, setCopiedNodes] = useState<DiagramElement[]>([]);
+  const [copiedNodes, setCopiedNodes] = useState<MindMapNode[]>([]);
   const [pasteCount, setPasteCount] = useState(0);
   const params = useParams();
   const mindMapId = params?.id as string;
@@ -328,7 +328,7 @@ export default function Editor() {
     );
   };
 
-  const handleNodeSelection = useCallback((nodes: DiagramElement[]) => {
+  const handleNodeSelection = useCallback((nodes: MindMapNode[]) => {
     if (nodes.length === 0) {
       return;
     }
@@ -581,7 +581,7 @@ export default function Editor() {
     const rootPosition = rootNode.position;
 
     // Check how far from root we are, for example root -> node -> new node would be depth 2
-    const mindMapDepthLevel = (currentNode: DiagramElement): number => {
+    const mindMapDepthLevel = (currentNode: MindMapNode): number => {
       let depth = 0;
       let node = currentNode;
 
@@ -631,7 +631,7 @@ export default function Editor() {
       getIntersectingNodes,
     );
 
-    const newNode: DiagramElement = {
+    const newNode: MindMapNode = {
       id: crypto.randomUUID(),
       type: "rectangleShape",
       position: freePosition,
@@ -727,7 +727,7 @@ export default function Editor() {
       getIntersectingNodes,
     );
 
-    const newNode: DiagramElement = {
+    const newNode: MindMapNode = {
       id: crypto.randomUUID(),
       type: "rectangleShape",
       position: freePosition,
@@ -812,7 +812,7 @@ export default function Editor() {
   type Direction = "left" | "right" | "top" | "bottom";
 
   const determineWhichSideToAddChildNode = useCallback(
-    (parentNode: DiagramElement): Direction => {
+    (parentNode: MindMapNode): Direction => {
       const edges = getEdges();
       const connections = {
         right: edges.filter(
@@ -904,7 +904,7 @@ export default function Editor() {
   };
 
   const handleAddChildNode = useCallback(
-    (parentNode: DiagramElement) => {
+    (parentNode: MindMapNode) => {
       const direction = determineWhichSideToAddChildNode(parentNode);
       const basePosition = getBasePosition(direction);
       const verticalSpace = parentNode.data.depth === 0 ? 80 : 5;
@@ -918,7 +918,7 @@ export default function Editor() {
         getIntersectingNodes,
       );
 
-      const newNode: DiagramElement = {
+      const newNode: MindMapNode = {
         id: crypto.randomUUID(),
         type: "rectangleShape",
         position: freePosition,
@@ -962,7 +962,7 @@ export default function Editor() {
 
   // Update handleAddSiblingNode to use the new direction logic
   const handleAddSiblingNode = useCallback(
-    (siblingNode: DiagramElement) => {
+    (siblingNode: MindMapNode) => {
       if (!siblingNode.parentId) return;
 
       const parentNode = nodes.find((n) => n.id === siblingNode.parentId);
@@ -984,7 +984,7 @@ export default function Editor() {
         getIntersectingNodes,
       );
 
-      const newNode: DiagramElement = {
+      const newNode: MindMapNode = {
         id: crypto.randomUUID(),
         type: "rectangleShape",
         position: freePosition,
@@ -1027,7 +1027,7 @@ export default function Editor() {
 
   // Update reactflow node creation to include these handlers
   const getNodeWithHandlers = useCallback(
-    (node: DiagramElement) => ({
+    (node: MindMapNode) => ({
       ...node,
       data: {
         ...node.data,
@@ -1042,7 +1042,7 @@ export default function Editor() {
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
       // Apply node changes first
-      onNodesChange(changes as NodeChange<DiagramElement>[]);
+      onNodesChange(changes as NodeChange<MindMapNode>[]);
 
       // Check for position changes
       const positionChanges = changes.filter(

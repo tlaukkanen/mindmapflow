@@ -3,9 +3,9 @@ import { memo } from "react";
 
 import { BaseNode } from "../base-node";
 
-import { DiagramElement } from "@/model/types";
+import { MindMapNode } from "@/model/types";
 
-export default memo(function CommentNode(props: NodeProps<DiagramElement>) {
+export default memo(function CommentNode(props: NodeProps<MindMapNode>) {
   return (
     <BaseNode
       {...props}

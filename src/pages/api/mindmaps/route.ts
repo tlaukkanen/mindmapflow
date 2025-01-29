@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 import { storageService } from "@/lib/storage";
+import { logger } from "@/services/logger";
 
 async function getAuthenticatedUserEmail(req: NextRequest) {
   const token = await getToken({ req });
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    console.error("Error saving diagram:", error);
+    logger.error("Error saving diagram:", error);
 
     return new NextResponse("Internal Server Error", { status: 500 });
   }
