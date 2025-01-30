@@ -29,6 +29,9 @@ export const authOptions: NextAuthOptions = {
       logger.error(
         `User ${email} not allowed to sign in as they are not in the allowed users list ${process.env.ALLOWED_USERS}`,
       );
+      logger.error(`User object: ${JSON.stringify(user)}`);
+      logger.error(`Account object: ${JSON.stringify(account)}`);
+      logger.error(`Profile object: ${JSON.stringify(profile)}`);
 
       return false;
     },
@@ -38,6 +41,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       logger.info(`JWT callback: ${token.email}`);
+      logger.info(`User object: ${JSON.stringify(user)}`);
 
       return token;
     },
