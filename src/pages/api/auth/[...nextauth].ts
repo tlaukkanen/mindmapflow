@@ -21,13 +21,13 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile, email }) {
-      if (email === process.env.ALLOWED_USERS) {
+      if (user.email === process.env.ALLOWED_USERS) {
         logger.info("User allowed to sign in");
 
         return true;
       }
       logger.error(
-        `User ${email} not allowed to sign in as they are not in the allowed users list ${process.env.ALLOWED_USERS}`,
+        `User ${user.email} not allowed to sign in as they are not in the allowed users list ${process.env.ALLOWED_USERS}`,
       );
       logger.error(`User object: ${JSON.stringify(user)}`);
       logger.error(`Account object: ${JSON.stringify(account)}`);
