@@ -31,7 +31,7 @@ export function useMindMap() {
 
         return true;
       } catch (error) {
-        toast.error(`Failed to save mindmap: ${error?.message}`);
+        toast.error(`Failed to save mindmap: ${error}`);
 
         return false;
       }
