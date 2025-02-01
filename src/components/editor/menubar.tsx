@@ -130,13 +130,13 @@ export const Menubar = ({
             >
               <Image
                 alt="Logo"
-                className="w-6 h-6 object-contain"
-                height={24}
+                className="w-8 h-8 object-contain"
+                height={28}
                 src="/aivoflow_icon.svg"
-                width={24}
+                width={28}
               />
-              <Box width={12} />
-              <Typography className="font-extrabold text-menuBar-text">
+              <Box width={1} />
+              <Typography className="hidden sm:block font-extrabold text-menuBar-text">
                 AivoFlow
               </Typography>
             </Link>
@@ -213,7 +213,7 @@ export const Menubar = ({
               justifyContent: "flex-end",
             }}
           >
-            <Box className="flex items-center gap-3 border-1 rounded-md px-2 text-xs text-gray-400">
+            <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-gray-400">
               ⚠️ Beta {process.env.NEXT_PUBLIC_VERSION_TAG || "v0.0.0"}
             </Box>
             {session ? (
