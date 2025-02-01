@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   icons: {
     icon: "/favicon.ico",
+    apple: "/favicon-512x512.png",
   },
 };
 

@@ -8,7 +8,7 @@ on:
 
 env:
   ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
-  IMAGE_NAME: mindmapflow
+  IMAGE_NAME: aivoflow
 
 jobs:
   build-and-push:
@@ -51,4 +51,4 @@ jobs:
         app-name: 'mindmapflow-dev'
         images: '${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
         slot-name: 'production'
-        resource-group-name: 'rg-mindmapflow-dev'
+        resource-group-name: 'rg-mmindmapflow-dev'

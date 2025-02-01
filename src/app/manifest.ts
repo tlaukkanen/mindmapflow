@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "MindMapFlow",
-    short_name: "MindMapFlow",
+    name: "AivoFlow",
+    short_name: "AivoFlow",
     description:
       "Organize Your Ideas, Simplify Your Workflow, Enhance Productivity.",
     start_url: "/editor",
@@ -12,20 +12,26 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#e0e3dd",
     icons: [
       {
-        src: "/icon-192x192.png",
+        src: "/favicon-192x192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: "/icon-192x192.png",
+        src: "/favicon-192x192.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/icon-512x512.png",
+        src: "/favicon-512x512.png",
         sizes: "512x512",
         type: "image/png",
+      },
+      {
+        src: "/favicon.svg",
+        sizes: "48x48 72x72 96x96 128x128 256x256 512x512",
+        type: "image/svg+xml",
+        purpose: "any",
       },
     ],
   };

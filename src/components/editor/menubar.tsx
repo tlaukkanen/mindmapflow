@@ -132,12 +132,12 @@ export const Menubar = ({
                 alt="Logo"
                 className="w-6 h-6 object-contain"
                 height={24}
-                src="/mindmapflow_icon.svg"
+                src="/aivoflow_icon.svg"
                 width={24}
               />
               <Box width={12} />
               <Typography className="font-extrabold text-menuBar-text">
-                MindMapFlow
+                AivoFlow
               </Typography>
             </Link>
             <div className="flex gap-0">
