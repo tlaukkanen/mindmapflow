@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AivoFlow",
-    short_name: "AivoFlow",
+    name: "AivoMind",
+    short_name: "AivoMind",
     description:
       "Organize Your Ideas, Simplify Your Workflow, Enhance Productivity.",
     start_url: "/editor",

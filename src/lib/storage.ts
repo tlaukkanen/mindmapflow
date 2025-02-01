@@ -4,7 +4,25 @@ import { Edge } from "@xyflow/react";
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 
+// Convert stream to text
+async function streamToText(readable: NodeJS.ReadableStream): Promise<string> {
+  readable.setEncoding("utf8");
+  let data = "";
+
+  for await (const chunk of readable) {
+    data += chunk;
+  }
+
+  return data;
+}
+
 const containerName = "user-mindmaps";
+
+export interface MindMapMetadata {
+  id: string;
+  name: string;
+  lastModified: Date;
+}
 
 export class StorageService {
   private blobServiceClient: BlobServiceClient;
@@ -19,6 +37,15 @@ export class StorageService {
       BlobServiceClient.fromConnectionString(connectionString);
   }
 
+  private async getContainerClient() {
+    const containerClient =
+      this.blobServiceClient.getContainerClient(containerName);
+
+    await containerClient.createIfNotExists();
+
+    return containerClient;
+  }
+
   private sanitizeEmailForPath(email: string): string {
     // Replace special characters and convert to lowercase
     return email.toLowerCase().replace(/[^a-z0-9]/g, "-");
@@ -26,7 +53,7 @@ export class StorageService {
 
   async saveMindMap(
     userEmail: string,
-    diagramId: string,
+    mindMapId: string,
     nodes: MindMapNode[],
     edges: Edge[],
   ) {
@@ -36,27 +63,98 @@ export class StorageService {
     await containerClient.createIfNotExists();
 
     const userPath = this.sanitizeEmailForPath(userEmail);
-    const blobName = `${userPath}/${diagramId}.json`;
+    const blobName = `${userPath}/${mindMapId}.json`;
+
+    logger.info(`Saving diagram to blob: ${blobName}`);
     const blobClient = containerClient.getBlockBlobClient(blobName);
 
     const content = JSON.stringify({ nodes, edges });
 
-    await blobClient.upload(content, content.length);
+    const blobUploadResponse = await blobClient.upload(content, content.length);
+
+    logger.debug("Upload response", blobUploadResponse);
+    if (blobUploadResponse.errorCode) {
+      logger.error(
+        `Failed to upload diagram to cloud storage ${blobUploadResponse.errorCode}`,
+      );
+      throw new Error(
+        `Failed to upload diagram to cloud storage ${blobUploadResponse.errorCode}`,
+      );
+    }
   }
 
   async loadMindMap(userEmail: string, diagramId: string) {
-    const containerClient =
-      this.blobServiceClient.getContainerClient(containerName);
+    const containerClient = await this.getContainerClient();
     const userPath = this.sanitizeEmailForPath(userEmail);
     const blobName = `${userPath}/${diagramId}.json`;
     const blobClient = containerClient.getBlockBlobClient(blobName);
 
     try {
-      // ...existing download code...
+      // Load edges and nodes from blob
+      const downloadBlockBlobResponse = await blobClient.download();
+      const content = await streamToText(
+        downloadBlockBlobResponse.readableStreamBody as NodeJS.ReadableStream,
+      );
+      const { nodes, edges } = JSON.parse(content.toString());
+
+      return { nodes, edges };
     } catch (error) {
       logger.error("Error loading diagram:", error);
 
       return null;
+    }
+  }
+
+  async listMindMaps(userEmail: string): Promise<MindMapMetadata[]> {
+    try {
+      const containerClient = await this.getContainerClient();
+      const sanitizeEmailForPath = this.sanitizeEmailForPath(userEmail);
+      const prefix = `${sanitizeEmailForPath}/`;
+      const blobs = containerClient.listBlobsFlat({ prefix });
+      const mindMaps: MindMapMetadata[] = [];
+
+      logger.info(
+        `Listing mindmaps for user: ${userEmail} using container prefix ${prefix}`,
+      );
+
+      for await (const blob of blobs) {
+        const blobClient = containerClient.getBlobClient(blob.name);
+        const properties = await blobClient.getProperties();
+        const mindMapId = blob.name
+          .replace(`${prefix}`, "")
+          .replace(".json", "");
+
+        mindMaps.push({
+          id: mindMapId,
+          name: properties.metadata?.name || "Untitled",
+          lastModified: blob.properties.lastModified || new Date(),
+        });
+      }
+
+      logger.info(`Found ${mindMaps.length} mindmaps for user: ${userEmail}`);
+
+      return mindMaps;
+    } catch (error) {
+      logger.error("Error listing mindmaps:", error);
+      throw error;
+    }
+  }
+
+  async saveMindMapMetadata(
+    userEmail: string,
+    mindMapId: string,
+    metadata: { name: string },
+  ) {
+    try {
+      const containerClient = await this.getContainerClient();
+      const blobClient = containerClient.getBlobClient(
+        `${userEmail}/${mindMapId}`,
+      );
+
+      await blobClient.setMetadata(metadata);
+    } catch (error) {
+      logger.error("Error saving mindmap metadata:", error);
+      throw error;
     }
   }
 }

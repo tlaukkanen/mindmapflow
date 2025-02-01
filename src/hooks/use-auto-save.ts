@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
+import { mindMapService } from "@/services/mindmap-service";
 
 export function useAutoSave(
   nodes: MindMapNode[],
@@ -15,11 +16,7 @@ export function useAutoSave(
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (!enabled || !mindMapId) return;
-
-    if (!session) {
-      return;
-    }
+    if (!enabled || !mindMapId || !session) return;
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -27,16 +24,7 @@ export function useAutoSave(
 
     timeoutRef.current = setTimeout(async () => {
       try {
-        const response = await fetch("/api/diagrams", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mindMapId: mindMapId, nodes, edges }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to save diagram");
-        }
-
+        await mindMapService.saveMindMap({ mindMapId, nodes, edges });
         logger.info("Auto-saved diagram to cloud storage");
       } catch (error) {
         logger.error("Failed to auto-save diagram:", error);
@@ -48,5 +36,5 @@ export function useAutoSave(
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [nodes, edges, mindMapId, enabled]);
+  }, [nodes, edges, mindMapId, enabled, session]);
 }

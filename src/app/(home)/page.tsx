@@ -25,7 +25,7 @@ export default function Home() {
             alt="Diagram"
             className="object-contain w-full h-fit "
             height={962}
-            src="/home/aivoflow_20250201.png"
+            src="/screens/screen_20250201.png"
             width={1382}
           />
         </div>
@@ -33,14 +33,14 @@ export default function Home() {
         <div className="flex gap-3 items-start justify-start max-w-4xl py-8 md:py-10 text-white">
           <div className="grid grid-cols-1 gap-6">
             <div className={subtitle({ class: "mt-4 text-white" })}>
-              ✏️ Meet AivoFlow, your ultimate brainstorming companion. Designed
-              to unleash creativity and enhance productivity, AivoFlow
+              ✏️ Meet AivoMind, your ultimate brainstorming companion. Designed
+              to unleash creativity and enhance productivity, AivoMind
               transforms complex ideas into clear, structured visuals.
             </div>
             <div className={subtitle({ class: "mt-4 text-white" })}>
               🧠 Whether you&apos;re a student, professional, or creative, our
               intuitive interface helps you map out thoughts, simplify concepts,
-              and bring your projects to life. Join the AivoFlow revolution and
+              and bring your projects to life. Join the AivoMind revolution and
               unlock the full potential of your mind!
             </div>
           </div>

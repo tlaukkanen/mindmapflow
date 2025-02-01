@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import clsx from "clsx";
 import { CssBaseline } from "@mui/material";
 import { Toaster } from "sonner";
+import { getServerSession } from "next-auth";
 
 import SessionProvider from "@/components/providers/SessionProvider";
 import { siteConfig } from "@/config/site";
@@ -22,13 +23,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession();
+
   return (
-    <SessionProvider>
+    <SessionProvider session={session}>
       <CssBaseline>
         <html suppressHydrationWarning lang="en">
           <head />

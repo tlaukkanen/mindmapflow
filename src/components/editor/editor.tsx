@@ -36,6 +36,7 @@ import {
 } from "@/utils/node-utils";
 import { emptyProject } from "@/model/example-data";
 import { useAutoSave } from "@/hooks/use-auto-save";
+import { useMindMap } from "@/hooks/use-mindmap";
 
 const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
@@ -202,42 +203,28 @@ export default function Editor() {
   const params = useParams();
   const mindMapId = params?.id as string;
   const { data: session } = useSession();
+  const { loadMindMap, saveMindMap } = useMindMap();
 
   // Add the auto-save hook
   useAutoSave(nodes, edges, mindMapId);
 
-  const loadMindMap = useCallback(async () => {
+  const handleLoadMindMap = useCallback(async () => {
     if (!mindMapId) return;
 
-    try {
-      const response = await fetch(`/api/diagrams?id=${mindMapId}`);
+    const data = await loadMindMap(mindMapId);
 
-      if (response.status === 401) {
-        toast.error("Please sign in to access your diagram");
-
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Failed to load diagram");
-      }
-
-      const data = await response.json();
-
+    if (data) {
       setNodes(data.nodes);
       setEdges(data.edges);
-    } catch (error) {
-      logger.error("Error loading diagram:", error);
-      //toast.error("Failed to load diagram");
     }
-  }, [mindMapId, setNodes, setEdges]);
+  }, [mindMapId, setNodes, setEdges, loadMindMap]);
 
   // Add useEffect to load diagram on mount
   useEffect(() => {
     if (session?.user) {
-      loadMindMap();
+      handleLoadMindMap();
     }
-  }, [loadMindMap]);
+  }, [handleLoadMindMap, session?.user]);
 
   const rootLeftConnections = useNodeConnections({
     id: rootNodeId,
@@ -1061,6 +1048,18 @@ export default function Editor() {
     [nodes, setEdges, onNodesChange],
   );
 
+  const handleSaveMindMap = useCallback(async () => {
+    if (!mindMapId || !session?.user) {
+      toast.error("Please sign in to save your mindmap");
+
+      return;
+    }
+
+    const cleanedNodes = cleanNodesForStorage(nodes);
+
+    await saveMindMap(mindMapId, cleanedNodes, edges);
+  }, [mindMapId, session?.user, nodes, edges, saveMindMap]);
+
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
@@ -1079,6 +1078,7 @@ export default function Editor() {
       <Menubar
         onCopyJsonToClipboard={copyJsonToClipboard}
         onNewProject={onNewProject}
+        onSaveMindMap={handleSaveMindMap} // Add this prop
       />
       <Toolbar
         onCopy={handleCopy}

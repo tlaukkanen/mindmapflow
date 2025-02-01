@@ -9,9 +9,10 @@ import {
   Link,
   Menu,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import {
   getNodesBounds,
@@ -20,6 +21,9 @@ import {
 } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { PiUser } from "react-icons/pi";
+
+import { OpenProjectDialog } from "./open-project-dialog";
 
 import { useEditor } from "@/store/editor-context";
 import { logger } from "@/services/logger";
@@ -27,11 +31,13 @@ import { logger } from "@/services/logger";
 interface MenubarProps {
   onNewProject: () => void;
   onCopyJsonToClipboard: () => void;
+  onSaveMindMap?: () => void; // Add this prop
 }
 
 export const Menubar = ({
   onNewProject,
   onCopyJsonToClipboard,
+  onSaveMindMap, // Add this prop
 }: MenubarProps) => {
   const { getNodes } = useReactFlow();
   const { isFullScreen } = useEditor();
@@ -39,8 +45,12 @@ export const Menubar = ({
   const [editAnchorEl, setEditAnchorEl] = React.useState<null | HTMLElement>(
     null,
   );
+  const [profileAchorEl, setProfileAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [openProjectDialogOpen, setOpenProjectDialogOpen] = useState(false);
   const projectMenuOpen = Boolean(anchorEl);
   const editMenuOpen = Boolean(editAnchorEl);
+  const profileMenuOpen = Boolean(profileAchorEl);
   const { data: session } = useSession();
 
   const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -50,9 +60,13 @@ export const Menubar = ({
   const handleEditMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setEditAnchorEl(event.currentTarget);
   };
-
+  const handleProfileMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
   const handleMenuClose = () => {
     setAnchorEl(null);
+    setEditAnchorEl(null);
+    setProfileAnchorEl(null);
     setEditAnchorEl(null);
   };
 
@@ -132,12 +146,12 @@ export const Menubar = ({
                 alt="Logo"
                 className="w-8 h-8 object-contain"
                 height={28}
-                src="/aivoflow_icon.svg"
+                src="/app_icon.svg"
                 width={28}
               />
               <Box width={1} />
               <Typography className="hidden sm:block font-extrabold text-menuBar-text">
-                AivoFlow
+                AivoMind
               </Typography>
             </Link>
             <div className="flex gap-0">
@@ -166,11 +180,21 @@ export const Menubar = ({
                 >
                   New Project
                 </MenuItem>
-                <MenuItem disabled onClick={handleMenuClose}>
-                  Open Project (Coming soon)
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    setOpenProjectDialogOpen(true);
+                  }}
+                >
+                  Open Project
                 </MenuItem>
-                <MenuItem disabled onClick={handleMenuClose}>
-                  Save Project (Coming soon)
+                <MenuItem
+                  onClick={() => {
+                    onSaveMindMap?.();
+                    handleMenuClose();
+                  }}
+                >
+                  Save Project
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
                   Export (Coming later)
@@ -217,16 +241,33 @@ export const Menubar = ({
               ⚠️ Beta {process.env.NEXT_PUBLIC_VERSION_TAG || "v0.0.0"}
             </Box>
             {session ? (
-              <Button
-                className="bg-toolBar-background text-white"
-                size="small"
-                variant="contained"
-                onClick={() => {
-                  signOut();
-                }}
-              >
-                Sign out
-              </Button>
+              <>
+                <IconButton
+                  aria-label="Profile menu"
+                  className="bg-toolBar-background text-white"
+                  size="small"
+                  onClick={handleProfileMenuClick}
+                >
+                  <PiUser />
+                </IconButton>
+                <Menu
+                  MenuListProps={{
+                    "aria-labelledby": "profile-menu",
+                  }}
+                  anchorEl={profileAchorEl}
+                  id="profile-menu"
+                  open={profileMenuOpen}
+                  onClose={handleMenuClose}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      signOut();
+                    }}
+                  >
+                    Sign out
+                  </MenuItem>
+                </Menu>
+              </>
             ) : (
               <Button
                 className="bg-toolBar-background text-white"
@@ -242,6 +283,10 @@ export const Menubar = ({
           </Box>
         </MUIToolbar>
       </AppBar>
+      <OpenProjectDialog
+        open={openProjectDialogOpen}
+        onClose={() => setOpenProjectDialogOpen(false)}
+      />
     </>
   );
 };
