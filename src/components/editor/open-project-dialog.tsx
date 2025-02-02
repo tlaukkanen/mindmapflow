@@ -9,7 +9,12 @@ import {
   ListItemText,
   CircularProgress,
   Typography,
+  IconButton,
+  DialogActions,
+  Button,
+  ListItemSecondaryAction,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
@@ -24,6 +29,10 @@ interface OpenProjectDialogProps {
 export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
   const [mindMaps, setMindMaps] = useState<MindMapMetadata[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [selectedMindMapId, setSelectedMindMapId] = useState<string | null>(
+    null,
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -55,36 +64,95 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     onClose();
   };
 
+  const handleDeleteClick = (mindMapId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedMindMapId(mindMapId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedMindMapId) return;
+
+    try {
+      const response = await fetch(`/api/mindmaps/${selectedMindMapId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete mindmap");
+      }
+
+      setMindMaps(mindMaps.filter((m) => m.id !== selectedMindMapId));
+    } catch (error) {
+      logger.error("Error deleting mindmap:", error);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setSelectedMindMapId(null);
+    }
+  };
+
   return (
-    <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
-      <DialogTitle>Open Project</DialogTitle>
-      <DialogContent>
-        {loading ? (
-          <div className="flex justify-center p-4">
-            <CircularProgress />
-          </div>
-        ) : mindMaps.length === 0 ? (
-          <Typography className="p-4 text-center text-gray-500">
-            No mindmaps found
+    <>
+      <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
+        <DialogTitle>Open Project</DialogTitle>
+        <DialogContent>
+          {loading ? (
+            <div className="flex justify-center p-4">
+              <CircularProgress />
+            </div>
+          ) : mindMaps.length === 0 ? (
+            <Typography className="p-4 text-center text-gray-500">
+              No mindmaps found
+            </Typography>
+          ) : (
+            <List>
+              {mindMaps.map((mindMap) => (
+                <ListItem key={mindMap.id} disablePadding>
+                  <ListItemButton
+                    onClick={() => handleMindMapSelect(mindMap.id)}
+                  >
+                    <ListItemText
+                      primary={mindMap.name}
+                      secondary={`Last modified: ${format(
+                        new Date(mindMap.lastModified),
+                        "PPp",
+                      )}`}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        aria-label="delete"
+                        edge="end"
+                        onClick={(e) => handleDeleteClick(mindMap.id, e)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Delete Mind Map</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this mind map? This action cannot be
+            undone.
           </Typography>
-        ) : (
-          <List>
-            {mindMaps.map((mindMap) => (
-              <ListItem key={mindMap.id} disablePadding>
-                <ListItemButton onClick={() => handleMindMapSelect(mindMap.id)}>
-                  <ListItemText
-                    primary={mindMap.name}
-                    secondary={`Last modified: ${format(
-                      new Date(mindMap.lastModified),
-                      "PPp",
-                    )}`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button autoFocus color="error" onClick={handleDeleteConfirm}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

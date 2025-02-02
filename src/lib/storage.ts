@@ -169,6 +169,28 @@ export class StorageService {
       throw error;
     }
   }
+
+  async deleteMindMap(userEmail: string, mindMapId: string) {
+    try {
+      const containerClient = await this.getContainerClient();
+      const userPath = this.sanitizeEmailForPath(userEmail);
+      const blobName = `${userPath}/${mindMapId}.json`;
+      const blobClient = containerClient.getBlockBlobClient(blobName);
+
+      logger.info(`Deleting mindmap: ${blobName}`);
+      const response = await blobClient.delete();
+
+      if (response.errorCode) {
+        logger.error(`Failed to delete mindmap: ${response.errorCode}`);
+        throw new Error(`Failed to delete mindmap: ${response.errorCode}`);
+      }
+
+      return true;
+    } catch (error) {
+      logger.error("Error deleting mindmap:", error);
+      throw error;
+    }
+  }
 }
 
 export const storageService = new StorageService();
