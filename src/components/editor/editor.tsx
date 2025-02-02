@@ -13,7 +13,7 @@ import {
   NodeChange, // Add this import
 } from "@xyflow/react";
 import { toast } from "sonner";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { nanoid } from "nanoid";
 
@@ -181,6 +181,8 @@ const findFreePosition = (
 };
 
 export default function Editor() {
+  const searchParams = useSearchParams();
+  const showSample = searchParams?.get("showSample") === "true";
   const { isFullScreen, setIsFullScreen } = useEditor();
   const {
     getIntersectingNodes,
@@ -193,8 +195,12 @@ export default function Editor() {
 
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(false);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    showSample ? initialNodes : [],
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    showSample ? initialEdges : [],
+  );
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);

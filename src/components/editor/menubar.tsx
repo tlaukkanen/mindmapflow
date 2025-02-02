@@ -164,7 +164,7 @@ export const Menubar = ({
         position="sticky"
       >
         <MUIToolbar
-          className="bg-menuBar-background border-b  border-b-panels-border text-menuBar-text"
+          className="bg-menuBar-background border-b  border-b-panels-border text-menuBar-text pl-3"
           variant="dense"
         >
           <Box
@@ -182,12 +182,12 @@ export const Menubar = ({
             >
               <Image
                 alt="Logo"
-                className="w-8 h-8 object-contain"
-                height={28}
+                className="w-6 h-6 object-contain"
+                height={22}
                 src="/app_icon.svg"
-                width={28}
+                width={26}
               />
-              <Box width={1} />
+              <Box width={2} />
               <Typography className="hidden sm:block font-extrabold text-menuBar-text">
                 AivoMind
               </Typography>

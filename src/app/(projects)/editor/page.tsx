@@ -22,7 +22,7 @@ export default function EditorRootPage() {
         // Not logged in - create new project
         const newMindMapId = nanoid(10);
 
-        router.replace(`/editor/${newMindMapId}`);
+        router.replace(`/editor/${newMindMapId}?showSample=true`);
 
         return;
       }
@@ -36,7 +36,7 @@ export default function EditorRootPage() {
           // No existing projects - create new one
           const newMindMapId = nanoid(10);
 
-          router.replace(`/editor/${newMindMapId}`);
+          router.replace(`/editor/${newMindMapId}?showSample=true`);
         } else {
           // Show dialog to choose project
           setShouldShowDialog(true);
