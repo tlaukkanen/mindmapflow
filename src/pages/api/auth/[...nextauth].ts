@@ -45,15 +45,15 @@ export const authOptions: NextAuthOptions = {
         };
       }
 
-      logger.info(`JWT callback: ${token.email}`);
-      logger.info(`User object: ${JSON.stringify(user)}`);
+      //logger.info(`JWT callback: ${token.email}`);
+      //logger.info(`User object: ${JSON.stringify(user)}`);
 
       return token;
     },
     async session({ session, token }) {
       session.user = { email: token.email };
-      logger.info(`Session callback: ${session.user?.email}`);
-      logger.info(`Token object: ${JSON.stringify(token)}`);
+      //logger.info(`Session callback: ${session.user?.email}`);
+      //logger.info(`Token object: ${JSON.stringify(token)}`);
 
       return session;
     },

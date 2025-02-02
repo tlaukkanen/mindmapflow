@@ -11,6 +11,7 @@ export function useAutoSave(
   edges: Edge[],
   mindMapId: string | undefined,
   enabled: boolean = true,
+  onAutoSave?: (timestamp: Date) => void, // New: optional callback
 ) {
   const timeoutRef = useRef<NodeJS.Timeout>();
   const { data: session } = useSession();
@@ -26,6 +27,9 @@ export function useAutoSave(
       try {
         await mindMapService.saveMindMap({ mindMapId, nodes, edges });
         logger.info("Auto-saved diagram to cloud storage");
+        if (onAutoSave) {
+          onAutoSave(new Date()); // Report the save timestamp
+        }
       } catch (error) {
         logger.error("Failed to auto-save diagram:", error);
       }
@@ -36,5 +40,5 @@ export function useAutoSave(
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [nodes, edges, mindMapId, enabled, session]);
+  }, [nodes, edges, mindMapId, enabled, session, onAutoSave]);
 }

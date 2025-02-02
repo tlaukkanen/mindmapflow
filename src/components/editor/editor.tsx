@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { nanoid } from "nanoid";
 
 import { PropertiesPanelHandle } from "./properties-panel";
 import Canvas from "./canvas";
@@ -206,7 +207,9 @@ export default function Editor() {
   const { loadMindMap, saveMindMap } = useMindMap();
 
   // Add the auto-save hook
-  useAutoSave(nodes, edges, mindMapId);
+  useAutoSave(nodes, edges, mindMapId, true, (timestamp: Date) => {
+    window.dispatchEvent(new CustomEvent("autoSave", { detail: timestamp }));
+  });
 
   const handleLoadMindMap = useCallback(async () => {
     if (!mindMapId) return;
@@ -257,7 +260,10 @@ export default function Editor() {
     // Reset to new project
     setNodes(emptyProject.nodes);
     setEdges(emptyProject.edges);
+    // Create new mindMapId
+    const newMindMapId = nanoid(10);
 
+    window.history.pushState({}, "", `/editor/${newMindMapId}`);
     fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
   };
 
@@ -1071,6 +1077,7 @@ export default function Editor() {
     onArrowRight: () => handleArrowNavigation("right"),
     onArrowUp: () => handleArrowNavigation("up"),
     onArrowDown: () => handleArrowNavigation("down"),
+    onCtrlS: handleSaveMindMap, // new shortcut for CTRL+s
   });
 
   return (

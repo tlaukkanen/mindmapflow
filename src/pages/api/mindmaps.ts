@@ -7,7 +7,6 @@ import { logger } from "@/services/logger";
 async function getAuthenticatedUserEmail(req: NextApiRequest) {
   const token = await getToken({ req });
 
-  logger.info("Token:", token);
   if (!token?.email) {
     logger.error("Unauthorized: No user email found from token");
     throw new Error("Unauthorized: No user email found");

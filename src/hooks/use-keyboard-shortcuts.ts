@@ -15,6 +15,7 @@ interface KeyboardShortcutHandlers {
   onArrowDown?: () => void;
   onSpace?: () => void; // Add new handler
   onEscape?: () => void; // Add new handler
+  onCtrlS?: () => void; // new handler for CTRL+s
 }
 
 export function useKeyboardShortcuts({
@@ -30,9 +31,18 @@ export function useKeyboardShortcuts({
   onArrowDown,
   onSpace, // Add new handler
   onEscape, // Add new handler
+  onCtrlS, // new handler
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
+      // Handle CTRL+s for save
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        onCtrlS?.();
+
+        return;
+      }
+
       // Allow Escape key even in input fields
       if (
         event.key !== "Escape" &&
@@ -117,6 +127,7 @@ export function useKeyboardShortcuts({
       onArrowDown,
       onSpace,
       onEscape,
+      onCtrlS,
     ], // Add onTab, onEnter, and onEscape to dependencies
   );
 

@@ -12,7 +12,7 @@ import {
   IconButton,
 } from "@mui/material";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Modified import: added useEffect
 import { toast } from "sonner";
 import {
   getNodesBounds,
@@ -40,7 +40,9 @@ export const Menubar = ({
   onSaveMindMap, // Add this prop
 }: MenubarProps) => {
   const { getNodes } = useReactFlow();
-  const { isFullScreen } = useEditor();
+  const { isFullScreen, editorVersion } = useEditor(); // Modified: destructured editorVersion
+  const [isSaved, setIsSaved] = useState<boolean>(true); // New state for save status
+  const [savedTimestamp, setSavedTimestamp] = useState<Date | null>(null); // New state for saved timestamp
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [editAnchorEl, setEditAnchorEl] = React.useState<null | HTMLElement>(
     null,
@@ -52,6 +54,25 @@ export const Menubar = ({
   const editMenuOpen = Boolean(editAnchorEl);
   const profileMenuOpen = Boolean(profileAchorEl);
   const { data: session } = useSession();
+
+  // Set diagram as unsaved on editor modifications
+  useEffect(() => {
+    setIsSaved(false);
+  }, [editorVersion]); // Assuming editorVersion updates on changes
+
+  // New: Listen for the "autoSave" custom event to update saved status
+  useEffect(() => {
+    const handleAutoSave = (event: Event) => {
+      const customEvent = event as CustomEvent<Date>;
+
+      setIsSaved(true);
+      setSavedTimestamp(customEvent.detail);
+    };
+
+    window.addEventListener("autoSave", handleAutoSave);
+
+    return () => window.removeEventListener("autoSave", handleAutoSave);
+  }, []);
 
   const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -112,6 +133,16 @@ export const Menubar = ({
     }).then(downloadImage);
 
     toast.info(`Downloading image: ${viewport.x}x${viewport.y}`);
+  };
+
+  // New handler: wrap save action to update saved status and record timestamp
+  const handleSaveProject = async () => {
+    if (onSaveMindMap) {
+      await onSaveMindMap();
+      setIsSaved(true);
+      setSavedTimestamp(new Date()); // Record the current save time
+    }
+    handleMenuClose();
   };
 
   if (isFullScreen) {
@@ -189,10 +220,7 @@ export const Menubar = ({
                   Open Project
                 </MenuItem>
                 <MenuItem
-                  onClick={() => {
-                    onSaveMindMap?.();
-                    handleMenuClose();
-                  }}
+                  onClick={handleSaveProject} // Modified: use new handler for saving
                 >
                   Save Project
                 </MenuItem>
@@ -228,6 +256,12 @@ export const Menubar = ({
                   Still in progress
                 </MenuItem>
               </Menu>
+              {/* Modified: display dynamic saved status */}
+              <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-gray-400">
+                {isSaved
+                  ? `Saved at ${savedTimestamp?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) || "now"}`
+                  : "Unsaved changes"}
+              </Box>
             </div>
           </Box>
           <Box

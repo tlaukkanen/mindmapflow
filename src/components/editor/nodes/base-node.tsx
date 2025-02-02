@@ -158,9 +158,9 @@ export const BaseNode = memo(
             autoFocus
             className={clsx(
               "text-gray-600 whitespace-pre-wrap w-full resize-none",
-              "bg-transparent outline-none border-0",
+              "bg-transparent outline-none m-0 pt-2 border-0",
               "font-['Roboto',_'Helvetica',_'Arial',_sans-serif']",
-              "overflow-hidden min-h-[16px]", // Add min-height
+              "overflow-hidden min-h-[12px]", // Add min-height
               // Inherit text alignments from parent
               data.textProperties?.textAlign === "left" && "text-left",
               data.textProperties?.textAlign === "center" && "text-center",
@@ -178,7 +178,8 @@ export const BaseNode = memo(
               fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
               fontSize: "14px",
               width: "100%",
-              padding: "0", // Remove default padding
+              //padding: "0", // Remove default padding
+              //paddingTop: "8px", // Add padding top
             }}
             onBlur={handleBlur}
             onFocus={(e) => {
