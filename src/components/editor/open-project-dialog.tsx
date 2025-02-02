@@ -148,7 +148,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button autoFocus color="error" onClick={handleDeleteConfirm}>
+          <Button color="error" onClick={handleDeleteConfirm}>
             Delete
           </Button>
         </DialogActions>
