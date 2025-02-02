@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
 import { OpenProjectDialog } from "@/components/editor/open-project-dialog";
+import { logger } from "@/services/logger";
 
 export default function EditorRootPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function EditorRootPage() {
           setShouldShowDialog(true);
         }
       } catch (error) {
-        console.error("Error checking existing projects:", error);
+        logger.error("Error checking existing projects:", error);
         toast.error("Failed to load existing projects");
         // On error, fall back to creating new project
         const newMindMapId = nanoid(10);

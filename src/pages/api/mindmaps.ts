@@ -23,7 +23,7 @@ export default async function handler(
     case "POST":
       try {
         const userEmail = await getAuthenticatedUserEmail(req);
-        const { mindMapId, nodes, edges } = req.body;
+        const { mindMapId, nodes, edges, lastModified } = req.body;
 
         if (!mindMapId) {
           logger.error("Diagram ID is required");
@@ -31,12 +31,47 @@ export default async function handler(
 
           return;
         }
+
+        // Check for conflicts
+        const currentData = await storageService.loadMindMap(
+          userEmail,
+          mindMapId,
+        );
+
+        if (currentData?.lastModified && lastModified) {
+          const serverLastModified = new Date(
+            currentData.lastModified,
+          ).getTime();
+          const clientLastModified = new Date(lastModified).getTime();
+
+          if (serverLastModified > clientLastModified) {
+            logger.warn(
+              `Conflict detected for diagram ID: ${mindMapId}. Server: ${serverLastModified}, Client: ${clientLastModified}`,
+            );
+            res.status(409).json({
+              message: "Conflict detected",
+              lastModified: serverLastModified,
+            });
+
+            return;
+          }
+        }
+
         logger.info(
           `Saving diagram for user: ${userEmail} with ID: ${mindMapId}`,
         );
-        await storageService.saveMindMap(userEmail, mindMapId, nodes, edges);
 
-        res.json({ success: true });
+        const newLastModified = new Date();
+
+        await storageService.saveMindMap(
+          userEmail,
+          mindMapId,
+          nodes,
+          edges,
+          newLastModified,
+        );
+
+        res.json({ success: true, lastModified: newLastModified });
 
         return;
       } catch (error) {

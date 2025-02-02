@@ -208,7 +208,7 @@ export default function Editor() {
 
   // Add the auto-save hook
   useAutoSave(nodes, edges, mindMapId, true, (timestamp: Date) => {
-    window.dispatchEvent(new CustomEvent("autoSave", { detail: timestamp }));
+    window.dispatchEvent(new CustomEvent("saved", { detail: timestamp }));
   });
 
   const handleLoadMindMap = useCallback(async () => {
@@ -1034,6 +1034,9 @@ export default function Editor() {
   // Update the existing onNodesChange handler to include edge updates
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
+      // Indicate that current version is not saved
+      window.dispatchEvent(new CustomEvent("unsavedChanges"));
+
       // Apply node changes first
       onNodesChange(changes as NodeChange<MindMapNode>[]);
 

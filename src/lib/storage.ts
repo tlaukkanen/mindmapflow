@@ -56,19 +56,16 @@ export class StorageService {
     mindMapId: string,
     nodes: MindMapNode[],
     edges: Edge[],
+    lastModified: Date,
   ) {
-    const containerClient =
-      this.blobServiceClient.getContainerClient(containerName);
-
-    await containerClient.createIfNotExists();
-
+    const containerClient = await this.getContainerClient();
     const userPath = this.sanitizeEmailForPath(userEmail);
     const blobName = `${userPath}/${mindMapId}.json`;
 
     logger.info(`Saving diagram to blob: ${blobName}`);
     const blobClient = containerClient.getBlockBlobClient(blobName);
 
-    const content = JSON.stringify({ nodes, edges });
+    const content = JSON.stringify({ nodes, edges, lastModified });
 
     const blobUploadResponse = await blobClient.upload(content, content.length);
 
@@ -82,14 +79,16 @@ export class StorageService {
       );
     }
 
-    // Update root node's description as mindmap name
+    // Update metadata
     const rootNode = nodes.find((node) => node.id === "root");
     const mindmapName = rootNode?.data.description || "Untitled";
-    // Remove special characters from mindmap name
-    const sanitizedMindmapName = mindmapName.replace(/[^a-z0-9]/gi, "-");
+    const sanitizedMindmapName = mindmapName.replace(/[^a-z0-9 ]/gi, "-");
 
     logger.debug(`Setting metadata name to ${sanitizedMindmapName}`);
-    await blobClient.setMetadata({ name: sanitizedMindmapName });
+    await blobClient.setMetadata({
+      name: sanitizedMindmapName,
+      lastModified: lastModified.toISOString(),
+    });
   }
 
   async loadMindMap(userEmail: string, diagramId: string) {
@@ -104,9 +103,13 @@ export class StorageService {
       const content = await streamToText(
         downloadBlockBlobResponse.readableStreamBody as NodeJS.ReadableStream,
       );
-      const { nodes, edges } = JSON.parse(content.toString());
+      const { nodes, edges, lastModified } = JSON.parse(content.toString());
 
-      return { nodes, edges };
+      return {
+        nodes,
+        edges,
+        lastModified: lastModified || downloadBlockBlobResponse.lastModified,
+      };
     } catch (error) {
       logger.error("Error loading diagram:", error);
 

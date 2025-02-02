@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async signIn({ user, account, profile, email }) {
+    async signIn({ user, account, profile }) {
       if (user.email === process.env.ALLOWED_USERS) {
         logger.info("User allowed to sign in");
 

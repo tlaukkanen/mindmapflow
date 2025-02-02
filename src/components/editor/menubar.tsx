@@ -58,21 +58,28 @@ export const Menubar = ({
   // Set diagram as unsaved on editor modifications
   useEffect(() => {
     setIsSaved(false);
-  }, [editorVersion]); // Assuming editorVersion updates on changes
 
-  // New: Listen for the "autoSave" custom event to update saved status
-  useEffect(() => {
     const handleAutoSave = (event: Event) => {
       const customEvent = event as CustomEvent<Date>;
 
-      setIsSaved(true);
+      logger.debug("Custom event received for save", customEvent);
+
       setSavedTimestamp(customEvent.detail);
+      setIsSaved(true);
     };
 
-    window.addEventListener("autoSave", handleAutoSave);
+    const handleUnsavedChanges = () => {
+      setIsSaved(false);
+    };
 
-    return () => window.removeEventListener("autoSave", handleAutoSave);
-  }, []);
+    window.addEventListener("saved", handleAutoSave);
+    window.addEventListener("unsavedChanges", handleUnsavedChanges);
+
+    return () => {
+      window.removeEventListener("saved", handleAutoSave);
+      window.removeEventListener("unsavedChanges", handleUnsavedChanges);
+    };
+  }, [editorVersion]);
 
   const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

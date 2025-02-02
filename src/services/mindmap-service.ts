@@ -8,10 +8,22 @@ export interface SaveMindMapParams {
   mindMapId: string;
   nodes: MindMapNode[];
   edges: Edge[];
+  lastModified?: Date;
+}
+
+export interface MindMapData {
+  nodes: MindMapNode[];
+  edges: Edge[];
+  lastModified: Date;
 }
 
 class MindMapService {
-  async saveMindMap({ mindMapId, nodes, edges }: SaveMindMapParams) {
+  async saveMindMap({
+    mindMapId,
+    nodes,
+    edges,
+    lastModified,
+  }: SaveMindMapParams) {
     try {
       const response = await fetch("/api/mindmaps", {
         method: "POST",
@@ -22,14 +34,24 @@ class MindMapService {
           mindMapId,
           nodes,
           edges,
+          lastModified,
         }),
       });
+
+      if (response.status === 409) {
+        const data = await response.json();
+
+        logger.warn("Conflict detected:", data.lastModified);
+        throw new Error("CONFLICT:" + data.lastModified);
+      }
 
       if (!response.ok) {
         throw new Error("Failed to save mindmap");
       }
 
-      return true;
+      const data = await response.json();
+
+      return data.lastModified;
     } catch (error) {
       logger.error("Error saving mindmap:", error);
       throw error;
