@@ -35,9 +35,9 @@ import {
   getAbsolutePosition,
   updateEdgeConnections,
 } from "@/utils/node-utils";
-import { emptyProject } from "@/model/example-data";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useMindMap } from "@/hooks/use-mindmap";
+import { mindMapService } from "@/services/mindmap-service"; // Added import
 
 const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
@@ -262,13 +262,11 @@ export default function Editor() {
 
   const onNewProject = () => {
     logger.info("Creating new project");
-
-    // Reset to new project
-    setNodes(emptyProject.nodes);
-    setEdges(emptyProject.edges);
-    // Create new mindMapId
     const newMindMapId = nanoid(10);
+    const emptyProject = mindMapService.createEmptyMindmap(); // Use new function
 
+    setNodes(emptyProject.nodes as MindMapNode[]);
+    setEdges(emptyProject.edges);
     window.history.pushState({}, "", `/editor/${newMindMapId}`);
     fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
   };

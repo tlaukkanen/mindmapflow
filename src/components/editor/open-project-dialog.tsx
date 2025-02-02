@@ -17,9 +17,13 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { nanoid } from "nanoid"; // Added import
+import { toast } from "sonner"; // Add this import
 
+import { mindMapService } from "@/services/mindmap-service"; // Added import
 import { MindMapMetadata } from "@/lib/storage";
 import { logger } from "@/services/logger";
+import { MindMapNode } from "@/model/types";
 
 interface OpenProjectDialogProps {
   open: boolean;
@@ -91,6 +95,28 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     }
   };
 
+  // Updated function to create and save a new project
+  const handleNewProject = async () => {
+    const newMindMapId = nanoid(10);
+    const emptyProject = mindMapService.createEmptyMindmap();
+
+    try {
+      // Save the new mindmap to backend
+      await mindMapService.saveMindMap({
+        mindMapId: newMindMapId,
+        nodes: emptyProject.nodes as MindMapNode[],
+        edges: emptyProject.edges,
+        lastModified: new Date(),
+      });
+
+      router.push(`/editor/${newMindMapId}`);
+      onClose();
+    } catch (error) {
+      logger.error("Error creating new mindmap:", error);
+      toast.error("Failed to create new mindmap");
+    }
+  };
+
   return (
     <>
       <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
@@ -133,6 +159,10 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
             </List>
           )}
         </DialogContent>
+        {/* Added new DialogActions with "New Project" button */}
+        <DialogActions>
+          <Button onClick={handleNewProject}>New Project</Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

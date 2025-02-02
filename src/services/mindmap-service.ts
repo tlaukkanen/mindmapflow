@@ -3,6 +3,7 @@ import { Edge } from "@xyflow/react";
 import { logger } from "./logger";
 
 import { MindMapNode } from "@/model/types";
+import emptyMindMap from "@/model/empty-mindmap.json"; // Added import for empty mindmap
 
 export interface SaveMindMapParams {
   mindMapId: string;
@@ -75,6 +76,12 @@ class MindMapService {
       logger.error("Error loading diagram:", error);
       throw error;
     }
+  }
+
+  // New function to initialize an empty mindmap
+  createEmptyMindmap() {
+    // You could update properties based on mindMapId if needed.
+    return emptyMindMap;
   }
 }
 
