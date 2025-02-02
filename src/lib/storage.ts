@@ -81,6 +81,15 @@ export class StorageService {
         `Failed to upload diagram to cloud storage ${blobUploadResponse.errorCode}`,
       );
     }
+
+    // Update root node's description as mindmap name
+    const rootNode = nodes.find((node) => node.id === "root");
+    const mindmapName = rootNode?.data.description || "Untitled";
+    // Remove special characters from mindmap name
+    const sanitizedMindmapName = mindmapName.replace(/[^a-z0-9]/gi, "-");
+
+    logger.debug(`Setting metadata name to ${sanitizedMindmapName}`);
+    await blobClient.setMetadata({ name: sanitizedMindmapName });
   }
 
   async loadMindMap(userEmail: string, diagramId: string) {
