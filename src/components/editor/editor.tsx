@@ -8,7 +8,6 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
-  useNodeConnections,
   OnNodesChange,
   NodeChange, // Add this import
 } from "@xyflow/react";
@@ -123,9 +122,6 @@ const findFreePosition = (
         y: parentAbsPos.y + basePosition.y,
       };
     }
-    logger.debug(
-      `Converted base position to absolute coordinates ${basePosition.x}, ${basePosition.y}`,
-    );
   }
 
   // Create a temporary node to check intersections with absolute position
@@ -167,15 +163,9 @@ const findFreePosition = (
         y: position.y - parentAbsPos.y,
       };
 
-      logger.debug(
-        `Found free position ${convertedPosition.x}, ${convertedPosition.y}`,
-      );
-
       return convertedPosition;
     }
   }
-
-  logger.debug(`Found free position ${position.x}, ${position.y}`);
 
   return position;
 };
@@ -234,17 +224,6 @@ export default function Editor() {
       handleLoadMindMap();
     }
   }, [handleLoadMindMap, session?.user]);
-
-  const rootLeftConnections = useNodeConnections({
-    id: rootNodeId,
-    handleType: "source",
-    handleId: "root-left-source",
-  });
-  const rootRightConnections = useNodeConnections({
-    id: rootNodeId,
-    handleType: "source",
-    handleId: "root-right-source",
-  });
 
   // Derive selected node from selectedNodeId
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
