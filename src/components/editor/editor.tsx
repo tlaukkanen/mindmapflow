@@ -555,131 +555,6 @@ export default function Editor() {
     [selectedEdgeId, setEdges],
   );
 
-  const handleTabKey = useCallback(() => {
-    if (
-      !selectedNode ||
-      !selectedNodeId ||
-      selectedNode?.data.isEditing ||
-      selectedNode.type === "noteShape"
-    )
-      return;
-
-    logger.debug(`selectedNode type ${selectedNode.type}`);
-
-    const rootNode = nodes.find((node) => node.id === rootNodeId);
-
-    if (!rootNode) return;
-
-    logger.debug(`Root node: ${rootNode.id} selected node: ${selectedNodeId}`);
-    const isSelectedNodeRoot = selectedNode.id === rootNode.id;
-
-    logger.debug(`Selected node is root: ${isSelectedNodeRoot}`);
-    const selectedNodePosition = getAbsolutePosition(selectedNode, nodes);
-    const rootPosition = rootNode.position;
-
-    // Check how far from root we are, for example root -> node -> new node would be depth 2
-    const mindMapDepthLevel = (currentNode: MindMapNode): number => {
-      let depth = 0;
-      let node = currentNode;
-
-      while (node.parentId) {
-        depth++;
-        node = nodes.find((n) => n.id === node.parentId) || node;
-      }
-
-      return depth;
-    };
-
-    const currentDepth = mindMapDepthLevel(selectedNode);
-
-    logger.debug(`Current depth level: ${currentDepth}`);
-
-    let shouldAddToRight = true;
-
-    if (isSelectedNodeRoot) {
-      // For root node, compare number of connections on each side
-      const leftConnections = rootLeftConnections.length;
-      const rightConnections = rootRightConnections.length;
-
-      logger.debug(
-        `Root node connections: left=${leftConnections}, right=${rightConnections}`,
-      );
-      shouldAddToRight = leftConnections >= rightConnections;
-    } else {
-      // For non-root nodes, use position relative to root
-      shouldAddToRight = selectedNodePosition.x > rootPosition.x;
-    }
-
-    logger.debug(`Adding new node to ${shouldAddToRight ? "right" : "left"}`);
-
-    const basePosition = {
-      x: shouldAddToRight ? 240 : -240,
-      y: 0,
-    };
-
-    const verticalSpace = currentDepth == 0 ? 80 : currentDepth == 1 ? 5 : 5;
-
-    // Find a free position for the new node using getIntersectingNodes
-    const freePosition = findFreePosition(
-      nodes,
-      basePosition,
-      verticalSpace,
-      selectedNodeId,
-      getIntersectingNodes,
-    );
-
-    const newNode: MindMapNode = {
-      id: crypto.randomUUID(),
-      type: "rectangleShape",
-      position: freePosition,
-      data: {
-        description: "",
-        resourceType: "generic",
-        textProperties: getDefaultTextProperties("generic"),
-        isEditing: true,
-        depth: currentDepth + 1,
-      },
-      //width: 100,
-      //height: 40,
-      selected: true,
-      parentId: selectedNodeId,
-    };
-
-    // Create edge between selected node and new node with proper handles
-    const newEdge: Edge = {
-      id: `e-${selectedNodeId}-${newNode.id}`,
-      source: selectedNodeId,
-      target: newNode.id,
-      sourceHandle: shouldAddToRight
-        ? `${selectedNodeId}-right-source`
-        : `${selectedNodeId}-left-source`,
-      targetHandle: shouldAddToRight
-        ? `${newNode.id}-left-target`
-        : `${newNode.id}-right-target`,
-      type: "default",
-    };
-
-    // Update nodes and edges
-    setNodes((nds) => [
-      ...nds.map((n) => ({ ...n, selected: false })),
-      newNode,
-    ]);
-    setEdges((eds) => [...eds, newEdge]);
-
-    // Set the new node as selected
-    setSelectedNodeId(newNode.id);
-    setSelectedNodeIds([newNode.id]);
-  }, [
-    selectedNodeId,
-    selectedNode,
-    nodes,
-    setNodes,
-    setEdges,
-    getIntersectingNodes,
-    rootLeftConnections,
-    rootRightConnections,
-  ]);
-
   const handleEnterKey = useCallback(() => {
     if (
       !selectedNode ||
@@ -851,33 +726,41 @@ export default function Editor() {
         return "bottom";
       }
 
-      // For non-root nodes, check their position relative to their parent
-      // and try to maintain the same expansion direction
-      const lastDirection = parentNode.data.lastDirection as Direction;
-      const oppositeDirections = {
-        left: "right",
-        right: "left",
-        top: "bottom",
-        bottom: "top",
-      };
+      // If parent node doesn't have outgoing connections (parent = source), then prefer
+      // the side that is opposite to the incoming connection (parent = target)
+      const outgoingTotal =
+        connections.left +
+        connections.right +
+        connections.top +
+        connections.bottom;
 
-      // If we have a last direction, prefer that or its opposite based on number of connections
-      if (lastDirection) {
-        const opposite = oppositeDirections[lastDirection] as Direction;
-        const lastDirConnections = connections[lastDirection];
-        const oppositeConnections = connections[opposite];
+      if (outgoingTotal === 0) {
+        const incomingEdges = edges.filter(
+          (edge) => edge.target === parentNode.id && edge.targetHandle,
+        );
 
-        return lastDirConnections <= oppositeConnections
-          ? lastDirection
-          : opposite;
+        if (incomingEdges.length > 0) {
+          const handle = incomingEdges[0].targetHandle || "";
+          const parts = handle.split("-");
+
+          if (parts.length >= 3) {
+            // First part might be GUID of the node
+            // Direction is the second to last part
+            const incomingDirection = parts[parts.length - 2] as Direction;
+
+            return getOppositeHandle(incomingDirection);
+          }
+        }
       }
 
-      // If no last direction, find the side with fewest connections
-      const sorted = Object.entries(connections).sort(([, a], [, b]) => a - b);
+      // If no last direction, find the side with most outgoing connections
+      const sorted = Object.entries(connections).sort((a, b) => b[1] - a[1]);
+
+      logger.debug(`Sorted connections: ${JSON.stringify(sorted)}`);
 
       return sorted[0][0] as Direction;
     },
-    [getEdges],
+    [edges],
   );
 
   // Update getBasePosition helper (new function)
@@ -903,6 +786,8 @@ export default function Editor() {
   const handleAddChildNode = useCallback(
     (parentNode: MindMapNode) => {
       const direction = determineWhichSideToAddChildNode(parentNode);
+
+      logger.debug(`Adding child node to ${direction}`);
       const basePosition = getBasePosition(direction);
       const verticalSpace = parentNode.data.depth === 0 ? 80 : 5;
 
@@ -956,6 +841,17 @@ export default function Editor() {
       determineWhichSideToAddChildNode,
     ],
   );
+
+  const handleTabKey = useCallback(() => {
+    if (
+      !selectedNode ||
+      !selectedNodeId ||
+      selectedNode?.data.isEditing ||
+      selectedNode.type === "noteShape"
+    )
+      return;
+    handleAddChildNode(selectedNode);
+  }, [selectedNode, selectedNodeId, handleAddChildNode]);
 
   // Update handleAddSiblingNode to use the new direction logic
   const handleAddSiblingNode = useCallback(
