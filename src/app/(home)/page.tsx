@@ -25,7 +25,7 @@ export default function Home() {
             alt="Diagram"
             className="object-contain w-full h-fit "
             height={962}
-            src="/screens/screen_20250201.png"
+            src="/screens/screen_20250204.png"
             width={1382}
           />
         </div>
