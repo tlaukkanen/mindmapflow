@@ -82,7 +82,9 @@ export class StorageService {
     // Update metadata
     const rootNode = nodes.find((node) => node.id === "root");
     const mindmapName = rootNode?.data.description || "Untitled";
-    const sanitizedMindmapName = mindmapName.replace(/[^a-z0-9 ]/gi, "-");
+    const sanitizedMindmapName = mindmapName
+      .replace(/[\r\n]+/g, " ")
+      .replace(/[^a-z0-9 ]/gi, "-");
 
     logger.debug(`Setting metadata name to ${sanitizedMindmapName}`);
     await blobClient.setMetadata({
