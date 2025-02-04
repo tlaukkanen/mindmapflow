@@ -215,6 +215,7 @@ export default function Editor() {
     if (data) {
       setNodes(data.nodes);
       setEdges(data.edges);
+      fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     }
   }, [mindMapId, setNodes, setEdges, loadMindMap]);
 
