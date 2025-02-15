@@ -23,6 +23,7 @@
     "autoprefixer": "^10.4.20",
     "date-fns": "^4.1.0",
     "html-to-image": "^1.11.11",
+    "lodash": "^4.17.21",
     "nanoid": "^5.0.9",
     "next": "15.1.5",
     "next-auth": "^4.24.11",

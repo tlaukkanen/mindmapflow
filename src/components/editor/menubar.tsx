@@ -27,6 +27,7 @@ import { OpenProjectDialog } from "./open-project-dialog";
 
 import { useEditor } from "@/store/editor-context";
 import { logger } from "@/services/logger";
+import { getHasUnsavedChanges } from "@/hooks/use-auto-save";
 
 interface MenubarProps {
   onNewProject: () => void;
@@ -40,7 +41,7 @@ export const Menubar = ({
   onSaveMindMap, // Add this prop
 }: MenubarProps) => {
   const { getNodes } = useReactFlow();
-  const { isFullScreen, editorVersion } = useEditor(); // Modified: destructured editorVersion
+  const { isFullScreen } = useEditor(); // Modified: removed editorVersion
   const [isSaved, setIsSaved] = useState<boolean>(true); // New state for save status
   const [savedTimestamp, setSavedTimestamp] = useState<Date | null>(null); // New state for saved timestamp
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -55,31 +56,104 @@ export const Menubar = ({
   const profileMenuOpen = Boolean(profileAchorEl);
   const { data: session } = useSession();
 
-  // Set diagram as unsaved on editor modifications
+  // Update saved status whenever hasUnsavedChanges changes
   useEffect(() => {
-    setIsSaved(false);
+    const updateSavedStatus = (event: Event) => {
+      const customEvent = event as CustomEvent<boolean>;
 
+      logger.debug("Unsaved changes status changed", {
+        hasUnsavedChanges: customEvent.detail,
+      });
+      setIsSaved(!customEvent.detail);
+    };
+
+    // Initial check - call the function to get the current value
+    const initialHasUnsavedChanges = getHasUnsavedChanges();
+
+    logger.debug("Initial unsaved changes check", {
+      hasUnsavedChanges: initialHasUnsavedChanges,
+    });
+    setIsSaved(!initialHasUnsavedChanges);
+
+    // Listen for changes
+    window.addEventListener("unsavedChangesChanged", updateSavedStatus);
+
+    return () => {
+      window.removeEventListener("unsavedChangesChanged", updateSavedStatus);
+    };
+  }, []); // Empty dependency array since we want this to run once on mount
+
+  // Handle auto-save event
+  useEffect(() => {
     const handleAutoSave = (event: Event) => {
       const customEvent = event as CustomEvent<Date>;
 
-      logger.debug("Custom event received for save", customEvent);
-
+      logger.debug("Auto-save event received", {
+        timestamp: customEvent.detail,
+      });
       setSavedTimestamp(customEvent.detail);
-      setIsSaved(true);
-    };
-
-    const handleUnsavedChanges = () => {
-      setIsSaved(false);
+      setIsSaved(true); // Explicitly set saved state to true when auto-save occurs
     };
 
     window.addEventListener("saved", handleAutoSave);
-    window.addEventListener("unsavedChanges", handleUnsavedChanges);
 
     return () => {
       window.removeEventListener("saved", handleAutoSave);
-      window.removeEventListener("unsavedChanges", handleUnsavedChanges);
     };
-  }, [editorVersion]);
+  }, []);
+
+  // Update document title based on save status
+  useEffect(() => {
+    const baseTitle = "AivoMind";
+
+    document.title = !isSaved ? `${baseTitle} (Unsaved Changes)` : baseTitle;
+
+    return () => {
+      document.title = baseTitle;
+    };
+  }, [isSaved]);
+
+  // Add beforeunload event handler
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isSaved) {
+        e.preventDefault();
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
+
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isSaved]);
+
+  // Add navigation guard for Next.js client-side navigation
+  useEffect(() => {
+    const handleBeforeRouteChange = (_url: string) => {
+      if (
+        !isSaved &&
+        !window.confirm(
+          "You have unsaved changes. Are you sure you want to leave?",
+        )
+      ) {
+        // Cancel navigation
+        window.history.pushState(null, "", window.location.href);
+        throw "Navigation cancelled";
+      }
+    };
+
+    window.addEventListener("popstate", () =>
+      handleBeforeRouteChange(window.location.href),
+    );
+
+    return () =>
+      window.removeEventListener("popstate", () =>
+        handleBeforeRouteChange(window.location.href),
+      );
+  }, [isSaved]);
 
   const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -95,7 +169,6 @@ export const Menubar = ({
     setAnchorEl(null);
     setEditAnchorEl(null);
     setProfileAnchorEl(null);
-    setEditAnchorEl(null);
   };
 
   const downloadImage = (dataUrl: string) => {

@@ -34,7 +34,12 @@ import {
   getAbsolutePosition,
   updateEdgeConnections,
 } from "@/utils/node-utils";
-import { useAutoSave } from "@/hooks/use-auto-save";
+import {
+  useAutoSave,
+  getHasUnsavedChanges,
+  setHasUnsavedChanges,
+  setLastSavedState,
+} from "@/hooks/use-auto-save";
 import { useMindMap } from "@/hooks/use-mindmap";
 import { mindMapService } from "@/services/mindmap-service"; // Added import
 
@@ -210,6 +215,13 @@ export default function Editor() {
   const handleLoadMindMap = useCallback(async () => {
     if (!mindMapId) return;
 
+    // Don't load if there are unsaved changes
+    if (getHasUnsavedChanges()) {
+      logger.info("Skipping mind map load due to unsaved changes");
+
+      return;
+    }
+
     const data = await loadMindMap(mindMapId);
 
     if (data) {
@@ -243,12 +255,14 @@ export default function Editor() {
   const onNewProject = () => {
     logger.info("Creating new project");
     const newMindMapId = nanoid(10);
-    const emptyProject = mindMapService.createEmptyMindmap(); // Use new function
+    const emptyProject = mindMapService.createEmptyMindmap();
 
     setNodes(emptyProject.nodes as MindMapNode[]);
     setEdges(emptyProject.edges);
     window.history.pushState({}, "", `/editor/${newMindMapId}`);
     fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
+    // Set hasUnsavedChanges to false since this is a fresh project
+    setHasUnsavedChanges(false);
   };
 
   const saveDiagram = () => {
@@ -914,9 +928,6 @@ export default function Editor() {
   // Update the existing onNodesChange handler to include edge updates
   const handleNodesChange: OnNodesChange = useCallback(
     (changes) => {
-      // Indicate that current version is not saved
-      window.dispatchEvent(new CustomEvent("unsavedChanges"));
-
       // Apply node changes first
       onNodesChange(changes as NodeChange<MindMapNode>[]);
 
@@ -944,9 +955,16 @@ export default function Editor() {
       return;
     }
 
-    const cleanedNodes = cleanNodesForStorage(nodes);
+    try {
+      const cleanedNodes = cleanNodesForStorage(nodes);
 
-    await saveMindMap(mindMapId, cleanedNodes, edges);
+      await saveMindMap(mindMapId, cleanedNodes, edges);
+      setLastSavedState(cleanedNodes, edges);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      toast.error("Failed to save mind map");
+      logger.error("Failed to save mind map:", error);
+    }
   }, [mindMapId, session?.user, nodes, edges, saveMindMap]);
 
   useKeyboardShortcuts({
