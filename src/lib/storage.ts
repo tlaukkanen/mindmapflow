@@ -82,13 +82,12 @@ export class StorageService {
     // Update metadata
     const rootNode = nodes.find((node) => node.id === "root");
     const mindmapName = rootNode?.data.description || "Untitled";
-    const sanitizedMindmapName = mindmapName
-      .replace(/[\r\n]+/g, " ")
-      .replace(/[^a-z0-9 ]/gi, "-");
+    // URL encode the mindmap name
+    const encodedMindmapName = encodeURIComponent(mindmapName);
 
-    logger.debug(`Setting metadata name to ${sanitizedMindmapName}`);
+    logger.debug(`Setting metadata name to ${encodedMindmapName}`);
     await blobClient.setMetadata({
-      name: sanitizedMindmapName,
+      name: encodedMindmapName,
       lastModified: lastModified.toISOString(),
     });
   }
@@ -138,9 +137,13 @@ export class StorageService {
           .replace(`${prefix}`, "")
           .replace(".json", "");
 
+        // URL decode the mindmap name from metadata
+        const encodedName = properties.metadata?.name || "Untitled";
+        const decodedName = decodeURIComponent(encodedName);
+
         mindMaps.push({
           id: mindMapId,
-          name: properties.metadata?.name || "Untitled",
+          name: decodedName,
           lastModified: blob.properties.lastModified || new Date(),
         });
       }

@@ -1,4 +1,5 @@
 import { Edge } from "@xyflow/react";
+import { toast } from "sonner";
 
 import { logger } from "./logger";
 
@@ -43,6 +44,9 @@ class MindMapService {
         const data = await response.json();
 
         logger.warn("Conflict detected:", data.lastModified);
+        toast.error(
+          "Conflict detected, unable to save. Please refresh the page.",
+        );
         throw new Error("CONFLICT:" + data.lastModified);
       }
 
@@ -82,6 +86,35 @@ class MindMapService {
   createEmptyMindmap() {
     // You could update properties based on mindMapId if needed.
     return emptyMindMap;
+  }
+
+  async copyMindMap(mindMapId: string) {
+    try {
+      const response = await fetch(`/api/mindmaps/${mindMapId}/copy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 401) {
+        throw new Error("Unauthorized");
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to copy diagram");
+      }
+
+      const data = await response.json();
+
+      return {
+        newMindMapId: data.newMindMapId,
+        lastModified: new Date(data.lastModified),
+      };
+    } catch (error) {
+      logger.error("Error copying diagram:", error);
+      throw error;
+    }
   }
 }
 

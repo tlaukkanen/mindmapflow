@@ -15,12 +15,13 @@ import {
   ListItemSecondaryAction,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { nanoid } from "nanoid"; // Added import
-import { toast } from "sonner"; // Add this import
+import { nanoid } from "nanoid";
+import { toast } from "sonner";
 
-import { mindMapService } from "@/services/mindmap-service"; // Added import
+import { mindMapService } from "@/services/mindmap-service";
 import { MindMapMetadata } from "@/lib/storage";
 import { logger } from "@/services/logger";
 import { MindMapNode } from "@/model/types";
@@ -95,13 +96,27 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     }
   };
 
-  // Updated function to create and save a new project
+  const handleCopyMindMap = async (
+    mindMapId: string,
+    event: React.MouseEvent,
+  ) => {
+    event.stopPropagation();
+    try {
+      await mindMapService.copyMindMap(mindMapId);
+
+      await loadMindMaps();
+      toast.success("Mind map copied successfully");
+    } catch (error) {
+      logger.error("Error copying mindmap:", error);
+      toast.error("Failed to copy mindmap");
+    }
+  };
+
   const handleNewProject = async () => {
     const newMindMapId = nanoid(10);
     const emptyProject = mindMapService.createEmptyMindmap();
 
     try {
-      // Save the new mindmap to backend
       await mindMapService.saveMindMap({
         mindMapId: newMindMapId,
         nodes: emptyProject.nodes as MindMapNode[],
@@ -132,34 +147,43 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
             </Typography>
           ) : (
             <List>
-              {mindMaps.map((mindMap) => (
-                <ListItem key={mindMap.id} disablePadding>
-                  <ListItemButton
-                    onClick={() => handleMindMapSelect(mindMap.id)}
-                  >
-                    <ListItemText
-                      primary={mindMap.name}
-                      secondary={`Last modified: ${format(
-                        new Date(mindMap.lastModified),
-                        "PPp",
-                      )}`}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        aria-label="delete"
-                        edge="end"
-                        onClick={(e) => handleDeleteClick(mindMap.id, e)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItemButton>
-                </ListItem>
-              ))}
+              {mindMaps
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((mindMap) => (
+                  <ListItem key={mindMap.id} disablePadding>
+                    <ListItemButton
+                      onClick={() => handleMindMapSelect(mindMap.id)}
+                    >
+                      <ListItemText
+                        primary={mindMap.name}
+                        secondary={`Last modified: ${format(
+                          new Date(mindMap.lastModified),
+                          "PPp",
+                        )}`}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          aria-label="copy"
+                          edge="end"
+                          sx={{ mr: 1 }}
+                          onClick={(e) => handleCopyMindMap(mindMap.id, e)}
+                        >
+                          <ContentCopyIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="delete"
+                          edge="end"
+                          onClick={(e) => handleDeleteClick(mindMap.id, e)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItemButton>
+                  </ListItem>
+                ))}
             </List>
           )}
         </DialogContent>
-        {/* Added new DialogActions with "New Project" button */}
         <DialogActions>
           <Button onClick={handleNewProject}>New Project</Button>
         </DialogActions>

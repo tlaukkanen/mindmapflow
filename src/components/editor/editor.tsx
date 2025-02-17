@@ -229,7 +229,7 @@ export default function Editor() {
       setEdges(data.edges);
       fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     }
-  }, [mindMapId, setNodes, setEdges, loadMindMap]);
+  }, [mindMapId, setNodes, setEdges, loadMindMap, fitView]);
 
   // Add useEffect to load diagram on mount
   useEffect(() => {
