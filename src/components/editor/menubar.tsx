@@ -32,13 +32,11 @@ import { getHasUnsavedChanges } from "@/hooks/use-auto-save";
 interface MenubarProps {
   onNewProject: () => void;
   onCopyJsonToClipboard: () => void;
-  onSaveMindMap?: () => void; // Add this prop
 }
 
 export const Menubar = ({
   onNewProject,
   onCopyJsonToClipboard,
-  onSaveMindMap, // Add this prop
 }: MenubarProps) => {
   const { getNodes } = useReactFlow();
   const { isFullScreen } = useEditor(); // Modified: removed editorVersion
@@ -215,16 +213,6 @@ export const Menubar = ({
     toast.info(`Downloading image: ${viewport.x}x${viewport.y}`);
   };
 
-  // New handler: wrap save action to update saved status and record timestamp
-  const handleSaveProject = async () => {
-    if (onSaveMindMap) {
-      await onSaveMindMap();
-      setIsSaved(true);
-      setSavedTimestamp(new Date()); // Record the current save time
-    }
-    handleMenuClose();
-  };
-
   if (isFullScreen) {
     return null;
   }
@@ -298,11 +286,6 @@ export const Menubar = ({
                   }}
                 >
                   Open Project
-                </MenuItem>
-                <MenuItem
-                  onClick={handleSaveProject} // Modified: use new handler for saving
-                >
-                  Save Project
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
                   Export (Coming later)

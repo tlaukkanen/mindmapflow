@@ -36,7 +36,6 @@ import {
 } from "@/utils/node-utils";
 import {
   useAutoSave,
-  getHasUnsavedChanges,
   setHasUnsavedChanges,
   setLastSavedState,
 } from "@/hooks/use-auto-save";
@@ -177,6 +176,7 @@ const findFreePosition = (
 
 export default function Editor() {
   const searchParams = useSearchParams();
+  const params = useParams();
   const showSample = searchParams?.get("showSample") === "true";
   const { isFullScreen, setIsFullScreen } = useEditor();
   const {
@@ -187,6 +187,13 @@ export default function Editor() {
     getNodesBounds,
     getEdges,
   } = useReactFlow();
+
+  // Update mindMapId to use state
+  const [mindMapId, setMindMapId] = useState<string | undefined>(() => {
+    const id = params?.id as string;
+
+    return id || undefined;
+  });
 
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(false);
@@ -202,10 +209,9 @@ export default function Editor() {
   const propertiesPanelRef = useRef<PropertiesPanelHandle>(null);
   const [copiedNodes, setCopiedNodes] = useState<MindMapNode[]>([]);
   const [pasteCount, setPasteCount] = useState(0);
-  const params = useParams();
-  const mindMapId = params?.id as string;
   const { data: session } = useSession();
-  const { loadMindMap, saveMindMap } = useMindMap();
+  const { loadMindMap } = useMindMap();
+  const settingUpNewProject = useRef(false);
 
   // Add the auto-save hook
   useAutoSave(nodes, edges, mindMapId, true, (timestamp: Date) => {
@@ -215,28 +221,41 @@ export default function Editor() {
   const handleLoadMindMap = useCallback(async () => {
     if (!mindMapId) return;
 
-    // Don't load if there are unsaved changes
-    if (getHasUnsavedChanges()) {
-      logger.info("Skipping mind map load due to unsaved changes");
+    // Force clear unsaved changes state when explicitly loading a new mindmap
+    setHasUnsavedChanges(false);
+    setLastSavedState([], []);
+    if (settingUpNewProject.current) {
+      settingUpNewProject.current = false;
+      logger.debug("Setting up new project, skipping load");
 
       return;
     }
-
+    logger.debug("Loading mindmap in handleLoadMindMap", mindMapId);
     const data = await loadMindMap(mindMapId);
 
     if (data) {
       setNodes(data.nodes);
       setEdges(data.edges);
+      // Update last saved state with the newly loaded data
+      setLastSavedState(data.nodes, data.edges);
       fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     }
-  }, [mindMapId, setNodes, setEdges, loadMindMap, fitView]);
+  }, [
+    mindMapId,
+    setNodes,
+    setEdges,
+    loadMindMap,
+    fitView,
+    settingUpNewProject,
+  ]);
 
   // Add useEffect to load diagram on mount
   useEffect(() => {
-    if (session?.user) {
+    if (session?.user && mindMapId) {
+      logger.debug("Loading mindmap on mount", mindMapId);
       handleLoadMindMap();
     }
-  }, [handleLoadMindMap, session?.user]);
+  }, [handleLoadMindMap, session?.user, mindMapId]);
 
   // Derive selected node from selectedNodeId
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
@@ -254,9 +273,11 @@ export default function Editor() {
 
   const onNewProject = () => {
     logger.info("Creating new project");
+    settingUpNewProject.current = true;
     const newMindMapId = nanoid(10);
     const emptyProject = mindMapService.createEmptyMindmap();
 
+    setMindMapId(newMindMapId);
     setNodes(emptyProject.nodes as MindMapNode[]);
     setEdges(emptyProject.edges);
     window.history.pushState({}, "", `/editor/${newMindMapId}`);
@@ -948,25 +969,6 @@ export default function Editor() {
     [nodes, setEdges, onNodesChange],
   );
 
-  const handleSaveMindMap = useCallback(async () => {
-    if (!mindMapId || !session?.user) {
-      toast.error("Please sign in to save your mindmap");
-
-      return;
-    }
-
-    try {
-      const cleanedNodes = cleanNodesForStorage(nodes);
-
-      await saveMindMap(mindMapId, cleanedNodes, edges);
-      setLastSavedState(cleanedNodes, edges);
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      toast.error("Failed to save mind map");
-      logger.error("Failed to save mind map:", error);
-    }
-  }, [mindMapId, session?.user, nodes, edges, saveMindMap]);
-
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
@@ -978,7 +980,6 @@ export default function Editor() {
     onArrowRight: () => handleArrowNavigation("right"),
     onArrowUp: () => handleArrowNavigation("up"),
     onArrowDown: () => handleArrowNavigation("down"),
-    onCtrlS: handleSaveMindMap, // new shortcut for CTRL+s
   });
 
   return (
@@ -986,7 +987,6 @@ export default function Editor() {
       <Menubar
         onCopyJsonToClipboard={copyJsonToClipboard}
         onNewProject={onNewProject}
-        onSaveMindMap={handleSaveMindMap} // Add this prop
       />
       <Toolbar
         onCopy={handleCopy}

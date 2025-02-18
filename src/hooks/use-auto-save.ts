@@ -59,8 +59,15 @@ export function useAutoSave(
   const debouncedSave = useRef(
     debounce(async (nodes: MindMapNode[], edges: Edge[], mindMapId: string) => {
       try {
+        // Double check mindMapId hasn't changed since debounce was triggered
+        if (mindMapId !== window.location.pathname.split("/").pop()) {
+          logger.debug("Skipping auto-save as mindMapId has changed");
+
+          return;
+        }
+
         await mindMapService.saveMindMap({ mindMapId, nodes, edges });
-        logger.info("Auto-saved diagram to cloud storage");
+        logger.info(`Auto-saved diagram ${mindMapId} to cloud storage`);
         lastSavedNodes = cleanNodesForComparison(nodes);
         lastSavedEdges = [...edges];
         setHasUnsavedChanges(false); // Use the function instead of direct assignment
@@ -83,7 +90,8 @@ export function useAutoSave(
 
     return (
       !isEqual(cleanedCurrentNodes, lastSavedNodes) ||
-      !isEqual(edges, lastSavedEdges)
+      !isEqual(edges, lastSavedEdges) ||
+      hasUnsavedChanges
     );
   }, []);
 
@@ -108,6 +116,7 @@ export function useAutoSave(
     session,
     debouncedSave,
     checkForChanges,
+    hasUnsavedChanges,
   ]);
 
   // Add beforeunload event listener

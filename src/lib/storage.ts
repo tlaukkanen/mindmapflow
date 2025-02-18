@@ -95,7 +95,7 @@ export class StorageService {
   async loadMindMap(userEmail: string, diagramId: string) {
     const containerClient = await this.getContainerClient();
     const userPath = this.sanitizeEmailForPath(userEmail);
-    const blobName = `${userPath}/${diagramId}.json`;
+    const blobName = `${userPath}/${encodeURIComponent(diagramId)}.json`;
     const blobClient = containerClient.getBlockBlobClient(blobName);
 
     try {

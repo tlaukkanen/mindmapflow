@@ -11,6 +11,7 @@ export function useMindMap() {
 
   const loadMindMap = useCallback(async (mindMapId: string) => {
     try {
+      logger.debug("Loading mindmap in useMindMap:", mindMapId);
       const data = await mindMapService.loadMindMap(mindMapId);
 
       setLastModified(new Date(data.lastModified));

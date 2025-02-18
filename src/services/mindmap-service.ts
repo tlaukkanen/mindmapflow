@@ -71,6 +71,10 @@ class MindMapService {
         throw new Error("Unauthorized");
       }
 
+      if (response.status === 404) {
+        throw new Error("Mind map not found");
+      }
+
       if (!response.ok) {
         throw new Error("Failed to load diagram");
       }
