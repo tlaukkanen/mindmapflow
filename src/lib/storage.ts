@@ -179,7 +179,7 @@ export class StorageService {
     try {
       const containerClient = await this.getContainerClient();
       const userPath = this.sanitizeEmailForPath(userEmail);
-      const blobName = `${userPath}/${mindMapId}.json`;
+      const blobName = `${userPath}/${encodeURIComponent(mindMapId)}.json`;
       const blobClient = containerClient.getBlockBlobClient(blobName);
 
       logger.info(`Deleting mindmap: ${blobName}`);
