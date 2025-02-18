@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getToken } from "next-auth/jwt";
-import { format } from "date-fns";
+import { nanoid } from "nanoid";
 
 import { storageService } from "@/lib/storage";
 import { logger } from "@/services/logger";
@@ -49,9 +49,8 @@ export default async function handler(
       return;
     }
 
-    // Generate new ID with timestamp
-    const timestamp = format(new Date(), "yyyyMMddHHmm");
-    const newMindMapId = `${mindMapId} ${timestamp}`;
+    // Generate new ID
+    const newMindMapId = nanoid(10);
 
     // Save as new mindmap
     const newLastModified = new Date();
