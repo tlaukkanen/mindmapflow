@@ -780,8 +780,8 @@ export default function Editor() {
 
   // Update getBasePosition helper (new function)
   const getBasePosition = (direction: Direction) => ({
-    x: direction === "right" ? 240 : direction === "left" ? -240 : 0,
-    y: direction === "bottom" ? 240 : direction === "top" ? -240 : 0,
+    x: direction === "right" ? 200 : direction === "left" ? -200 : 0,
+    y: direction === "bottom" ? 100 : direction === "top" ? -120 : 0,
   });
 
   // Update getOppositeHandle helper (new function)
