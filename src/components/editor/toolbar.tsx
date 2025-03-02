@@ -2,33 +2,35 @@ import { AppBar, Toolbar as MUIToolbar, Box } from "@mui/material";
 import { IconButton } from "@mui/material";
 import { TbLayoutSidebarRightCollapseFilled } from "react-icons/tb";
 import { MdFullscreen } from "react-icons/md";
-import { toast } from "sonner";
 import {
   PiClipboardThin,
   PiCopyThin,
-  PiDownloadThin,
+  PiFloppyDiskThin,
+  PiFolderOpenThin,
+  PiGridFour,
   PiTrashThin,
-  PiUploadThin,
 } from "react-icons/pi";
 
 interface ToolbarProps {
   onToggleProperties: () => void;
   onToggleFullScreen: () => void;
-  onSaveDiagram: () => void;
-  onRestoreDiagram: () => void;
+  onSaveMindMap: () => void;
+  onLoadMindMap: () => void;
   onDeleteNodeOrEdge: () => void;
   onCopy: () => void;
   onPaste: () => void;
+  onToggleGrid?: () => void;
 }
 
 export const Toolbar = ({
   onToggleProperties,
   onToggleFullScreen,
-  onSaveDiagram,
-  onRestoreDiagram,
+  onSaveMindMap,
+  onLoadMindMap,
   onDeleteNodeOrEdge,
   onCopy,
   onPaste,
+  onToggleGrid,
 }: ToolbarProps) => {
   return (
     <AppBar
@@ -42,26 +44,24 @@ export const Toolbar = ({
       >
         <Box className="flex-1 flex flex-nowrap [&_button]:text-fallLight">
           <IconButton
-            aria-label="Save to memory"
+            aria-label="Load mindmap"
             size="medium"
-            title="Save to browser memory"
+            title="Load mindmap"
             onClick={() => {
-              onSaveDiagram();
-              toast.info("Diagram saved to memory");
+              onLoadMindMap();
             }}
           >
-            <PiUploadThin />
+            <PiFolderOpenThin />
           </IconButton>
           <IconButton
-            aria-label="Restore from memory"
+            aria-label="Save mindmap"
             size="medium"
-            title="Restore from browser memory"
+            title="Save mindmap"
             onClick={() => {
-              onRestoreDiagram();
-              toast.info("Diagram restored from memory");
+              onSaveMindMap();
             }}
           >
-            <PiDownloadThin />
+            <PiFloppyDiskThin />
           </IconButton>
           <div className="h-6 my-4 mx-2 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
           <IconButton
@@ -90,10 +90,18 @@ export const Toolbar = ({
           >
             <PiTrashThin />
           </IconButton>
+          <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
         </Box>
         <Box
           sx={{ flex: "1 1 auto", display: "flex", justifyContent: "flex-end" }}
         >
+          <IconButton
+            aria-label="Toggle grid"
+            size="small"
+            onClick={onToggleGrid}
+          >
+            <PiGridFour />
+          </IconButton>
           <IconButton
             aria-label="Toggle menubar"
             size="small"

@@ -48,6 +48,7 @@ interface CanvasProps {
   onEdgeSelect: (edge: Edge | null) => void;
   onNodesChange: OnNodesChange<MindMapNode>;
   onEdgesChange: OnEdgesChange<Edge>;
+  showGrid?: boolean; // Added prop to control grid visibility
 }
 
 const nodeTypes: NodeTypes = {
@@ -69,6 +70,7 @@ export default function Canvas({
   onEdgeSelect,
   onNodesChange,
   onEdgesChange,
+  showGrid = true, // Set default to true
 }: CanvasProps) {
   const { setNodes, fitView } = useReactFlow();
   const [isContextMenuOpen, setIsContextMenuOpen] = React.useState(false);
@@ -234,7 +236,7 @@ export default function Canvas({
         proOptions={proOptions}
         selectionOnDrag={true}
         snapGrid={[10, 10]}
-        snapToGrid={false}
+        snapToGrid={showGrid}
         onConnect={onConnect}
         onEdgesChange={onEdgesChange}
         onInit={onInit}
@@ -243,13 +245,15 @@ export default function Canvas({
         onNodesChange={onNodesChange}
         onSelectionChange={onSelectionChange}
       >
-        <Background
-          color="#E8DDCB"
-          gap={20}
-          id="2"
-          lineWidth={0.2}
-          variant={BackgroundVariant.Lines}
-        />
+        {showGrid && (
+          <Background
+            color="#fff"
+            gap={20}
+            id="2"
+            lineWidth={0.2}
+            variant={BackgroundVariant.Lines}
+          />
+        )}
         <Controls />
       </ReactFlow>
       <Menu

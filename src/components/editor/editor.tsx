@@ -197,6 +197,7 @@ export default function Editor() {
 
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(false);
+  const [showGrid, setShowGrid] = useState(false); // Add state for grid visibility
   const [nodes, setNodes, onNodesChange] = useNodesState(
     showSample ? initialNodes : [],
   );
@@ -286,18 +287,20 @@ export default function Editor() {
     setHasUnsavedChanges(false);
   };
 
-  const saveDiagram = () => {
-    logger.info("Saving diagram to local storage");
-    saveToLocalStorage(nodes, edges);
-  };
+  // Add handler for toggling grid visibility
+  const handleToggleGrid = useCallback(() => {
+    logger.info(`Toggling grid visibility to ${!showGrid}`);
+    setShowGrid(!showGrid);
+  }, [showGrid]);
 
-  const onRestoreDiagram = () => {
-    logger.info("Restoring diagram from local storage");
-    const { nodes: savedNodes, edges: savedEdges } = restoreFromLocalStorage();
+  const onLoadMindMap = useCallback(() => {
+    logger.info("Loading mindmap");
+    handleLoadMindMap();
+  }, [handleLoadMindMap]);
 
-    setNodes(savedNodes);
-    setEdges(savedEdges);
-  };
+  const onSaveMindMap = useCallback(() => {
+    logger.info("Saving mindmap");
+  }, []);
 
   const handleNodeNameChange = (newName: string) => {
     setNodes((prev) =>
@@ -989,12 +992,14 @@ export default function Editor() {
         onNewProject={onNewProject}
       />
       <Toolbar
+        showGrid={showGrid} // Pass current grid state
         onCopy={handleCopy}
         onDeleteNodeOrEdge={handleDeleteNodeOrEdge}
+        onLoadMindMap={onLoadMindMap}
         onPaste={handlePaste}
-        onRestoreDiagram={onRestoreDiagram}
-        onSaveDiagram={saveDiagram}
+        onSaveMindMap={onSaveMindMap}
         onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}
+        onToggleGrid={handleToggleGrid}
         onToggleProperties={() =>
           setIsPropertiesPanelVisible(!isPropertiesPanelVisible)
         }
@@ -1008,6 +1013,7 @@ export default function Editor() {
             edges={edges}
             nodes={nodes.map(getNodeWithHandlers)}
             setEdges={setEdges}
+            showGrid={showGrid} // Pass showGrid to Canvas
             onEdgeSelect={handleEdgeSelection}
             onEdgesChange={onEdgesChange}
             onNodeSelect={handleNodeSelection}
