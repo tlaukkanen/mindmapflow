@@ -72,24 +72,6 @@ function updateSelectedNodeData(
   );
 }
 
-// Abstracted local storage logic
-function saveToLocalStorage(nodes: MindMapNode[], edges: Edge[]) {
-  const cleanedNodes = cleanNodesForStorage(nodes);
-
-  localStorage.setItem("nodes", JSON.stringify(cleanedNodes));
-  localStorage.setItem("edges", JSON.stringify(edges));
-}
-
-function restoreFromLocalStorage() {
-  const storedNodes = localStorage.getItem("nodes");
-  const storedEdges = localStorage.getItem("edges");
-
-  return {
-    nodes: storedNodes ? JSON.parse(storedNodes) : [],
-    edges: storedEdges ? JSON.parse(storedEdges) : [],
-  };
-}
-
 // Add where nodes are created/initialized
 export const getDefaultTextProperties = (
   resourceType: string,
@@ -992,7 +974,6 @@ export default function Editor() {
         onNewProject={onNewProject}
       />
       <Toolbar
-        showGrid={showGrid} // Pass current grid state
         onCopy={handleCopy}
         onDeleteNodeOrEdge={handleDeleteNodeOrEdge}
         onLoadMindMap={onLoadMindMap}
