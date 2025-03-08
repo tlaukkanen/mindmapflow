@@ -31,7 +31,7 @@ export const FormatToolbar = memo(({ id }: FormatToolbarProps) => {
 
   const toolbarStyles = {
     position: "absolute" as const,
-    top: "-38px",
+    top: "-48px",
     left: "50%",
     transform: "translateX(-50%)",
     display: "flex",

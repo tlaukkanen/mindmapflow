@@ -2,7 +2,7 @@
 
 Meet MindMapFlow, your ultimate brainstorming companion. Designed to unleash creativity and enhance productivity, MindMapFlow transforms complex ideas into clear, structured visuals. Whether you're a student, professional, or creative, our intuitive interface helps you map out thoughts, simplify concepts, and bring your projects to life. Join the MindMapFlow revolution and unlock the full potential of your mind!
 
-![Screenshot](/public/screens/screen_20250204.png)
+![Screenshot](/public/screens/screen_20250308.png)
 
 # Tech Stack
 

@@ -24,9 +24,9 @@ export default function Home() {
             priority
             alt="Diagram"
             className="object-contain w-full h-fit "
-            height={962}
-            src="/screens/screen_20250204.png"
-            width={1382}
+            height={1019}
+            src="/screens/screen_20250308.png"
+            width={1420}
           />
         </div>
 
