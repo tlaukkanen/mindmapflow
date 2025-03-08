@@ -1,9 +1,9 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "AivoMind",
+  name: "MindMapFlow",
   description:
-    "AivoMind - Accelerate your Azure cloud architecture design process with AI-powered diagramming, security suggestions, cost estimates, and Infrastructure as Code export capabilities.",
+    "MindMapFlow - Accelerate your Azure cloud architecture design process with AI-powered diagramming, security suggestions, cost estimates, and Infrastructure as Code export capabilities.",
   navItems: [
     {
       label: "Home",
@@ -36,13 +36,25 @@ export const siteConfig = {
       href: "/pricing",
     },
   ],
+  footerItems: [
+    {
+      label: "Privacy Policy",
+      href: "/privacy",
+    },
+    {
+      label: "Terms of Service",
+      href: "/terms",
+    },
+  ],
   internalLinks: {
     editor: "/editor",
+    privacy: "/privacy",
+    terms: "/terms",
   },
   links: {
-    github: "https://github.com/tlaukkanen/aivomind",
+    github: "https://github.com/tlaukkanen/mindmapflow",
     twitter: "https://twitter.com/tlaukkanen",
-    docs: "https://www.aivomind.com",
+    docs: "https://www.mindmapflow.com",
     sponsor: "https://buymeacoffee.com/tlaukkanen",
   },
 };

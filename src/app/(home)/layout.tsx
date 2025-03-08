@@ -35,9 +35,21 @@ export default function RootLayout({
       <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow ">
         {children}
       </main>
-      <footer className="w-full flex items-center justify-center py-3">
+      <footer className="w-full flex flex-col items-center justify-center py-5 gap-3">
+        <div className="flex gap-6 items-center">
+          {siteConfig.footerItems?.map((item, index) => (
+            <Link
+              key={`footer-${index}`}
+              className="text-slate-300 hover:text-white text-sm no-underline"
+              href={item.href}
+              underline="none"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
         <Link
-          className="flex items-center gap-1 text-current no-underline"
+          className="flex items-center gap-1 text-current no-underline mt-2"
           href="https://www.linkedin.com/in/tlaukkanen/"
           title="Tommi Laukkanen"
           underline="none"

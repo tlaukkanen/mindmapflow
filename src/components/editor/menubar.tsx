@@ -102,7 +102,7 @@ export const Menubar = ({
 
   // Update document title based on save status
   useEffect(() => {
-    const baseTitle = "AivoMind";
+    const baseTitle = "MindMapFlow";
 
     document.title = !isSaved ? `${baseTitle} (Unsaved Changes)` : baseTitle;
 
@@ -250,7 +250,7 @@ export const Menubar = ({
               />
               <Box width={2} />
               <Typography className="hidden sm:block font-extrabold text-menuBar-text">
-                AivoMind
+                MindMapFlow
               </Typography>
             </Link>
             <div className="flex gap-0">

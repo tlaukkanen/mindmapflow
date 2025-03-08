@@ -60,7 +60,7 @@ export const Navbar = () => {
                 width={24}
               />
               <Box width={12} />
-              <p className="font-bold text-inherit">AivoMind</p>
+              <p className="font-bold text-inherit">MindMapFlow</p>
             </Link>
           </Box>
 

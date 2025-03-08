@@ -1,12 +1,12 @@
-# AivoMind
+# MindMapFlow
 
-Meet AivoMind, your ultimate brainstorming companion. Designed to unleash creativity and enhance productivity, AivoMind transforms complex ideas into clear, structured visuals. Whether you're a student, professional, or creative, our intuitive interface helps you map out thoughts, simplify concepts, and bring your projects to life. Join the AivoMind revolution and unlock the full potential of your mind!
+Meet MindMapFlow, your ultimate brainstorming companion. Designed to unleash creativity and enhance productivity, MindMapFlow transforms complex ideas into clear, structured visuals. Whether you're a student, professional, or creative, our intuitive interface helps you map out thoughts, simplify concepts, and bring your projects to life. Join the MindMapFlow revolution and unlock the full potential of your mind!
 
 ![Screenshot](/public/screens/screen_20250204.png)
 
 # Tech Stack
 
-AivoMind is built using these major components:
+MindMapFlow is built using these major components:
 
 * React, Next.js - https://nextjs.org/
 * MUI React UI tools - https://mui.com/

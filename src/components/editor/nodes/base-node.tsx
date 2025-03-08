@@ -3,6 +3,7 @@ import { Handle, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import clsx from "clsx";
 
 import { AddNodeButtons } from "./add-node-buttons";
+import { FormatToolbar } from "./format-toolbar";
 
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
@@ -251,14 +252,18 @@ export const BaseNode = memo(
         }}
       >
         {selected && data.resourceType !== "Note" && (
-          <AddNodeButtons
-            childButtonOnRight={childButtonOnRight}
-            isRoot={data.depth === 0}
-            onAddChild={onAddChild || (() => {})}
-            onAddSibling={onAddSibling || (() => {})}
-          />
+          <>
+            <AddNodeButtons
+              childButtonOnRight={childButtonOnRight}
+              isRoot={data.depth === 0}
+              onAddChild={onAddChild || (() => {})}
+              onAddSibling={onAddSibling || (() => {})}
+            />
+            <FormatToolbar id={id} />
+          </>
         )}
         {renderContent()}
+        {data.isEditing && <FormatToolbar id={id} />}
         <Handle
           className="w-0 h-0 opacity-0 "
           id={`${id}-top-target`}

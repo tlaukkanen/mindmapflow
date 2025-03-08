@@ -30,20 +30,36 @@ export function setHasUnsavedChanges(value: boolean) {
 
 export function setLastSavedState(nodes: MindMapNode[], edges: Edge[]) {
   lastSavedNodes = cleanNodesForComparison(nodes);
-  lastSavedEdges = [...edges];
+  lastSavedEdges = cleanEdgesForComparison(edges);
 }
 
 const cleanNodesForComparison = (nodes: MindMapNode[]) =>
   nodes.map((node) => ({
     ...node,
+    height: undefined,
+    width: undefined,
+    selected: undefined,
     data: {
       ...node.data,
       showHandles: undefined,
       resizing: undefined,
-      selected: undefined,
       onAddChild: undefined,
       onAddSibling: undefined,
     },
+    zIndex: undefined,
+    style: undefined,
+    interactionWidth: undefined,
+    className: undefined,
+  }));
+
+const cleanEdgesForComparison = (edges: Edge[]) =>
+  edges.map((edge) => ({
+    ...edge,
+    selected: undefined,
+    animated: undefined,
+    style: undefined,
+    interactionWidth: undefined,
+    zIndex: undefined,
   }));
 
 export function useAutoSave(
@@ -69,7 +85,7 @@ export function useAutoSave(
         await mindMapService.saveMindMap({ mindMapId, nodes, edges });
         logger.info(`Auto-saved diagram ${mindMapId} to cloud storage`);
         lastSavedNodes = cleanNodesForComparison(nodes);
-        lastSavedEdges = [...edges];
+        lastSavedEdges = cleanEdgesForComparison(edges);
         setHasUnsavedChanges(false); // Use the function instead of direct assignment
         if (onAutoSave) {
           onAutoSave(new Date());
@@ -87,12 +103,101 @@ export function useAutoSave(
   // Check if there are actual changes
   const checkForChanges = useCallback((nodes: MindMapNode[], edges: Edge[]) => {
     const cleanedCurrentNodes = cleanNodesForComparison(nodes);
+    const cleanedCurrentEdges = cleanEdgesForComparison(edges);
+    const hasNodesChanged = !isEqual(cleanedCurrentNodes, lastSavedNodes);
+    const hasEdgesChanged = !isEqual(cleanedCurrentEdges, lastSavedEdges);
 
-    return (
-      !isEqual(cleanedCurrentNodes, lastSavedNodes) ||
-      !isEqual(edges, lastSavedEdges) ||
-      hasUnsavedChanges
-    );
+    if (hasNodesChanged) {
+      // Log node changes by comparing JSON strings
+      cleanedCurrentNodes.forEach((currentNode, index) => {
+        if (index < lastSavedNodes.length) {
+          const lastNode = lastSavedNodes[index];
+
+          if (!isEqual(currentNode, lastNode)) {
+            const currentJson = JSON.stringify(currentNode, null, 2);
+            const lastJson = JSON.stringify(lastNode, null, 2);
+
+            logger.debug(`Node ${currentNode.id} changed:`, {
+              current: currentJson,
+              previous: lastJson,
+              // Simple text diff (can be expanded for more sophisticated diffing)
+              diff:
+                currentJson.length === lastJson.length
+                  ? "Same length, different content"
+                  : `Length changed from ${lastJson.length} to ${currentJson.length} chars`,
+            });
+          }
+        } else {
+          logger.debug(`New node detected: ${currentNode.id}`, {
+            nodeData: JSON.stringify(currentNode, null, 2),
+          });
+        }
+      });
+
+      if (cleanedCurrentNodes.length < lastSavedNodes.length) {
+        const removedNodes = lastSavedNodes
+          .filter(
+            (node) =>
+              !cleanedCurrentNodes.some((current) => current.id === node.id),
+          )
+          .map((node) => node.id);
+
+        logger.debug(
+          `${lastSavedNodes.length - cleanedCurrentNodes.length} nodes were removed:`,
+          {
+            removedNodeIds: removedNodes,
+          },
+        );
+      }
+    }
+
+    if (hasEdgesChanged) {
+      // Log edge changes by comparing JSON strings
+      cleanedCurrentEdges.forEach((currentEdge, index) => {
+        if (index < lastSavedEdges.length) {
+          const lastEdge = lastSavedEdges[index];
+
+          if (!isEqual(currentEdge, lastEdge)) {
+            const currentJson = JSON.stringify(currentEdge, null, 2);
+            const lastJson = JSON.stringify(lastEdge, null, 2);
+
+            logger.debug(`Edge ${currentEdge.id} changed:`, {
+              current: currentJson,
+              previous: lastJson,
+              diff:
+                currentJson.length === lastJson.length
+                  ? "Same length, different content"
+                  : `Length changed from ${lastJson.length} to ${currentJson.length} chars`,
+            });
+          }
+        } else {
+          logger.debug(`New edge detected: ${currentEdge.id}`, {
+            edgeData: JSON.stringify(currentEdge, null, 2),
+          });
+        }
+      });
+
+      if (cleanedCurrentEdges.length < lastSavedEdges.length) {
+        const removedEdges = lastSavedEdges
+          .filter(
+            (edge) =>
+              !cleanedCurrentEdges.some((current) => current.id === edge.id),
+          )
+          .map((edge) => edge.id);
+
+        logger.debug(
+          `${lastSavedEdges.length - cleanedCurrentEdges.length} edges were removed:`,
+          {
+            removedEdgeIds: removedEdges,
+          },
+        );
+      }
+    }
+
+    logger.debug("Nodes changed:", hasNodesChanged);
+    logger.debug("Edges changed:", hasEdgesChanged);
+
+    return hasNodesChanged || hasEdgesChanged || hasUnsavedChanges;
   }, []);
 
   useEffect(() => {
@@ -142,7 +247,7 @@ export function useAutoSave(
   useEffect(() => {
     if (nodes && edges) {
       lastSavedNodes = cleanNodesForComparison(nodes);
-      lastSavedEdges = [...edges];
+      lastSavedEdges = cleanEdgesForComparison(edges);
     }
   }, []);
 }
