@@ -3,7 +3,7 @@ export type SiteConfig = typeof siteConfig;
 export const siteConfig = {
   name: "MindMapFlow",
   description:
-    "MindMapFlow - Accelerate your Azure cloud architecture design process with AI-powered diagramming, security suggestions, cost estimates, and Infrastructure as Code export capabilities.",
+    "MindMapFlow - Meet MindMapFlow, your ultimate brainstorming companion. Designed to unleash creativity and enhance productivity, MindMapFlow transforms complex ideas into clear, structured visuals.",
   navItems: [
     {
       label: "Home",
