@@ -57,6 +57,7 @@ export class StorageService {
     nodes: MindMapNode[],
     edges: Edge[],
     lastModified: Date,
+    paletteId?: string,
   ) {
     const containerClient = await this.getContainerClient();
     const userPath = this.sanitizeEmailForPath(userEmail);
@@ -65,7 +66,12 @@ export class StorageService {
     logger.info(`Saving diagram to blob: ${blobName}`);
     const blobClient = containerClient.getBlockBlobClient(blobName);
 
-    const content = JSON.stringify({ nodes, edges, lastModified });
+    const content = JSON.stringify({
+      nodes,
+      edges,
+      lastModified,
+      paletteId,
+    });
 
     const blobUploadResponse = await blobClient.upload(content, content.length);
 
@@ -104,12 +110,15 @@ export class StorageService {
       const content = await streamToText(
         downloadBlockBlobResponse.readableStreamBody as NodeJS.ReadableStream,
       );
-      const { nodes, edges, lastModified } = JSON.parse(content.toString());
+      const { nodes, edges, lastModified, paletteId } = JSON.parse(
+        content.toString(),
+      );
 
       return {
         nodes,
         edges,
         lastModified: lastModified || downloadBlockBlobResponse.lastModified,
+        paletteId,
       };
     } catch (error) {
       logger.error("Error loading diagram:", error);

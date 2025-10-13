@@ -10,12 +10,12 @@ export default memo(function NoteNode(props: NodeProps<MindMapNode>) {
   return (
     <BaseNode
       {...props}
-      className="p-2 h-full text-sm shadow-lg rounded-sm bg-yellow-100 border border-solid border-stone-300"
+      className="p-2 h-full text-sm shadow-lg rounded-sm bg-note border border-solid border-canvas-node-border text-canvas-node-text"
       style={{ transform: "rotate(-2deg)" }}
     >
-      <div className="text-xs text-gray-800 whitespace-pre-wrap w-full" />
+      <div className="text-xs text-canvas-node-text whitespace-pre-wrap w-full" />
       <PiNoteThin
-        className="absolute bottom-1 right-1 w-5 h-5 text-yellow-500"
+        className="absolute bottom-1 right-1 w-5 h-5 text-link"
         title="This is a free text note"
       />
       <NodeResizer

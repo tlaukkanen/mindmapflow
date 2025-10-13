@@ -42,7 +42,17 @@ export const Toolbar = ({
         className="bg-toolBar-background border-b border-solid border-0 border-b-panels-border text-toolBar-text"
         variant="dense"
       >
-        <Box className="flex-1 flex flex-nowrap [&_button]:text-fallLight">
+        <Box
+          className="flex-1 flex flex-nowrap text-toolBar-text"
+          sx={{
+            "& .MuiIconButton-root": {
+              color: "var(--color-toolBar-text)",
+            },
+            "& .MuiIconButton-root:hover": {
+              color: "var(--color-link-text)",
+            },
+          }}
+        >
           <IconButton
             aria-label="Load mindmap"
             size="medium"
@@ -93,7 +103,18 @@ export const Toolbar = ({
           <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
         </Box>
         <Box
-          sx={{ flex: "1 1 auto", display: "flex", justifyContent: "flex-end" }}
+          className="text-toolBar-text"
+          sx={{
+            flex: "1 1 auto",
+            display: "flex",
+            justifyContent: "flex-end",
+            "& .MuiIconButton-root": {
+              color: "var(--color-toolBar-text)",
+            },
+            "& .MuiIconButton-root:hover": {
+              color: "var(--color-link-text)",
+            },
+          }}
         >
           <IconButton
             aria-label="Toggle grid"

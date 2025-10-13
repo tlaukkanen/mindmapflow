@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { getServerSession } from "next-auth";
 
 import SessionProvider from "@/components/providers/SessionProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 
@@ -43,8 +44,10 @@ export default async function RootLayout({
             )}
             id="root"
           >
-            <Toaster expand position="top-right" />
-            {children}
+            <ThemeProvider>
+              <Toaster expand position="top-right" />
+              {children}
+            </ThemeProvider>
           </body>
         </html>
       </CssBaseline>

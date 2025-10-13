@@ -132,9 +132,39 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
     };
 
     return (
-      <div className="w-max-56 w-56 [&_button]:text-fallLight text-fallLight h-full border-solid border-0 border-l border-gray-200 p-0 bg-panels-background flex flex-col">
+      <Box
+        className="w-max-56 w-56 h-full border-solid border-0 border-l border-panels-border p-0 bg-panels-background flex flex-col text-panels-text"
+        component="aside"
+        sx={{
+          "& .MuiTypography-root": {
+            color: "var(--color-panels-text)",
+          },
+          "& .MuiButtonBase-root": {
+            color: "var(--color-panels-text)",
+          },
+          "& .MuiButtonBase-root:hover": {
+            color: "var(--color-link-text)",
+          },
+          "& .MuiInputBase-root": {
+            color: "var(--color-panels-text)",
+            backgroundColor: "var(--color-panels-background)",
+          },
+          "& .MuiInputBase-root fieldset": {
+            borderColor: "var(--color-panels-border)",
+          },
+          "& .MuiInputBase-root:hover fieldset": {
+            borderColor: "var(--color-link-text)",
+          },
+          "& .MuiInputBase-root.Mui-focused fieldset": {
+            borderColor: "var(--color-link-text)",
+          },
+          "& .MuiSvgIcon-root": {
+            color: "var(--color-panels-text)",
+          },
+        }}
+      >
         <div className="overflow-y-auto flex-1">
-          <div className="p-2 border-b border-gray-200 space-y-2">
+          <div className="p-2 border-b border-panels-border space-y-2">
             <Typography variant="caption">
               {selectedNode
                 ? selectedNode.data.resourceType
@@ -146,7 +176,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
             {selectedNode && selectedNode.type?.startsWith("azure") && (
               <TextField
                 fullWidth
-                className="bg-white"
                 disabled={!selectedNode}
                 inputRef={inputRef}
                 label="Resource Name"
@@ -175,7 +204,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
               <TextField
                 fullWidth
                 multiline
-                className="bg-white"
                 inputRef={edgeLabelRef}
                 label="Edge Label"
                 margin="dense"
@@ -252,11 +280,7 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
                   />
                   <FormControl fullWidth margin="dense" size="small">
                     <InputLabel>Line type</InputLabel>
-                    <Select
-                      className="bg-white"
-                      label="SKU"
-                      value={selectedEdge?.type || "bezier"}
-                    >
+                    <Select label="SKU" value={selectedEdge?.type || "bezier"}>
                       {["straight", "step", "smoothstep", "bezier"].map(
                         (lineType) => (
                           <MenuItem key={lineType} value={lineType}>
@@ -342,7 +366,7 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
             )}
           </div>
         </div>
-      </div>
+      </Box>
     );
   },
 );

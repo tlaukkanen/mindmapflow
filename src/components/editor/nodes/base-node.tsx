@@ -124,7 +124,7 @@ export const BaseNode = memo(
         return (
           <div
             className={clsx(
-              "text-gray-600 whitespace-pre-wrap h-full flex flex-col min-h-[16px]",
+              "text-canvas-node-text whitespace-pre-wrap h-full flex flex-col min-h-[16px]",
               "px-1 ", // Add consistent padding
               // Text alignment horizontal
               textProps?.textAlign === "left" && "text-left",
@@ -158,7 +158,7 @@ export const BaseNode = memo(
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             className={clsx(
-              "text-gray-600 whitespace-pre-wrap w-full resize-none",
+              "text-canvas-node-text whitespace-pre-wrap w-full resize-none",
               "bg-transparent outline-none m-0 pt-2 border-0",
               "font-['Roboto',_'Helvetica',_'Arial',_sans-serif']",
               "overflow-hidden min-h-[12px]", // Add min-height
@@ -243,12 +243,15 @@ export const BaseNode = memo(
 
     return (
       <div
-        className={`group relative ${className} ${selected ? "border-2 border-stone-800" : "border border-stone-200"} touch-none`}
+        className={`group relative ${className} ${selected ? "border-2" : "border"} touch-none`}
         style={{
           ...style,
           touchAction: "none",
           userSelect: "none",
           minHeight: "16px", // Add minimum height
+          borderColor: selected
+            ? "var(--color-primary)"
+            : "var(--color-canvas-node-border)",
         }}
       >
         {selected && data.resourceType !== "Note" && (

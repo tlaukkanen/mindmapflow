@@ -25,6 +25,7 @@ import { mindMapService } from "@/services/mindmap-service";
 import { MindMapMetadata } from "@/lib/storage";
 import { logger } from "@/services/logger";
 import { MindMapNode } from "@/model/types";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 interface OpenProjectDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     null,
   );
   const router = useRouter();
+  const { palette } = useTheme();
 
   useEffect(() => {
     if (open) {
@@ -122,6 +124,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
         nodes: emptyProject.nodes as MindMapNode[],
         edges: emptyProject.edges,
         lastModified: new Date(),
+        paletteId: palette.id ?? emptyProject.paletteId,
       });
 
       router.push(`/editor/${newMindMapId}`);
@@ -142,7 +145,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
               <CircularProgress />
             </div>
           ) : mindMaps.length === 0 ? (
-            <Typography className="p-4 text-center text-gray-500">
+            <Typography className="p-4 text-center text-muted">
               No mindmaps found
             </Typography>
           ) : (

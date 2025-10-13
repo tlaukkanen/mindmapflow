@@ -5,18 +5,21 @@ import { logger } from "./logger";
 
 import { MindMapNode } from "@/model/types";
 import emptyMindMap from "@/model/empty-mindmap.json"; // Added import for empty mindmap
+import { DEFAULT_PALETTE_ID } from "@/config/palettes";
 
 export interface SaveMindMapParams {
   mindMapId: string;
   nodes: MindMapNode[];
   edges: Edge[];
   lastModified?: Date;
+  paletteId?: string;
 }
 
 export interface MindMapData {
   nodes: MindMapNode[];
   edges: Edge[];
   lastModified: Date;
+  paletteId?: string;
 }
 
 class MindMapService {
@@ -25,6 +28,7 @@ class MindMapService {
     nodes,
     edges,
     lastModified,
+    paletteId,
   }: SaveMindMapParams) {
     try {
       const response = await fetch("/api/mindmaps", {
@@ -37,6 +41,7 @@ class MindMapService {
           nodes,
           edges,
           lastModified,
+          paletteId,
         }),
       });
 
@@ -79,7 +84,12 @@ class MindMapService {
         throw new Error("Failed to load diagram");
       }
 
-      return await response.json();
+      const data = (await response.json()) as MindMapData;
+
+      return {
+        ...data,
+        paletteId: data.paletteId ?? DEFAULT_PALETTE_ID,
+      };
     } catch (error) {
       logger.error("Error loading diagram:", error);
       throw error;
@@ -89,7 +99,10 @@ class MindMapService {
   // New function to initialize an empty mindmap
   createEmptyMindmap() {
     // You could update properties based on mindMapId if needed.
-    return emptyMindMap;
+    return {
+      ...emptyMindMap,
+      paletteId: DEFAULT_PALETTE_ID,
+    };
   }
 
   async copyMindMap(mindMapId: string) {

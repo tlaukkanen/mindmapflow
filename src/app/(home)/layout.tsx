@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex flex-col min-h-screen text-white">
+    <div className="relative flex flex-col min-h-screen text-body">
       <Navbar />
       <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow ">
         {children}
@@ -40,7 +40,7 @@ export default function RootLayout({
           {siteConfig.footerItems?.map((item, index) => (
             <Link
               key={`footer-${index}`}
-              className="text-slate-300 hover:text-white text-sm no-underline"
+              className="text-muted text-sm no-underline hover:text-link"
               href={item.href}
               underline="none"
             >
@@ -54,10 +54,8 @@ export default function RootLayout({
           title="Tommi Laukkanen"
           underline="none"
         >
-          <span className="text-default-600 text-slate-300">
-            Created with ❤️ by&nbsp;
-          </span>
-          <p className="text-cornflowerBlue">Tommi Laukkanen</p>
+          <span className="text-muted">Created with ❤️ by&nbsp;</span>
+          <p className="text-link">Tommi Laukkanen</p>
         </Link>
       </footer>
     </div>

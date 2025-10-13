@@ -41,6 +41,8 @@ import {
 } from "@/hooks/use-auto-save";
 import { useMindMap } from "@/hooks/use-mindmap";
 import { mindMapService } from "@/services/mindmap-service"; // Added import
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { DEFAULT_PALETTE_ID } from "@/config/palettes";
 
 const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
@@ -195,18 +197,26 @@ export default function Editor() {
   const { data: session } = useSession();
   const { loadMindMap } = useMindMap();
   const settingUpNewProject = useRef(false);
+  const { palette, setPaletteId: setThemePaletteId } = useTheme();
 
   // Add the auto-save hook
-  useAutoSave(nodes, edges, mindMapId, true, (timestamp: Date) => {
-    window.dispatchEvent(new CustomEvent("saved", { detail: timestamp }));
-  });
+  useAutoSave(
+    nodes,
+    edges,
+    mindMapId,
+    true,
+    (timestamp: Date) => {
+      window.dispatchEvent(new CustomEvent("saved", { detail: timestamp }));
+    },
+    palette.id,
+  );
 
   const handleLoadMindMap = useCallback(async () => {
     if (!mindMapId) return;
 
     // Force clear unsaved changes state when explicitly loading a new mindmap
     setHasUnsavedChanges(false);
-    setLastSavedState([], []);
+    setLastSavedState([], [], palette.id);
     if (settingUpNewProject.current) {
       settingUpNewProject.current = false;
       logger.debug("Setting up new project, skipping load");
@@ -217,10 +227,13 @@ export default function Editor() {
     const data = await loadMindMap(mindMapId);
 
     if (data) {
+      const loadedPaletteId = data.paletteId ?? DEFAULT_PALETTE_ID;
+
+      setThemePaletteId(loadedPaletteId);
       setNodes(data.nodes);
       setEdges(data.edges);
       // Update last saved state with the newly loaded data
-      setLastSavedState(data.nodes, data.edges);
+      setLastSavedState(data.nodes, data.edges, loadedPaletteId);
       fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     }
   }, [
@@ -230,6 +243,7 @@ export default function Editor() {
     loadMindMap,
     fitView,
     settingUpNewProject,
+    setThemePaletteId,
   ]);
 
   // Add useEffect to load diagram on mount
@@ -259,6 +273,7 @@ export default function Editor() {
     settingUpNewProject.current = true;
     const newMindMapId = nanoid(10);
     const emptyProject = mindMapService.createEmptyMindmap();
+    const initialPaletteId = palette.id ?? DEFAULT_PALETTE_ID;
 
     setMindMapId(newMindMapId);
     setNodes(emptyProject.nodes as MindMapNode[]);
@@ -267,6 +282,12 @@ export default function Editor() {
     fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     // Set hasUnsavedChanges to false since this is a fresh project
     setHasUnsavedChanges(false);
+    setThemePaletteId(initialPaletteId);
+    setLastSavedState(
+      emptyProject.nodes as MindMapNode[],
+      emptyProject.edges,
+      initialPaletteId,
+    );
   };
 
   // Add handler for toggling grid visibility

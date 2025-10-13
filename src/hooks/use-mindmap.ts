@@ -29,13 +29,19 @@ export function useMindMap() {
   }, []);
 
   const saveMindMap = useCallback(
-    async (mindMapId: string, nodes: MindMapNode[], edges: Edge[]) => {
+    async (
+      mindMapId: string,
+      nodes: MindMapNode[],
+      edges: Edge[],
+      paletteId?: string,
+    ) => {
       try {
         const newLastModified = await mindMapService.saveMindMap({
           mindMapId,
           nodes,
           edges,
           lastModified,
+          paletteId,
         });
 
         setLastModified(new Date(newLastModified));
@@ -57,6 +63,7 @@ export function useMindMap() {
               mindMapId,
               nodes,
               edges,
+              paletteId,
             });
 
             setLastModified(new Date(newLastModified));

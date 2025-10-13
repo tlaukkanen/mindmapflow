@@ -10,6 +10,7 @@ import {
   List,
   ListItem,
   Link,
+  Divider,
 } from "@mui/material";
 import clsx from "clsx";
 import Image from "next/image";
@@ -17,6 +18,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 
 import { siteConfig } from "@/config/site";
+import { ThemeSelector } from "@/components/theme-selector";
 
 export const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -27,12 +29,20 @@ export const Navbar = () => {
 
   return (
     <AppBar
-      className="bg-panels-background text-white"
+      className="bg-menuBar-background text-menuBar-text"
       elevation={0}
       position="sticky"
     >
       <Toolbar
-        className="bg-menuBar-background shadow-md border-b border-b-panels-border text-white"
+        className="bg-menuBar-background shadow-md border-b border-b-menuBar-border text-menuBar-text"
+        sx={{
+          "& .MuiIconButton-root": {
+            color: "var(--color-menuBar-text)",
+          },
+          "& .MuiIconButton-root:hover": {
+            color: "var(--color-link-text)",
+          },
+        }}
         variant="dense"
       >
         <Box
@@ -48,7 +58,7 @@ export const Navbar = () => {
             sx={{ display: "flex", alignItems: "center", gap: 1 }}
           >
             <Link
-              className="flex text-white justify-start items-center gap-1"
+              className="flex text-menuBar-text justify-start items-center gap-1"
               href="/"
               underline="none"
             >
@@ -69,7 +79,7 @@ export const Navbar = () => {
               <ListItem key={item.href} className="w-auto p-0">
                 <Link
                   className={clsx(
-                    "data-[active=true]:text-primary data-[active=true]:font-medium text-white",
+                    "data-[active=true]:text-primary data-[active=true]:font-medium text-menuBar-text",
                   )}
                   href={item.href}
                   underline="none"
@@ -81,11 +91,19 @@ export const Navbar = () => {
           </Box>
           <Box width={12} />
           <Button
-            className="bg-toolBar-background text-white"
+            className="bg-toolBar-background text-toolBar-text"
             component={Link}
             href={siteConfig.internalLinks.editor}
             size="small"
-            sx={{ display: { xs: "none", sm: "flex" } }}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              backgroundColor: "var(--color-toolBar-background)",
+              color: "var(--color-toolBar-text)",
+              "&:hover": {
+                backgroundColor: "var(--color-toolBar-border)",
+                color: "var(--color-toolBar-text)",
+              },
+            }}
             variant="contained"
           >
             Try it out 😊
@@ -106,6 +124,7 @@ export const Navbar = () => {
             className="sm:invisible"
             color="inherit"
             edge="end"
+            sx={{ color: "var(--color-menuBar-text)" }}
             onClick={handleDrawerToggle}
           >
             <MenuIcon />
@@ -113,38 +132,58 @@ export const Navbar = () => {
         </Box>
 
         <Drawer
+          PaperProps={{
+            sx: {
+              backgroundColor: "var(--color-panels-background)",
+              color: "var(--color-panels-text)",
+            },
+          }}
           anchor="right"
           open={mobileOpen}
           variant="temporary"
           onClose={handleDrawerToggle}
         >
-          <List className="p-2">
-            {siteConfig.navMenuItems.map((item, index) => (
-              <ListItem key={`${item}-${index}`} className="p-4">
-                {item.label === "Editor" ? (
-                  <Button
-                    className="bg-toolBar-background text-white"
-                    component={Link}
-                    href={siteConfig.internalLinks.editor}
-                    size="large"
-                    variant="contained"
-                  >
-                    Try it out 😊
-                  </Button>
-                ) : (
-                  <Link
-                    className={clsx(
-                      "data-[active=true]:text-primary data-[active=true]:font-medium text-black",
-                    )}
-                    href={item.href}
-                    underline="none"
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </ListItem>
-            ))}
-          </List>
+          <Box sx={{ width: 320, p: 2 }}>
+            <List className="p-0">
+              {siteConfig.navMenuItems.map((item, index) => (
+                <ListItem key={`${item.href}-${index}`} className="px-0 py-2">
+                  {item.label === "Editor" ? (
+                    <Button
+                      className="bg-toolBar-background text-toolBar-text"
+                      component={Link}
+                      href={siteConfig.internalLinks.editor}
+                      size="large"
+                      sx={{
+                        backgroundColor: "var(--color-toolBar-background)",
+                        color: "var(--color-toolBar-text)",
+                        "&:hover": {
+                          backgroundColor: "var(--color-toolBar-border)",
+                          color: "var(--color-toolBar-text)",
+                        },
+                      }}
+                      variant="contained"
+                      onClick={handleDrawerToggle}
+                    >
+                      Try it out 😊
+                    </Button>
+                  ) : (
+                    <Link
+                      className={clsx(
+                        "data-[active=true]:text-primary data-[active=true]:font-medium text-panels-text",
+                      )}
+                      href={item.href}
+                      underline="none"
+                      onClick={handleDrawerToggle}
+                    >
+                      {item.label}
+                    </Link>
+                  )}
+                </ListItem>
+              ))}
+            </List>
+            <Divider sx={{ my: 2, borderColor: "var(--color-divider)" }} />
+            <ThemeSelector onSelected={handleDrawerToggle} />
+          </Box>
         </Drawer>
       </Toolbar>
     </AppBar>

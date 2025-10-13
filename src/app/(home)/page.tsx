@@ -14,7 +14,7 @@ export default function Home() {
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <AppInsightService />
         <div className="inline-block max-w-3xl text-center justify-center">
-          <span className={title({ class: "text-white" })}>
+          <span className={title({ class: "text-heading" })}>
             Organize Your Ideas, Simplify Your Workflow, Enhance Productivity
           </span>
         </div>
@@ -30,15 +30,15 @@ export default function Home() {
           />
         </div>
 
-        <div className="flex gap-3 items-start justify-start max-w-4xl py-8 md:py-10 text-white">
+        <div className="flex gap-3 items-start justify-start max-w-4xl py-8 md:py-10 text-body">
           <div className="grid grid-cols-1 gap-6">
-            <div className={subtitle({ class: "mt-4 text-white" })}>
+            <div className={subtitle({ class: "mt-4" })}>
               ✏️ Meet MindMapFlow, your ultimate brainstorming companion.
               Designed to unleash creativity and enhance productivity,
               MindMapFlow transforms complex ideas into clear, structured
               visuals.
             </div>
-            <div className={subtitle({ class: "mt-4 text-white" })}>
+            <div className={subtitle({ class: "mt-4" })}>
               🧠 Whether you&apos;re a student, professional, or creative, our
               intuitive interface helps you map out thoughts, simplify concepts,
               and bring your projects to life. Join the MindMapFlow revolution
@@ -49,7 +49,7 @@ export default function Home() {
 
         <div className="flex gap-3">
           <Link
-            className="text-white no-underline"
+            className="text-link no-underline"
             href={siteConfig.links.docs}
             underline="none"
           >

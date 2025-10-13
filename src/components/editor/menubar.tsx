@@ -10,7 +10,9 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  Divider,
 } from "@mui/material";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import Image from "next/image";
 import React, { useState, useEffect } from "react"; // Modified import: added useEffect
 import { toast } from "sonner";
@@ -28,6 +30,7 @@ import { OpenProjectDialog } from "./open-project-dialog";
 import { useEditor } from "@/store/editor-context";
 import { logger } from "@/services/logger";
 import { getHasUnsavedChanges } from "@/hooks/use-auto-save";
+import { ThemeSelector } from "@/components/theme-selector";
 
 interface MenubarProps {
   onNewProject: () => void;
@@ -48,10 +51,14 @@ export const Menubar = ({
   );
   const [profileAchorEl, setProfileAnchorEl] =
     React.useState<null | HTMLElement>(null);
+  const [themeAnchorEl, setThemeAnchorEl] = React.useState<null | HTMLElement>(
+    null,
+  );
   const [openProjectDialogOpen, setOpenProjectDialogOpen] = useState(false);
   const projectMenuOpen = Boolean(anchorEl);
   const editMenuOpen = Boolean(editAnchorEl);
   const profileMenuOpen = Boolean(profileAchorEl);
+  const themeMenuOpen = Boolean(themeAnchorEl);
   const { data: session } = useSession();
 
   // Update saved status whenever hasUnsavedChanges changes
@@ -163,10 +170,25 @@ export const Menubar = ({
   const handleProfileMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setProfileAnchorEl(event.currentTarget);
   };
+  const handleThemeMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setThemeAnchorEl(event.currentTarget);
+  };
+  const handleThemeMenuKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      setThemeAnchorEl(event.currentTarget as HTMLElement);
+    }
+  };
+  const handleThemeMenuClose = () => {
+    setThemeAnchorEl(null);
+  };
   const handleMenuClose = () => {
     setAnchorEl(null);
     setEditAnchorEl(null);
     setProfileAnchorEl(null);
+    setThemeAnchorEl(null);
   };
 
   const downloadImage = (dataUrl: string) => {
@@ -290,6 +312,48 @@ export const Menubar = ({
                 <MenuItem disabled onClick={handleMenuClose}>
                   Export (Coming later)
                 </MenuItem>
+                <Divider component="li" sx={{ my: 0.5 }} />
+                <MenuItem
+                  id="project-theme-menu-item"
+                  aria-controls={themeMenuOpen ? "project-theme-menu" : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={themeMenuOpen ? "true" : undefined}
+                  onClick={handleThemeMenuOpen}
+                  onKeyDown={handleThemeMenuKeyDown}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                      gap: 1,
+                    }}
+                  >
+                    <Typography variant="inherit">Project theme</Typography>
+                    <KeyboardArrowRightIcon fontSize="small" sx={{ ml: "auto" }} />
+                  </Box>
+                </MenuItem>
+              </Menu>
+              <Menu
+                MenuListProps={{
+                  "aria-labelledby": "project-theme-menu-item",
+                  sx: { py: 1 },
+                }}
+                anchorEl={themeAnchorEl}
+                anchorOrigin={{ horizontal: "right", vertical: "top" }}
+                id="project-theme-menu"
+                open={themeMenuOpen}
+                transformOrigin={{ horizontal: "left", vertical: "top" }}
+                onClose={handleThemeMenuClose}
+              >
+                <Box sx={{ width: 280, px: 1.5, py: 1 }}>
+                  <ThemeSelector
+                    onSelected={() => {
+                      handleThemeMenuClose();
+                      handleMenuClose();
+                    }}
+                  />
+                </Box>
               </Menu>
               <Button
                 className="text-xs"
@@ -320,7 +384,7 @@ export const Menubar = ({
                 </MenuItem>
               </Menu>
               {/* Modified: display dynamic saved status */}
-              <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-gray-400">
+              <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-muted">
                 {isSaved
                   ? `Saved at ${savedTimestamp?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) || "now"}`
                   : "Unsaved changes"}
@@ -334,15 +398,22 @@ export const Menubar = ({
               justifyContent: "flex-end",
             }}
           >
-            <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-gray-400">
+            <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-muted">
               ⚠️ Beta {process.env.NEXT_PUBLIC_VERSION_TAG || "v0.0.0"}
             </Box>
             {session ? (
               <>
                 <IconButton
                   aria-label="Profile menu"
-                  className="bg-toolBar-background text-white"
+                  className="bg-toolBar-background text-toolBar-text"
                   size="small"
+                  sx={{
+                    backgroundColor: "var(--color-toolBar-background)",
+                    color: "var(--color-toolBar-text)",
+                    "&:hover": {
+                      backgroundColor: "var(--color-toolBar-border)",
+                    },
+                  }}
                   onClick={handleProfileMenuClick}
                 >
                   <PiUser />
@@ -367,8 +438,16 @@ export const Menubar = ({
               </>
             ) : (
               <Button
-                className="bg-toolBar-background text-white"
+                className="bg-toolBar-background text-toolBar-text"
                 size="small"
+                sx={{
+                  backgroundColor: "var(--color-toolBar-background)",
+                  color: "var(--color-toolBar-text)",
+                  "&:hover": {
+                    backgroundColor: "var(--color-toolBar-border)",
+                    color: "var(--color-toolBar-text)",
+                  },
+                }}
                 variant="contained"
                 onClick={() => {
                   signIn();

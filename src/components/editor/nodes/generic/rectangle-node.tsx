@@ -13,14 +13,16 @@ interface RectangleNodeProps extends NodeProps<MindMapNode> {
 
 export default memo(function RectangleNode(props: RectangleNodeProps) {
   const getNodeStyle = () => {
-    if (props.data.depth === 0)
-      return "px-3 py-2 h-full w-full shadow-md rounded-md bg-white border-solid max-w-[250px]";
-    if (props.data.depth === 1)
-      return "px-3 py-1 h-full w-full shadow-md rounded-3xl bg-white border-solid max-w-[250px]";
-    if (props.data.depth === 2)
-      return "px-1 py-1 h-full text-sm w-full rounded-md border-solid border-0 bg-transparent max-w-[250px]";
+    const base = "h-full w-full max-w-[250px] text-canvas-node-text";
 
-    return "px-1 py-1 h-full text-xs w-full rounded-md border-solid border-0 bg-transparent max-w-[250px]";
+    if (props.data.depth === 0)
+      return `${base} px-3 py-2 shadow-md rounded-md border border-solid border-canvas-node-border bg-canvas-node-background`;
+    if (props.data.depth === 1)
+      return `${base} px-3 py-1 shadow-md rounded-3xl border border-solid border-canvas-node-border bg-canvas-node-background`;
+    if (props.data.depth === 2)
+      return `${base} px-1 py-1 text-sm rounded-md border-0 border-solid bg-transparent`;
+
+    return `${base} px-1 py-1 text-xs rounded-md border-0 border-solid bg-transparent`;
   };
 
   return (

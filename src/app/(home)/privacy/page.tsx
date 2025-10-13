@@ -81,14 +81,14 @@ export default function PrivacyPolicyPage() {
         If you have any questions about this Privacy Policy, please contact
         Tommi through LinkedIn:{" "}
         <a
-          className="text-white underline"
+          className="text-link underline"
           href="https://www.linkedin.com/in/tlaukkanen/"
         >
           https://www.linkedin.com/in/tlaukkanen/
         </a>
       </p>
 
-      <p className="text-sm text-gray-400 mt-8">Last updated: March 2025</p>
+      <p className="text-sm text-muted mt-8">Last updated: March 2025</p>
     </div>
   );
 }

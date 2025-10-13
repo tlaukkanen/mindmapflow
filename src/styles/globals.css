@@ -2,19 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --palette-id: tech;
+  --palette-bg: #f5f7fa;
+  --palette-bg-solid: #f5f7fa;
+  --palette-header: #2f2f37;
+  --palette-accent: #4c6ef5;
+  --palette-accent-2: #adb5bd;
+  --palette-node-bg: #ffffff;
+  --palette-text: #212529;
+  --palette-muted: #6b6b76;
+  --palette-note-bg: #fff8c2;
+
+  --page-background: #f5f7fa;
+  --color-body-text: #212529;
+  --color-heading-text: #2f2f37;
+  --color-muted-text: #6b6b76;
+  --color-link-text: #4c6ef5;
+  --color-link-text-hover: #adb5bd;
+
+  --color-panels-background: #ffffff;
+  --color-panels-border: #6b6b76;
+  --color-panels-text: #212529;
+
+  --color-menuBar-background: #2f2f37;
+  --color-menuBar-border: #2f2f37;
+  --color-menuBar-text: #ffffff;
+
+  --color-toolBar-background: #adb5bd;
+  --color-toolBar-border: #4c6ef5;
+  --color-toolBar-text: #ffffff;
+
+  --color-canvas-background: #f5f7fa;
+  --color-canvas-background-backup: #ffffff;
+  --color-canvas-node-background: #ffffff;
+  --color-canvas-node-border: #6b6b76;
+  --color-canvas-node-text: #212529;
+
+  --color-collectionNodes-background100: #ffffff;
+  --color-collectionNodes-background200: #f5f7fa;
+  --color-collectionNodes-background300: #adb5bd;
+  --color-collectionNodes-text: #212529;
+
+  --color-divider: #6b6b76;
+  --color-background: #4c6ef5;
+  --color-foreground: #2f2f37;
+  --color-primary: #4c6ef5;
+  --color-primary-foreground: #ffffff;
+  --color-note-background: #fff8c2;
+}
 
 html {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  background: linear-gradient(170deg, #7D6E83, #3E3A44) fixed;
+  background: var(--page-background);
+  color: var(--color-body-text);
 }
 
 /*
@@ -72,6 +121,128 @@ body {
   border-radius: 0;
   width: 15px;
   height: 15px;
+}
+
+.text-heading {
+  color: var(--color-heading-text);
+}
+
+.text-body {
+  color: var(--color-body-text);
+}
+
+.text-muted {
+  color: var(--color-muted-text);
+}
+
+.text-link {
+  color: var(--color-link-text);
+}
+
+.text-link:hover,
+.text-link:focus {
+  color: var(--color-link-text-hover);
+}
+
+.hover\:text-link:hover,
+.hover\:text-link:focus {
+  color: var(--color-link-text) !important;
+}
+
+.bg-surface {
+  background-color: var(--color-panels-background);
+}
+
+.bg-panels-background {
+  background-color: var(--color-panels-background) !important;
+}
+
+.text-panels-text {
+  color: var(--color-panels-text) !important;
+}
+
+.border-panels-border,
+.border-b-panels-border,
+.border-t-panels-border,
+.border-l-panels-border,
+.border-r-panels-border {
+  border-color: var(--color-panels-border) !important;
+}
+
+.bg-menuBar-background {
+  background-color: var(--color-menuBar-background) !important;
+}
+
+.text-menuBar-text {
+  color: var(--color-menuBar-text) !important;
+}
+
+.border-menuBar-border,
+.border-b-menuBar-border,
+.border-t-menuBar-border,
+.border-l-menuBar-border,
+.border-r-menuBar-border {
+  border-color: var(--color-menuBar-border) !important;
+}
+
+.bg-toolBar-background {
+  background-color: var(--color-toolBar-background) !important;
+}
+
+.text-toolBar-text {
+  color: var(--color-toolBar-text) !important;
+}
+
+.border-toolBar-border,
+.border-b-toolBar-border,
+.border-t-toolBar-border,
+.border-l-toolBar-border,
+.border-r-toolBar-border {
+  border-color: var(--color-toolBar-border) !important;
+}
+
+.bg-canvas-background {
+  background: var(--color-canvas-background) !important;
+}
+
+.bg-canvas-backgroundBackup {
+  background: var(--color-canvas-background-backup) !important;
+}
+
+.bg-canvas-node-background {
+  background-color: var(--color-canvas-node-background) !important;
+}
+
+.text-canvas-node-text {
+  color: var(--color-canvas-node-text) !important;
+}
+
+.border-canvas-node-border {
+  border-color: var(--color-canvas-node-border) !important;
+}
+
+.bg-collectionNodes-background100 {
+  background-color: var(--color-collectionNodes-background100) !important;
+}
+
+.bg-collectionNodes-background200 {
+  background-color: var(--color-collectionNodes-background200) !important;
+}
+
+.bg-collectionNodes-background300 {
+  background-color: var(--color-collectionNodes-background300) !important;
+}
+
+.text-collectionNodes-text {
+  color: var(--color-collectionNodes-text) !important;
+}
+
+.border-divider {
+  border-color: var(--color-divider) !important;
+}
+
+.bg-note {
+  background-color: var(--color-note-background) !important;
 }
 
 /*
