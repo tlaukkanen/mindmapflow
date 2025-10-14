@@ -157,6 +157,13 @@ body {
   background-color: var(--color-panels-background) !important;
 }
 
+.bg-landing {
+  background: var(--color-landing-background) !important;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .text-panels-text {
   color: var(--color-panels-text) !important;
 }
@@ -213,12 +220,32 @@ body {
   background-color: var(--color-canvas-node-background) !important;
 }
 
+.bg-root-node-background {
+  background-color: var(--color-root-node-background) !important;
+}
+
+.bg-first-node-background {
+  background-color: var(--color-first-node-background) !important;
+}
+
 .text-canvas-node-text {
   color: var(--color-canvas-node-text) !important;
 }
 
+.text-root-node-text {
+  color: var(--color-root-node-text) !important;
+}
+
+.text-first-node-text {
+  color: var(--color-first-node-text) !important;
+}
+
 .border-canvas-node-border {
   border-color: var(--color-canvas-node-border) !important;
+}
+
+.border-first-node-border {
+  border-color: var(--color-first-node-border) !important;
 }
 
 .bg-collectionNodes-background100 {

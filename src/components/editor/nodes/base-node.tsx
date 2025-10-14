@@ -23,6 +23,7 @@ interface BaseNodeProps extends NodeProps<MindMapNode> {
   style?: React.CSSProperties; // Add style prop support
   onAddChild?: () => void;
   onAddSibling?: () => void;
+  descriptionClassName?: string;
 }
 
 export const BaseNode = memo(
@@ -35,6 +36,7 @@ export const BaseNode = memo(
     style,
     onAddChild,
     onAddSibling,
+    descriptionClassName,
   }: BaseNodeProps) => {
     const { setNodes, getNodes, getEdges, deleteElements } = useReactFlow();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -118,13 +120,17 @@ export const BaseNode = memo(
 
     // Create a function to wrap description text with proper styling
     const StyledDescription = () => {
+      const resolvedDescriptionClass =
+        descriptionClassName ?? "text-canvas-node-text";
+
       if (!data.isEditing) {
         const textProps = data.textProperties;
 
         return (
           <div
             className={clsx(
-              "text-canvas-node-text whitespace-pre-wrap h-full flex flex-col min-h-[16px]",
+              "whitespace-pre-wrap h-full flex flex-col min-h-[16px]",
+              resolvedDescriptionClass,
               "px-1 ", // Add consistent padding
               // Text alignment horizontal
               textProps?.textAlign === "left" && "text-left",
@@ -158,7 +164,8 @@ export const BaseNode = memo(
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             className={clsx(
-              "text-canvas-node-text whitespace-pre-wrap w-full resize-none",
+              "whitespace-pre-wrap w-full resize-none",
+              resolvedDescriptionClass,
               "bg-transparent outline-none m-0 pt-2 border-0",
               "font-['Roboto',_'Helvetica',_'Arial',_sans-serif']",
               "overflow-hidden min-h-[12px]", // Add min-height

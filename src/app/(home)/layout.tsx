@@ -4,6 +4,14 @@ import { Link } from "@mui/material";
 
 import { siteConfig } from "@/config/site";
 import { Navbar } from "@/components/navbar";
+import type { CSSProperties } from "react";
+
+import {
+  DEFAULT_PALETTE_ID,
+  getPaletteById,
+  paletteToCssVariables,
+  palettes,
+} from "@/config/palettes";
 
 export const metadata: Metadata = {
   title: {
@@ -29,8 +37,19 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const palette =
+    getPaletteById(DEFAULT_PALETTE_ID) ?? getPaletteById("tech") ?? palettes[0];
+  const paletteVars = paletteToCssVariables(palette);
+
   return (
-    <div className="relative flex flex-col min-h-screen text-body">
+    <div
+      className="relative flex flex-col min-h-screen text-body bg-landing"
+      style={{
+        ...(paletteVars as CSSProperties),
+        background: paletteVars["--page-background"],
+        color: paletteVars["--color-body-text"],
+      }}
+    >
       <Navbar />
       <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow ">
         {children}

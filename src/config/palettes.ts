@@ -91,6 +91,21 @@ export const palettes: Palette[] = [
       "--note-bg": "#FFF1D6",
     },
   },
+  {
+    id: "graphite",
+    name: "Graphite",
+    description: "Bold charcoal base with earthy highlights.",
+    vars: {
+      "--bg": "#EEF1EE",
+      "--header": "#323C39",
+      "--accent": "#8F974A",
+      "--accent-2": "#D9A066",
+      "--node-bg": "#FFFFFF",
+      "--text": "#323C39",
+      "--muted": "#6F7B76",
+      "--note-bg": "#F7E6C9",
+    },
+  },
 ];
 
 export const DEFAULT_PALETTE_ID = palettes[0].id;
@@ -147,9 +162,14 @@ export function paletteToCssVariables(palette: Palette): PaletteCssVariableMap {
 
     "--color-canvas-background": palette.vars["--bg"],
     "--color-canvas-background-backup": solidBackground,
-    "--color-canvas-node-background": palette.vars["--node-bg"],
-    "--color-canvas-node-border": palette.vars["--muted"],
-    "--color-canvas-node-text": palette.vars["--text"],
+  "--color-canvas-node-background": palette.vars["--node-bg"],
+  "--color-canvas-node-border": palette.vars["--muted"],
+  "--color-canvas-node-text": palette.vars["--text"],
+  "--color-root-node-background": palette.vars["--accent"],
+  "--color-root-node-text": palette.vars["--node-bg"],
+  "--color-first-node-background": palette.vars["--node-bg"],
+  "--color-first-node-text": palette.vars["--text"],
+  "--color-first-node-border": palette.vars["--node-bg"],
 
     "--color-collectionNodes-background100": palette.vars["--node-bg"],
     "--color-collectionNodes-background200": solidBackground,
@@ -162,6 +182,7 @@ export function paletteToCssVariables(palette: Palette): PaletteCssVariableMap {
     "--color-primary": palette.vars["--accent"],
     "--color-primary-foreground": palette.vars["--node-bg"],
     "--color-note-background": palette.vars["--note-bg"],
+    "--color-landing-background": `linear-gradient(170deg, ${solidBackground} 0%, ${palette.vars["--accent-2"]} 100%)`,
   };
 
   return vars;
