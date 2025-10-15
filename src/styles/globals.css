@@ -248,6 +248,10 @@ body {
   border-color: var(--color-first-node-border) !important;
 }
 
+.border-first-node-selected {
+  border-color: var(--color-primary) !important;
+}
+
 .bg-collectionNodes-background100 {
   background-color: var(--color-collectionNodes-background100) !important;
 }

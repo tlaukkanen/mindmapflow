@@ -17,8 +17,15 @@ export default memo(function RectangleNode(props: RectangleNodeProps) {
 
     if (props.data.depth === 0)
       return `${base} px-3 py-2 shadow-md rounded-md border border-solid border-canvas-node-border bg-root-node-background text-root-node-text`;
-    if (props.data.depth === 1)
-      return `${base} px-3 py-1 shadow-md rounded-3xl border border-solid border-first-node-border bg-first-node-background text-first-node-text`;
+
+    if (props.data.depth === 1) {
+      const firstLevelBase = `${base} px-3 py-1 shadow-md rounded-3xl border border-solid bg-first-node-background text-first-node-text`;
+
+      return props.selected
+        ? `${firstLevelBase} border-first-node-selected`
+        : `${firstLevelBase} border-first-node-border`;
+    }
+
     if (props.data.depth === 2)
       return `${base} px-1 py-1 text-sm rounded-md border-0 border-solid bg-transparent text-canvas-node-text`;
 

@@ -513,6 +513,56 @@ export const getAutoLayoutedNodes = (
   };
 
   const applyRadialLayout = () => {
+    const angleInfo = new Map<
+      string,
+      { angle: number; start: number; end: number }
+    >();
+
+    const fullSpan = Math.PI * 2;
+    const baseAngle = -Math.PI / 2;
+    const firstLevel = levelNodes.get(1) ?? [];
+    const firstLevelCount = firstLevel.length;
+    const firstLevelStep =
+      firstLevelCount > 0 ? fullSpan / firstLevelCount : fullSpan;
+    const rootStart =
+      firstLevelCount > 0 ? baseAngle - firstLevelStep / 2 : baseAngle - Math.PI;
+
+    angleInfo.set(rootNode.id, {
+      angle: baseAngle,
+      start: rootStart,
+      end: rootStart + fullSpan,
+    });
+
+    const assignAngleRange = (parentId: string) => {
+      const parentInfo = angleInfo.get(parentId);
+
+      if (!parentInfo) {
+        return;
+      }
+
+      const children = getOrderedChildren(parentId).filter((childId) =>
+        reachableIds.has(childId),
+      );
+
+      if (!children.length) {
+        return;
+      }
+
+      const parentSpan = parentInfo.end - parentInfo.start;
+      const segmentSpan = parentSpan / children.length;
+
+      children.forEach((childId, index) => {
+        const start = parentInfo.start + index * segmentSpan;
+        const end = start + segmentSpan;
+        const angle = (start + end) / 2;
+
+        angleInfo.set(childId, { angle, start, end });
+        assignAngleRange(childId);
+      });
+    };
+
+    assignAngleRange(rootNode.id);
+
     depthLevels.forEach((depth) => {
       const nodesAtDepth = levelNodes.get(depth);
 
@@ -521,25 +571,28 @@ export const getAutoLayoutedNodes = (
       }
 
       if (depth === 0) {
-        newPositions.set(nodesAtDepth[0], {
-          x: rootAbsolute.x,
-          y: rootAbsolute.y,
-        });
+        if (!newPositions.has(nodesAtDepth[0])) {
+          newPositions.set(nodesAtDepth[0], {
+            x: rootAbsolute.x,
+            y: rootAbsolute.y,
+          });
+        }
 
         return;
       }
 
       const radius = Math.max(getDepthOffset(depth), horizontalOffset * depth);
-      const count = nodesAtDepth.length;
-      const angleStep = (Math.PI * 2) / count;
-      const startAngle = -Math.PI / 2;
 
-      nodesAtDepth.forEach((nodeId, index) => {
-        const angle = startAngle + index * angleStep;
+      nodesAtDepth.forEach((nodeId) => {
+        const info = angleInfo.get(nodeId);
+
+        if (!info) {
+          return;
+        }
 
         newPositions.set(nodeId, {
-          x: rootAbsolute.x + radius * Math.cos(angle),
-          y: rootAbsolute.y + radius * Math.sin(angle),
+          x: rootAbsolute.x + radius * Math.cos(info.angle),
+          y: rootAbsolute.y + radius * Math.sin(info.angle),
         });
       });
     });

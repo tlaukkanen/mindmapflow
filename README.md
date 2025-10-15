@@ -11,3 +11,12 @@ MindMapFlow is built using these major components:
 * React, Next.js - https://nextjs.org/
 * MUI React UI tools - https://mui.com/
 * React Flow - https://reactflow.dev/
+
+## Configuration
+
+Set the following environment variables to enable AI-powered suggestions via Azure OpenAI:
+
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_MODEL`
+- `AZURE_OPENAI_API_VERSION`
