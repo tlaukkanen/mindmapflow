@@ -32,6 +32,7 @@ import { ResourceNodeTypes } from "@/model/node-types";
 import {
   findClosestNodeInDirection,
   getAbsolutePosition,
+  recalculateAllEdgeConnections,
   updateEdgeConnections,
 } from "@/utils/node-utils";
 import {
@@ -43,10 +44,80 @@ import { useMindMap } from "@/hooks/use-mindmap";
 import { mindMapService } from "@/services/mindmap-service"; // Added import
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { DEFAULT_PALETTE_ID } from "@/config/palettes";
+import { AutoLayoutMode, getAutoLayoutedNodes } from "@/utils/auto-layout";
 
 const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
 const rootNodeId = "root";
+
+interface OutlineItem {
+  text: string;
+  children: OutlineItem[];
+}
+
+const NODE_HORIZONTAL_OFFSET = 240;
+const ROOT_VERTICAL_SPACING = 160;
+const CHILD_VERTICAL_SPACING = 100;
+
+const getVerticalSpacingForDepth = (depth: number) =>
+  depth <= 1 ? ROOT_VERTICAL_SPACING : CHILD_VERTICAL_SPACING;
+
+const parseOutlineText = (outline: string): OutlineItem[] => {
+  const lines = outline
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\t/g, "  ").replace(/\s+$/, ""));
+
+  const rootItems: OutlineItem[] = [];
+  const stack: { level: number; item: OutlineItem }[] = [];
+
+  for (const rawLine of lines) {
+    if (!rawLine.trim()) {
+      continue;
+    }
+
+    const match = rawLine.match(/^(\s*)([-*+])\s+(.*)$/);
+
+    if (!match) {
+      const continuation = rawLine.trim();
+
+      if (continuation && stack.length > 0) {
+        const current = stack[stack.length - 1].item;
+
+        current.text = `${current.text} ${continuation}`.trim();
+      }
+
+      continue;
+    }
+
+    const [, indent, , content] = match;
+    const normalizedIndent = indent.replace(/\t/g, "  ");
+    const level = Math.floor(normalizedIndent.length / 2);
+    const text = content.trim();
+
+    if (!text) {
+      continue;
+    }
+
+    const item: OutlineItem = {
+      text,
+      children: [],
+    };
+
+    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+      stack.pop();
+    }
+
+    if (stack.length === 0) {
+      rootItems.push(item);
+    } else {
+      stack[stack.length - 1].item.children.push(item);
+    }
+
+    stack.push({ level, item });
+  }
+
+  return rootItems;
+};
 
 // Add this helper function before the Editor component
 const cleanNodesForStorage = (nodes: MindMapNode[]) => {
@@ -188,6 +259,8 @@ export default function Editor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     showSample ? initialEdges : [],
   );
+  const [autoLayoutMode, setAutoLayoutMode] =
+    useState<AutoLayoutMode>("horizontal");
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
@@ -296,6 +369,65 @@ export default function Editor() {
     setShowGrid(!showGrid);
   }, [showGrid]);
 
+  const handleAutoLayout = useCallback(
+    (mode?: AutoLayoutMode) => {
+      const effectiveMode = mode ?? autoLayoutMode;
+
+      if (mode && mode !== autoLayoutMode) {
+        setAutoLayoutMode(mode);
+      }
+
+      const layoutedNodes = getAutoLayoutedNodes(nodes, edges, {
+        rootNodeId,
+        horizontalOffset: NODE_HORIZONTAL_OFFSET,
+        rootVerticalSpacing: ROOT_VERTICAL_SPACING,
+        childVerticalSpacing: CHILD_VERTICAL_SPACING,
+        mode: effectiveMode,
+      });
+
+      const hasNodeChanges = layoutedNodes.some(
+        (node, index) => node !== nodes[index],
+      );
+
+      const updatedEdges = recalculateAllEdgeConnections(layoutedNodes, edges);
+      const hasEdgeChanges = updatedEdges.some(
+        (edge, index) => edge !== edges[index],
+      );
+
+      if (!hasNodeChanges && !hasEdgeChanges) {
+        toast.info("Mindmap is already laid out");
+
+        return;
+      }
+
+      if (hasNodeChanges) {
+        setNodes(layoutedNodes);
+      }
+
+      if (hasEdgeChanges) {
+        setEdges(updatedEdges);
+      }
+
+      setHasUnsavedChanges(true);
+      toast.success("Auto layout applied");
+
+      if (hasNodeChanges) {
+        requestAnimationFrame(() => {
+          fitView({ padding: 160, duration: 800, maxZoom: 1.0 });
+        });
+      }
+    },
+    [
+      autoLayoutMode,
+      edges,
+      fitView,
+      nodes,
+      setHasUnsavedChanges,
+      setEdges,
+      setNodes,
+    ],
+  );
+
   const onLoadMindMap = useCallback(() => {
     logger.info("Loading mindmap");
     handleLoadMindMap();
@@ -345,6 +477,141 @@ export default function Editor() {
       })),
     );
   };
+
+  const handleImportOutline = useCallback(
+    (outline: string) => {
+      if (!selectedNode || selectedNode.data.depth !== 0) {
+        toast.error("Select the root node to import child nodes");
+
+        return false;
+      }
+
+      const outlineItems = parseOutlineText(outline);
+
+      if (outlineItems.length === 0) {
+        toast.error("No bullet points detected in the outline");
+
+        return false;
+      }
+
+      const newNodes: MindMapNode[] = [];
+      const newEdges: Edge[] = [];
+      const getAllNodes = () => [...nodes, ...newNodes];
+
+      const createChildren = (
+        items: OutlineItem[],
+        parentId: string,
+        parentDepth: number,
+      ) => {
+        if (items.length === 0) return;
+
+        const siblings = getAllNodes().filter(
+          (node) => node.parentId === parentId,
+        );
+        const spacing = getVerticalSpacingForDepth(parentDepth + 1);
+
+        let yPositions: number[] = [];
+
+        if (siblings.length === 0) {
+          const centerOffset = ((items.length - 1) / 2) * spacing;
+
+          yPositions = items.map((_, index) => index * spacing - centerOffset);
+        } else {
+          const existingPositions = siblings.map(
+            (node) => node.position?.y ?? 0,
+          );
+          let currentY =
+            existingPositions.length > 0
+              ? Math.max(...existingPositions) + spacing
+              : 0;
+
+          yPositions = items.map((_, index) => {
+            if (index === 0) return currentY;
+
+            currentY += spacing;
+
+            return currentY;
+          });
+        }
+
+        items.forEach((item, index) => {
+          const nodeId = crypto.randomUUID();
+          const nodeDepth = parentDepth + 1;
+          const positionY = yPositions[index] ?? 0;
+          const defaultTextProps = getDefaultTextProperties("generic");
+
+          const nodeData: MindMapNode["data"] = {
+            resourceType: "generic",
+            description: item.text,
+            isEditing: false,
+            depth: nodeDepth,
+          };
+
+          if (defaultTextProps) {
+            nodeData.textProperties = defaultTextProps;
+          }
+
+          const newNode: MindMapNode = {
+            id: nodeId,
+            type: "rectangleShape",
+            position: {
+              x: NODE_HORIZONTAL_OFFSET,
+              y: positionY,
+            },
+            data: nodeData,
+            selected: false,
+            parentId,
+          };
+
+          newNodes.push(newNode);
+
+          newEdges.push({
+            id: `e-${parentId}-${nodeId}`,
+            source: parentId,
+            target: nodeId,
+            sourceHandle: `${parentId}-right-source`,
+            targetHandle: `${nodeId}-left-target`,
+            type: "default",
+          });
+
+          if (item.children.length > 0) {
+            createChildren(item.children, nodeId, nodeDepth);
+          }
+        });
+      };
+
+      createChildren(
+        outlineItems,
+        selectedNode.id,
+        selectedNode.data.depth ?? 0,
+      );
+
+      if (newNodes.length === 0) {
+        toast.error("No bullet points detected in the outline");
+
+        return false;
+      }
+
+      setNodes((prev) => [...prev, ...newNodes]);
+      setEdges((prev) => [...prev, ...newEdges]);
+      setSelectedNodeId(selectedNode.id);
+      setSelectedNodeIds([selectedNode.id]);
+
+      toast.success(
+        `Imported ${newNodes.length} node${newNodes.length === 1 ? "" : "s"}`,
+      );
+
+      return true;
+    },
+    [
+      nodes,
+      selectedNode,
+      setEdges,
+      setNodes,
+      setSelectedNodeId,
+      setSelectedNodeIds,
+    ],
+  );
 
   const handleNodeSelection = useCallback((nodes: MindMapNode[]) => {
     if (nodes.length === 0) {
@@ -995,6 +1262,8 @@ export default function Editor() {
         onNewProject={onNewProject}
       />
       <Toolbar
+        autoLayoutMode={autoLayoutMode}
+        onAutoLayout={handleAutoLayout}
         onCopy={handleCopy}
         onDeleteNodeOrEdge={handleDeleteNodeOrEdge}
         onLoadMindMap={onLoadMindMap}
@@ -1031,6 +1300,7 @@ export default function Editor() {
             onEdgeDirectionSwitch={handleEdgeDirectionSwitch}
             onEdgeLabelChange={handleEdgeLabelChange}
             onEdgeMarkerChange={handleEdgeMarkerChange}
+            onImportOutline={handleImportOutline}
             onNameChange={handleNodeNameChange}
             onTextPropertiesChange={handleTextPropertiesChange}
           />

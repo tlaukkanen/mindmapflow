@@ -176,7 +176,11 @@ export const Menubar = ({
     setThemeAnchorEl(event.currentTarget);
   };
   const handleThemeMenuKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
+    if (
+      event.key === "ArrowRight" ||
+      event.key === "Enter" ||
+      event.key === " "
+    ) {
       event.preventDefault();
       setThemeAnchorEl(event.currentTarget as HTMLElement);
     }
@@ -314,10 +318,12 @@ export const Menubar = ({
                 </MenuItem>
                 <Divider component="li" sx={{ my: 0.5 }} />
                 <MenuItem
-                  id="project-theme-menu-item"
-                  aria-controls={themeMenuOpen ? "project-theme-menu" : undefined}
-                  aria-haspopup="true"
+                  aria-controls={
+                    themeMenuOpen ? "project-theme-menu" : undefined
+                  }
                   aria-expanded={themeMenuOpen ? "true" : undefined}
+                  aria-haspopup="true"
+                  id="project-theme-menu-item"
                   onClick={handleThemeMenuOpen}
                   onKeyDown={handleThemeMenuKeyDown}
                 >
@@ -330,7 +336,10 @@ export const Menubar = ({
                     }}
                   >
                     <Typography variant="inherit">Project theme</Typography>
-                    <KeyboardArrowRightIcon fontSize="small" sx={{ ml: "auto" }} />
+                    <KeyboardArrowRightIcon
+                      fontSize="small"
+                      sx={{ ml: "auto" }}
+                    />
                   </Box>
                 </MenuItem>
               </Menu>

@@ -40,9 +40,9 @@ export default function Home() {
             </div>
             <div className={subtitle({ class: "mt-4" })}>
               🧠 Whether you&apos;re a student, professional, or creative, our
-              intuitive interface helps you map out thoughts, simplify
-              concepts, and bring your projects to life. Join the MindMapFlow
-              revolution and unlock the full potential of your mind!
+              intuitive interface helps you map out thoughts, simplify concepts,
+              and bring your projects to life. Join the MindMapFlow revolution
+              and unlock the full potential of your mind!
             </div>
           </div>
         </div>

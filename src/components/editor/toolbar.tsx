@@ -1,5 +1,17 @@
-import { AppBar, Toolbar as MUIToolbar, Box } from "@mui/material";
-import { IconButton } from "@mui/material";
+import { useState } from "react";
+import {
+  AppBar,
+  Toolbar as MUIToolbar,
+  Box,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { TbLayoutSidebarRightCollapseFilled } from "react-icons/tb";
 import { MdFullscreen } from "react-icons/md";
 import {
@@ -8,8 +20,11 @@ import {
   PiFloppyDiskThin,
   PiFolderOpenThin,
   PiGridFour,
+  PiShareNetworkThin,
   PiTrashThin,
 } from "react-icons/pi";
+
+import { AutoLayoutMode } from "@/utils/auto-layout";
 
 interface ToolbarProps {
   onToggleProperties: () => void;
@@ -20,6 +35,8 @@ interface ToolbarProps {
   onCopy: () => void;
   onPaste: () => void;
   onToggleGrid?: () => void;
+  onAutoLayout?: (mode?: AutoLayoutMode) => void;
+  autoLayoutMode: AutoLayoutMode;
 }
 
 export const Toolbar = ({
@@ -31,7 +48,26 @@ export const Toolbar = ({
   onCopy,
   onPaste,
   onToggleGrid,
+  onAutoLayout,
+  autoLayoutMode,
 }: ToolbarProps) => {
+  const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false);
+
+  const handleOpenLayoutDialog = () => {
+    if (!onAutoLayout) return;
+
+    setIsLayoutDialogOpen(true);
+  };
+
+  const handleCloseLayoutDialog = () => {
+    setIsLayoutDialogOpen(false);
+  };
+
+  const handleSelectLayout = (mode: AutoLayoutMode) => {
+    onAutoLayout?.(mode);
+    setIsLayoutDialogOpen(false);
+  };
+
   return (
     <AppBar
       className="bg-toolBar-background shadow-stone-500 shadow-md"
@@ -101,6 +137,15 @@ export const Toolbar = ({
             <PiTrashThin />
           </IconButton>
           <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
+          <IconButton
+            aria-label="Auto layout mindmap"
+            disabled={!onAutoLayout}
+            size="medium"
+            title="Auto layout mindmap"
+            onClick={handleOpenLayoutDialog}
+          >
+            <PiShareNetworkThin />
+          </IconButton>
         </Box>
         <Box
           className="text-toolBar-text"
@@ -139,6 +184,30 @@ export const Toolbar = ({
           </IconButton>
         </Box>
       </MUIToolbar>
+      <Dialog open={isLayoutDialogOpen} onClose={handleCloseLayoutDialog}>
+        <DialogTitle>Select Auto Layout</DialogTitle>
+        <DialogContent dividers>
+          <Typography sx={{ mb: 2 }}>Choose how to arrange nodes.</Typography>
+          <Stack spacing={1}>
+            {(["horizontal", "vertical", "radial"] as AutoLayoutMode[]).map(
+              (mode) => (
+                <Button
+                  key={mode}
+                  disabled={!onAutoLayout}
+                  fullWidth
+                  onClick={() => handleSelectLayout(mode)}
+                  variant={mode === autoLayoutMode ? "contained" : "outlined"}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </Button>
+              ),
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseLayoutDialog}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 };

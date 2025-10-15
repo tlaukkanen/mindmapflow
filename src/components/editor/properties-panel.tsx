@@ -1,6 +1,13 @@
 "use client";
 
-import { useRef, forwardRef, useImperativeHandle, KeyboardEvent } from "react";
+import {
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  KeyboardEvent,
+  useState,
+  useEffect,
+} from "react";
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -56,6 +63,7 @@ interface PropertiesPanelProps {
   onEdgeAnimatedChange: (animated: boolean) => void;
   onEdgeDirectionSwitch: () => void;
   onEdgeMarkerChange: (markerStart: boolean, markerEnd: boolean) => void;
+  onImportOutline: (outline: string) => Promise<boolean> | boolean;
 }
 
 const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
@@ -69,6 +77,7 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
       onEdgeAnimatedChange,
       onEdgeDirectionSwitch,
       onEdgeMarkerChange,
+      onImportOutline,
     },
     ref,
   ) => {
@@ -76,6 +85,8 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const edgeLabelRef = useRef<HTMLInputElement>(null);
     const descriptionRef = useRef<HTMLInputElement>(null);
+    const [outlineInput, setOutlineInput] = useState("");
+    const [isImporting, setIsImporting] = useState(false);
 
     useImperativeHandle(ref, () => ({
       focusNameInput: () => {
@@ -131,6 +142,29 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
       onEdgeMarkerChange(hasStart, hasEnd);
     };
 
+    useEffect(() => {
+      if (!selectedNode || selectedNode.data.depth !== 0) {
+        setOutlineInput("");
+      }
+    }, [selectedNode?.id, selectedNode?.data.depth]);
+
+    const handleOutlineImport = async () => {
+      const outline = outlineInput.trim();
+
+      if (!outline) return;
+
+      try {
+        setIsImporting(true);
+        const result = await Promise.resolve(onImportOutline(outline));
+
+        if (result) {
+          setOutlineInput("");
+        }
+      } finally {
+        setIsImporting(false);
+      }
+    };
+
     return (
       <Box
         className="w-max-56 w-56 h-full border-solid border-0 border-l border-panels-border p-0 bg-panels-background flex flex-col text-panels-text"
@@ -172,6 +206,39 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
                   ? "Connection properties"
                   : "Project properties"}
             </Typography>
+
+            {selectedNode?.data.depth === 0 && (
+              <>
+                <Typography variant="caption">Import outline</Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  label="Child nodes outline"
+                  margin="dense"
+                  minRows={6}
+                  placeholder="- Section\n  - Detail"
+                  size="small"
+                  value={outlineInput}
+                  onChange={(e) => setOutlineInput(e.target.value)}
+                  onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key === "Enter" && event.ctrlKey) {
+                      event.preventDefault();
+                      void handleOutlineImport();
+                    }
+                  }}
+                />
+                <Button
+                  className="mt-1"
+                  color="inherit"
+                  disabled={isImporting || !outlineInput.trim()}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => void handleOutlineImport()}
+                >
+                  {isImporting ? "Importing..." : "Import outline"}
+                </Button>
+              </>
+            )}
 
             {selectedNode && selectedNode.type?.startsWith("azure") && (
               <TextField

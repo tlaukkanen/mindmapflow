@@ -1,11 +1,11 @@
 import "@/styles/globals.css";
+import type { CSSProperties } from "react";
+
 import { Metadata, Viewport } from "next";
 import { Link } from "@mui/material";
 
 import { siteConfig } from "@/config/site";
 import { Navbar } from "@/components/navbar";
-import type { CSSProperties } from "react";
-
 import {
   DEFAULT_PALETTE_ID,
   getPaletteById,

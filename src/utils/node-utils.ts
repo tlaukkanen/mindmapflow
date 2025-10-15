@@ -186,3 +186,36 @@ export function updateEdgeConnections(
     };
   });
 }
+
+export function recalculateAllEdgeConnections(
+  nodes: MindMapNode[],
+  edges: Edge[],
+): Edge[] {
+  return edges.map((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+
+    if (!sourceNode || !targetNode) {
+      return edge;
+    }
+
+    const { sourceHandle, targetHandle } = getOptimalHandlePair(
+      sourceNode,
+      targetNode,
+      nodes,
+    );
+
+    if (
+      edge.sourceHandle === sourceHandle &&
+      edge.targetHandle === targetHandle
+    ) {
+      return edge;
+    }
+
+    return {
+      ...edge,
+      sourceHandle,
+      targetHandle,
+    };
+  });
+}
