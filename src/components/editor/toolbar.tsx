@@ -204,10 +204,10 @@ export const Toolbar = ({
               (mode) => (
                 <Button
                   key={mode}
-                  disabled={!onAutoLayout}
                   fullWidth
-                  onClick={() => handleSelectLayout(mode)}
+                  disabled={!onAutoLayout}
                   variant={mode === autoLayoutMode ? "contained" : "outlined"}
+                  onClick={() => handleSelectLayout(mode)}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </Button>

@@ -525,7 +525,9 @@ export const getAutoLayoutedNodes = (
     const firstLevelStep =
       firstLevelCount > 0 ? fullSpan / firstLevelCount : fullSpan;
     const rootStart =
-      firstLevelCount > 0 ? baseAngle - firstLevelStep / 2 : baseAngle - Math.PI;
+      firstLevelCount > 0
+        ? baseAngle - firstLevelStep / 2
+        : baseAngle - Math.PI;
 
     angleInfo.set(rootNode.id, {
       angle: baseAngle,

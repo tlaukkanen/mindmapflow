@@ -67,35 +67,33 @@ class AiSuggestionService {
 
     const childSummary =
       params.existingChildren && params.existingChildren.length > 0
-        ? params.existingChildren
-            .map((child) => `- ${child}`)
-            .join("\n")
+        ? params.existingChildren.map((child) => `- ${child}`).join("\n")
         : "(No existing children)";
 
     const mindmapOutline = this.renderMindmapOutline(params.mindmap);
 
     const requestBody = {
       messages: [
-      {
-        role: "system",
-        content:
-        "You are assisting with mind mapping. Respond using JSON matching the schema " +
-        '{\"suggestions\": [{\"title\": string, \"children\"?: Suggestion[]}]} where Suggestion follows the same shape. ' +
-        "Provide concise titles for the first level (ideally under 8 words, maximum 12). " +
-        "You may extend nested suggestions up to three levels deep; deeper children can use slightly longer, phrase-like titles when that adds clarity. " +
-        "You can also add more descriptive text to the suggestions when it helps convey the idea or information - like actual numerical values or dates if relevant. " +
-        "Include a relevant emoji when it enhances understanding.",
-      },
-      {
-        role: "user",
-        content: 
-        `The parent node is: "${params.parentDescription}".\n` +
-        `Existing children are:\n${childSummary}\n\n` +
-        `Full mind map outline:\n${mindmapOutline}\n\n` +
-        `Suggest 1-5 additional child nodes relevant to the parent. ` +
-        `Avoid duplicates of existing topics. ` +
-        `Include nested child ideas when useful by populating children arrays.`,
-      },
+        {
+          role: "system",
+          content:
+            "You are assisting with mind mapping. Respond using JSON matching the schema " +
+            '{"suggestions": [{"title": string, "children"?: Suggestion[]}]} where Suggestion follows the same shape. ' +
+            "Provide concise titles for the first level (ideally under 8 words, maximum 12). " +
+            "You may extend nested suggestions up to three levels deep; deeper children can use slightly longer, phrase-like titles when that adds clarity. " +
+            "You can also add more descriptive text to the suggestions when it helps convey the idea or information - like actual numerical values or dates if relevant. " +
+            "Include a relevant emoji when it enhances understanding.",
+        },
+        {
+          role: "user",
+          content:
+            `The parent node is: "${params.parentDescription}".\n` +
+            `Existing children are:\n${childSummary}\n\n` +
+            `Full mind map outline:\n${mindmapOutline}\n\n` +
+            `Suggest 1-5 additional child nodes relevant to the parent. ` +
+            `Avoid duplicates of existing topics. ` +
+            `Include nested child ideas when useful by populating children arrays.`,
+        },
       ],
       temperature: 0.4,
       max_tokens: 2000,
@@ -113,6 +111,7 @@ class AiSuggestionService {
 
     if (!response.ok) {
       const errorText = await response.text();
+
       logger.error("Azure OpenAI request failed to URL " + url, {
         status: response.status,
         statusText: response.statusText,
@@ -182,17 +181,20 @@ class AiSuggestionService {
     for (const node of mindmap) {
       const parentId = node.parentId;
       const entry = childrenMap.get(parentId) ?? [];
+
       entry.push(node);
       childrenMap.set(parentId, entry);
     }
 
-    const roots = childrenMap.get(null) ?? mindmap.filter((node) => !node.parentId);
+    const roots =
+      childrenMap.get(null) ?? mindmap.filter((node) => !node.parentId);
 
     const lines: string[] = [];
 
     const traverse = (node: MindmapNodeSummary, depth: number) => {
       const indent = "  ".repeat(depth);
       const text = node.description.trim().replace(/[\r\n]+/g, " ");
+
       lines.push(`${indent}- ${text}`);
       const children = childrenMap.get(node.id);
 
@@ -206,7 +208,10 @@ class AiSuggestionService {
     };
 
     roots
-      .filter((node, index, self) => self.findIndex((candidate) => candidate.id === node.id) === index)
+      .filter(
+        (node, index, self) =>
+          self.findIndex((candidate) => candidate.id === node.id) === index,
+      )
       .sort((a, b) => a.description.localeCompare(b.description))
       .forEach((root) => {
         traverse(root, 0);
@@ -215,7 +220,9 @@ class AiSuggestionService {
     return lines.join("\n") || "(Mind map content omitted)";
   }
 
-  private transformRawSuggestion(raw: RawSuggestion): AiSubnodeSuggestion | undefined {
+  private transformRawSuggestion(
+    raw: RawSuggestion,
+  ): AiSubnodeSuggestion | undefined {
     if (!raw || typeof raw !== "object") {
       return undefined;
     }

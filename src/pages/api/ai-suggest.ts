@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+
 import { getToken } from "next-auth/jwt";
 
 import { aiSuggestionService } from "@/services/ai-suggestion-service";
@@ -50,9 +51,7 @@ export default async function handler(
 
     const existingChildren = Array.isArray(body?.existingChildren)
       ? body?.existingChildren
-          .map((item) =>
-            typeof item === "string" ? item.trim() : undefined,
-          )
+          .map((item) => (typeof item === "string" ? item.trim() : undefined))
           .filter((item): item is string => Boolean(item && item.length))
       : undefined;
 

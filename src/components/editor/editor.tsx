@@ -1371,11 +1371,11 @@ export default function Editor() {
       />
       <Toolbar
         autoLayoutMode={autoLayoutMode}
+        onAddNote={handleAddNoteNode}
         onAutoLayout={handleAutoLayout}
         onCopy={handleCopy}
         onDeleteNodeOrEdge={handleDeleteNodeOrEdge}
         onLoadMindMap={onLoadMindMap}
-        onAddNote={handleAddNoteNode}
         onPaste={handlePaste}
         onSaveMindMap={onSaveMindMap}
         onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}

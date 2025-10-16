@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@mui/material";
 import { AppInsightsContext } from "@microsoft/applicationinsights-react-js";
 import Image from "next/image";
@@ -16,6 +16,22 @@ export default function Home() {
 
   const openLightbox = (src: string, alt: string) => setLightbox({ src, alt });
   const closeLightbox = () => setLightbox(null);
+
+  useEffect(() => {
+    if (!lightbox) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeLightbox();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightbox]);
 
   return (
     <AppInsightsContext.Provider value={reactPlugin}>
@@ -34,15 +50,16 @@ export default function Home() {
                 Capture Every Spark In One Map
               </span>
               <p className="text-body text-lg leading-relaxed">
-                ✏️ Meet MindMapFlow, your ultimate brainstorming companion. Designed to
-                unleash creativity and enhance productivity, MindMapFlow transforms complex
-                ideas into clear, structured visuals.
+                ✏️ Meet MindMapFlow, your ultimate brainstorming companion.
+                Designed to unleash creativity and enhance productivity,
+                MindMapFlow transforms complex ideas into clear, structured
+                visuals.
               </p>
               <p className="text-body text-lg leading-relaxed">
-                🧠 Whether you&apos;re a student, professional, or creative, our intuitive
-                interface helps you map out thoughts, simplify concepts, and bring your
-                projects to life. Join the MindMapFlow revolution and unlock the full
-                potential of your mind!
+                🧠 Whether you&apos;re a student, professional, or creative, our
+                intuitive interface helps you map out thoughts, simplify
+                concepts, and bring your projects to life. Join the MindMapFlow
+                revolution and unlock the full potential of your mind!
               </p>
               <div className="flex gap-3 pt-2">
                 <Link
@@ -56,10 +73,15 @@ export default function Home() {
             </div>
             <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md bg-surface md:order-last">
               <button
-                type="button"
                 aria-label="Expand MindMapFlow editor screenshot"
                 className="group relative block h-full w-full cursor-zoom-in border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
-                onClick={() => openLightbox("/screens/mindmapflow_20251016.png", "Overview of the MindMapFlow editor")}
+                type="button"
+                onClick={() =>
+                  openLightbox(
+                    "/screens/mindmapflow_20251016.png",
+                    "Overview of the MindMapFlow editor",
+                  )
+                }
               >
                 <Image
                   fill
@@ -76,10 +98,15 @@ export default function Home() {
           <div className="grid items-center gap-8 rounded-md border border-panels-border bg-surface p-8 shadow-xl md:grid-cols-[1fr_1.1fr]">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-surface md:order-first">
               <button
-                type="button"
                 aria-label="Expand AI suggestions screenshot"
                 className="group relative block h-full w-full cursor-zoom-in border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
-                onClick={() => openLightbox("/screens/ai-suggestions-2025-10-16.png", "Preview of AI suggestions inside MindMapFlow")}
+                type="button"
+                onClick={() =>
+                  openLightbox(
+                    "/screens/ai-suggestions-2025-10-16.png",
+                    "Preview of AI suggestions inside MindMapFlow",
+                  )
+                }
               >
                 <Image
                   fill
@@ -95,14 +122,14 @@ export default function Home() {
                 AI Suggestions That Keep You Moving
               </span>
               <p className="text-body text-lg leading-relaxed">
-                Let the editor surface context-aware topics and follow-up ideas while you
-                sketch. Intelligent prompts react to the structure of your mind map so your
-                next step is always one click away.
+                Let the editor surface context-aware follow-up ideas while you
+                sketch. Suggestions adapt to the structure of your mind map so
+                expanding a branch is always one click away.
               </p>
               <p className="text-body text-lg leading-relaxed">
-                Capture lightning-fast inspiration without losing flow—save your favourite
-                prompts, apply AI suggestions instantly, and keep every brainstorm moving
-                forward.
+                Receive ready-to-use title tweaks, supporting points, and node
+                variations directly in the canvas—stay focused on flow while AI
+                brings fresh angles to each concept.
               </p>
             </div>
           </div>
@@ -113,21 +140,27 @@ export default function Home() {
                 Themes That Match Your Mindset
               </span>
               <p className="text-body text-lg leading-relaxed">
-                Tailor every board with curated palettes and typography presets designed for
-                strategy, design, education, and more. Switch themes without leaving the
-                canvas to explore the mood that fits your story.
+                Tailor every board with curated palettes and typography presets
+                designed for strategy, design, education, and more. Switch
+                themes without leaving the canvas to explore the mood that fits
+                your story.
               </p>
               <p className="text-body text-lg leading-relaxed">
-                Preview changes instantly, collaborate with team favourites, and ship final
-                visuals that look polished in every export.
+                Preview changes instantly, collaborate with team favourites, and
+                ship final visuals that look polished in every export.
               </p>
             </div>
             <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md bg-surface md:order-last">
               <button
-                type="button"
                 aria-label="Expand themes gallery screenshot"
                 className="group relative block h-full w-full cursor-zoom-in border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
-                onClick={() => openLightbox("/screens/themes-2025-10-16.png", "Gallery of theme options available in MindMapFlow")}
+                type="button"
+                onClick={() =>
+                  openLightbox(
+                    "/screens/themes-2025-10-16.png",
+                    "Gallery of theme options available in MindMapFlow",
+                  )
+                }
               >
                 <Image
                   fill
@@ -146,27 +179,39 @@ export default function Home() {
             aria-modal="true"
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
             role="dialog"
-            onClick={closeLightbox}
+            tabIndex={-1}
           >
-            <div
-              className="relative h-full max-h-[90vh] w-full max-w-5xl"
-              onClick={(event) => event.stopPropagation()}
-            >
+            <button
+              aria-label="Close enlarged screenshot"
+              className="absolute inset-0 h-full w-full cursor-zoom-out border-0 bg-transparent p-0"
+              type="button"
+              onClick={closeLightbox}
+            />
+            <div className="relative z-[110] h-full max-h-[90vh] w-full max-w-5xl">
               <button
-                type="button"
                 aria-label="Close enlarged screenshot"
-                className="absolute right-4 top-4 z-[110] rounded-md bg-black/70 px-3 py-1 text-sm font-medium text-white transition hover:bg-black"
+                className="absolute right-4 top-4 z-[120] rounded-md bg-black/70 px-3 py-1 text-sm font-medium text-white transition hover:bg-black"
+                type="button"
                 onClick={closeLightbox}
               >
                 Close
               </button>
-              <Image
-                fill
-                alt={lightbox.alt}
-                className="object-contain"
-                sizes="100vw"
-                src={lightbox.src}
-              />
+              <button
+                aria-label="Close enlarged screenshot"
+                className="group block h-full w-full border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
+                type="button"
+                onClick={closeLightbox}
+              >
+                <span className="relative block h-full w-full">
+                  <Image
+                    fill
+                    alt={lightbox.alt}
+                    className="object-contain transition group-hover:scale-[1.002]"
+                    sizes="100vw"
+                    src={lightbox.src}
+                  />
+                </span>
+              </button>
             </div>
           </div>
         ) : null}
