@@ -20,6 +20,7 @@ import {
   PiFloppyDiskThin,
   PiFolderOpenThin,
   PiGridFour,
+  PiNote,
   PiShareNetworkThin,
   PiTrashThin,
 } from "react-icons/pi";
@@ -34,6 +35,7 @@ interface ToolbarProps {
   onDeleteNodeOrEdge: () => void;
   onCopy: () => void;
   onPaste: () => void;
+  onAddNote: () => void;
   onToggleGrid?: () => void;
   onAutoLayout?: (mode?: AutoLayoutMode) => void;
   autoLayoutMode: AutoLayoutMode;
@@ -47,6 +49,7 @@ export const Toolbar = ({
   onDeleteNodeOrEdge,
   onCopy,
   onPaste,
+  onAddNote,
   onToggleGrid,
   onAutoLayout,
   autoLayoutMode,
@@ -135,6 +138,14 @@ export const Toolbar = ({
             onClick={onDeleteNodeOrEdge}
           >
             <PiTrashThin />
+          </IconButton>
+          <IconButton
+            aria-label="Add note"
+            size="medium"
+            title="Add note"
+            onClick={onAddNote}
+          >
+            <PiNote />
           </IconButton>
           <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
           <IconButton

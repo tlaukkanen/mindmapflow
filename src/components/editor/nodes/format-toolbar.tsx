@@ -37,9 +37,10 @@ const countTotalSuggestions = (items: AiSubnodeSuggestion[]): number =>
 
 interface FormatToolbarProps {
   id: string;
+  resourceType?: string;
 }
 
-export const FormatToolbar = memo(({ id }: FormatToolbarProps) => {
+export const FormatToolbar = memo(({ id, resourceType }: FormatToolbarProps) => {
   const { data: session } = useSession();
   const { setNodes, setEdges, getNodes } = useReactFlow<MindMapNode>();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -48,6 +49,7 @@ export const FormatToolbar = memo(({ id }: FormatToolbarProps) => {
     useState<AiSubnodeSuggestion[] | null>(null);
   const [pendingParentId, setPendingParentId] = useState<string | null>(null);
   const [pendingParentTitle, setPendingParentTitle] = useState<string>("");
+  const isNoteNode = resourceType === "Note";
 
   // Remove the position styling from button styles as it's conflicting
   const buttonStyles = {
@@ -427,26 +429,28 @@ export const FormatToolbar = memo(({ id }: FormatToolbarProps) => {
           <PiTextStrikethrough className="w-4 h-4" />
         </IconButton>
       </Tooltip>
-      <Tooltip
-        title={
-          session
-            ? isGenerating
-              ? "Generating AI suggestions..."
-              : "Ask AI to suggest child topics"
-            : "Sign in to use AI suggestions"
-        }
-      >
-        <span>
-          <IconButton
-            size="small"
-            sx={buttonStyles}
-            disabled={!session || isGenerating || isDialogOpen}
-            onClick={handleAiSuggestions}
-          >
-            <PiSparkleFill className="w-4 h-4" />
-          </IconButton>
-        </span>
-      </Tooltip>
+      {!isNoteNode && (
+        <Tooltip
+          title={
+            session
+              ? isGenerating
+                ? "Generating AI suggestions..."
+                : "Ask AI to suggest child topics"
+              : "Sign in to use AI suggestions"
+          }
+        >
+          <span>
+            <IconButton
+              size="small"
+              sx={buttonStyles}
+              disabled={!session || isGenerating || isDialogOpen}
+              onClick={handleAiSuggestions}
+            >
+              <PiSparkleFill className="w-4 h-4" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      )}
       <Dialog
         fullWidth
         maxWidth="sm"

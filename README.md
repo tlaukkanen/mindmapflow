@@ -20,3 +20,7 @@ Set the following environment variables to enable AI-powered suggestions via Azu
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_MODEL`
 - `AZURE_OPENAI_API_VERSION`
+
+## 3rd Party Notes
+
+- https://screely.com/ used for browser screenshots

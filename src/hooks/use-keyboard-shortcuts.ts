@@ -16,6 +16,7 @@ interface KeyboardShortcutHandlers {
   onSpace?: () => void; // Add new handler
   onEscape?: () => void; // Add new handler
   onCtrlS?: () => void; // new handler for CTRL+s
+  onAddNote?: () => void; // handler for creating a new note
 }
 
 export function useKeyboardShortcuts({
@@ -32,6 +33,7 @@ export function useKeyboardShortcuts({
   onSpace, // Add new handler
   onEscape, // Add new handler
   onCtrlS, // new handler
+  onAddNote,
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -92,6 +94,14 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onEscape?.();
           break;
+        case "n":
+        case "N":
+          if (event.ctrlKey || event.metaKey || event.altKey) {
+            break;
+          }
+          event.preventDefault();
+          onAddNote?.();
+          break;
         default:
           // Handle Copy & Paste
           if (
@@ -128,7 +138,8 @@ export function useKeyboardShortcuts({
       onSpace,
       onEscape,
       onCtrlS,
-    ], // Add onTab, onEnter, and onEscape to dependencies
+      onAddNote,
+    ],
   );
 
   useEffect(() => {

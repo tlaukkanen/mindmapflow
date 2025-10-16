@@ -76,20 +76,26 @@ class AiSuggestionService {
 
     const requestBody = {
       messages: [
-        {
-          role: "system",
-          content:
-            "You are assisting with mind mapping. Respond using JSON matching the schema {\"suggestions\": [{\"title\": string, \"children\"?: Suggestion[]}]} where Suggestion follows the same shape. Provide concise titles for the first level (ideally under 8 words, maximum 12). You may extend nested suggestions up to three levels deep; deeper children can use slightly longer, phrase-like titles when that adds clarity. Include a relevant emoji only when it genuinely enhances understanding, otherwise omit emojis.",
-        },
-        {
-          role: "user",
-          content: `The parent node is: "${params.parentDescription}".
-Existing children are:\n${childSummary}
-
-Full mind map outline:\n${mindmapOutline}
-
-Suggest 1-5 additional child nodes relevant to the parent. Avoid duplicates of existing topics. Include nested child ideas when useful by populating children arrays.`,
-        },
+      {
+        role: "system",
+        content:
+        "You are assisting with mind mapping. Respond using JSON matching the schema " +
+        '{\"suggestions\": [{\"title\": string, \"children\"?: Suggestion[]}]} where Suggestion follows the same shape. ' +
+        "Provide concise titles for the first level (ideally under 8 words, maximum 12). " +
+        "You may extend nested suggestions up to three levels deep; deeper children can use slightly longer, phrase-like titles when that adds clarity. " +
+        "You can also add more descriptive text to the suggestions when it helps convey the idea or information - like actual numerical values or dates if relevant. " +
+        "Include a relevant emoji when it enhances understanding.",
+      },
+      {
+        role: "user",
+        content: 
+        `The parent node is: "${params.parentDescription}".\n` +
+        `Existing children are:\n${childSummary}\n\n` +
+        `Full mind map outline:\n${mindmapOutline}\n\n` +
+        `Suggest 1-5 additional child nodes relevant to the parent. ` +
+        `Avoid duplicates of existing topics. ` +
+        `Include nested child ideas when useful by populating children arrays.`,
+      },
       ],
       temperature: 0.4,
       max_tokens: 2000,

@@ -794,6 +794,113 @@ export default function Editor() {
     );
   }, [copiedNodes, setNodes, setEdges, edges, pasteCount]);
 
+  const handleAddNoteNode = useCallback(() => {
+    const NOTE_WIDTH = 220;
+    const NOTE_HEIGHT = 140;
+    const NOTE_GAP_Y = 24;
+
+    const defaultTextProps = getDefaultTextProperties("Note");
+
+    const newNoteId = crypto.randomUUID();
+
+    let parentId: string | undefined;
+    let resolvedPosition = { x: 0, y: 0 };
+
+    if (selectedNode) {
+      const selectedAbsolute = getAbsolutePosition(selectedNode, nodes);
+      const selectedWidth =
+        typeof selectedNode.width === "number"
+          ? selectedNode.width
+          : typeof selectedNode.style?.width === "number"
+            ? selectedNode.style.width
+            : NOTE_WIDTH;
+      const noteAbsolute = {
+        x: selectedAbsolute.x + (selectedWidth - NOTE_WIDTH) / 2,
+        y: selectedAbsolute.y - NOTE_HEIGHT - NOTE_GAP_Y,
+      };
+
+      parentId = selectedNode.parentId;
+
+      if (parentId) {
+        const parentNode = nodes.find((n) => n.id === parentId);
+
+        if (parentNode) {
+          const parentAbsolute = getAbsolutePosition(parentNode, nodes);
+
+          resolvedPosition = {
+            x: noteAbsolute.x - parentAbsolute.x,
+            y: noteAbsolute.y - parentAbsolute.y,
+          };
+        } else {
+          parentId = undefined;
+          resolvedPosition = noteAbsolute;
+        }
+      } else {
+        resolvedPosition = noteAbsolute;
+      }
+    } else {
+      const viewport = getViewport();
+      const zoom = viewport.zoom ?? 1;
+      const centerX = (-viewport.x + window.innerWidth / 2) / zoom;
+      const centerY = (-viewport.y + window.innerHeight / 2) / zoom;
+
+      resolvedPosition = {
+        x: centerX - NOTE_WIDTH / 2,
+        y: centerY - NOTE_HEIGHT / 2,
+      };
+    }
+
+    const newNode: MindMapNode = {
+      id: newNoteId,
+      type: "noteShape",
+      position: resolvedPosition,
+      data: {
+        resourceType: "Note",
+        iconName: "Note",
+        description: "",
+        isEditing: true,
+        textProperties: defaultTextProps,
+      },
+      style: {
+        width: NOTE_WIDTH,
+        height: NOTE_HEIGHT,
+      },
+      width: NOTE_WIDTH,
+      height: NOTE_HEIGHT,
+      selected: true,
+    };
+
+    if (parentId) {
+      newNode.parentId = parentId;
+    }
+
+    setNodes((prev) => [
+      ...prev.map((node) =>
+        node.selected || node.data.isEditing
+          ? {
+              ...node,
+              selected: false,
+              data: { ...node.data, isEditing: false },
+            }
+          : node,
+      ),
+      newNode,
+    ]);
+    setSelectedNodeId(newNoteId);
+    setSelectedNodeIds([newNoteId]);
+    setSelectedEdgeId(null);
+    setHasUnsavedChanges(true);
+  }, [
+    getViewport,
+    nodes,
+    selectedNode,
+    setNodes,
+    setSelectedEdgeId,
+    setSelectedNodeId,
+    setSelectedNodeIds,
+    setHasUnsavedChanges,
+  ]);
+
   const handleEdgeDirectionSwitch = useCallback(() => {
     if (!selectedEdgeId) return;
 
@@ -1253,6 +1360,7 @@ export default function Editor() {
     onArrowRight: () => handleArrowNavigation("right"),
     onArrowUp: () => handleArrowNavigation("up"),
     onArrowDown: () => handleArrowNavigation("down"),
+    onAddNote: handleAddNoteNode,
   });
 
   return (
@@ -1267,6 +1375,7 @@ export default function Editor() {
         onCopy={handleCopy}
         onDeleteNodeOrEdge={handleDeleteNodeOrEdge}
         onLoadMindMap={onLoadMindMap}
+        onAddNote={handleAddNoteNode}
         onPaste={handlePaste}
         onSaveMindMap={onSaveMindMap}
         onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}

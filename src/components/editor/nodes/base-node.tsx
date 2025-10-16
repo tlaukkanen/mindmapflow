@@ -269,11 +269,13 @@ export const BaseNode = memo(
               onAddChild={onAddChild || (() => {})}
               onAddSibling={onAddSibling || (() => {})}
             />
-            <FormatToolbar id={id} />
+            <FormatToolbar id={id} resourceType={data.resourceType} />
           </>
         )}
         {renderContent()}
-        {data.isEditing && <FormatToolbar id={id} />}
+        {data.isEditing && (
+          <FormatToolbar id={id} resourceType={data.resourceType} />
+        )}
         <Handle
           className="w-0 h-0 opacity-0 "
           id={`${id}-top-target`}
