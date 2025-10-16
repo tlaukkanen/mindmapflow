@@ -35,8 +35,16 @@ export default function Home() {
 
   return (
     <AppInsightsContext.Provider value={reactPlugin}>
-      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+      <section className="flex flex-col items-center justify-center gap-4 ">
         <AppInsightService />
+        <Image
+          alt="MindMapFlow logo"
+          className="object-contain"
+          height={260}
+          src="/mindmapflow_logo_with_text.png"
+          width={480}
+        />
+
         <div className="inline-block max-w-3xl text-center justify-center">
           <span className={title({ class: "text-heading" })}>
             Organize Your Ideas, Simplify Your Workflow, Enhance Productivity
@@ -47,7 +55,7 @@ export default function Home() {
           <div className="grid items-center gap-8 rounded-md border border-panels-border bg-surface p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
-                Capture Every Spark In One Map
+                Capture Every Spark of Creativity
               </span>
               <p className="text-body text-lg leading-relaxed">
                 ✏️ Meet MindMapFlow, your ultimate brainstorming companion.
