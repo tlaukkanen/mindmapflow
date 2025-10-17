@@ -33,10 +33,6 @@ import {
   PiArrowRight,
   PiArrowsLeftRight,
   PiMinus,
-  PiTextAlignCenter,
-  PiTextAlignJustify,
-  PiTextAlignLeft,
-  PiTextAlignRight,
   PiTextB,
   PiTextItalic,
   PiTextStrikethrough,
@@ -106,12 +102,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
     //     inputRef.current.focus();
     //   }
     // }, [selectedNode?.id]);
-
-    const handleTextAlignChange = (_: any, newAlign: string) => {
-      onTextPropertiesChange({
-        textAlign: newAlign as TextProperties["textAlign"],
-      });
-    };
 
     const handleVerticalAlignChange = (_: any, newAlign: string) => {
       onTextPropertiesChange({
@@ -206,7 +196,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
                   ? "Connection properties"
                   : "Project properties"}
             </Typography>
-
             {selectedNode?.data.depth === 0 && (
               <>
                 <Typography variant="caption">Import outline</Typography>
@@ -365,27 +354,6 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
               <>
                 <Typography variant="caption">Text properties</Typography>
                 <FormGroup>
-                  <ToggleButtonGroup
-                    exclusive
-                    value={
-                      selectedNode?.data.textProperties?.textAlign || "left"
-                    }
-                    onChange={handleTextAlignChange}
-                  >
-                    <ToggleButton value="left">
-                      <PiTextAlignLeft />
-                    </ToggleButton>
-                    <ToggleButton value="center">
-                      <PiTextAlignCenter />
-                    </ToggleButton>
-                    <ToggleButton value="right">
-                      <PiTextAlignRight />
-                    </ToggleButton>
-                    <ToggleButton value="justify">
-                      <PiTextAlignJustify />
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                  <Box className="h-2" />
                   <ToggleButtonGroup
                     exclusive
                     value={

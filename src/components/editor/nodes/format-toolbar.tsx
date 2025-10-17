@@ -1,6 +1,7 @@
 "use client";
 
 import type { AiSubnodeSuggestion } from "@/services/ai-suggestion-service";
+import type { TextProperties } from "./base-node";
 
 import { memo, useCallback, useState } from "react";
 import { useReactFlow, Edge } from "@xyflow/react";
@@ -21,6 +22,10 @@ import {
   PiTextUnderline,
   PiTextStrikethrough,
   PiSparkleFill,
+  PiTextAlignLeft,
+  PiTextAlignCenter,
+  PiTextAlignRight,
+  PiTextAlignJustify,
 } from "react-icons/pi";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -392,6 +397,20 @@ export const FormatToolbar = memo(
       ? countTotalSuggestions(pendingSuggestions)
       : 0;
 
+    const currentNode = getNodes().find((node) => node.id === id);
+    const currentTextAlign =
+      currentNode?.data.textProperties?.textAlign ?? "left";
+
+    const createButtonStyles = (isActive: boolean) => ({
+      ...buttonStyles,
+      ...(isActive && {
+        backgroundColor: "#e2e8f0",
+        "&:hover": {
+          backgroundColor: "#e2e8f0",
+        },
+      }),
+    });
+
     const handleFormatChange = (property: FormatProperty) => {
       setNodes((prevNodes) =>
         prevNodes.map((node) => {
@@ -415,8 +434,84 @@ export const FormatToolbar = memo(
       );
     };
 
+    const handleTextAlignChange = (
+      alignment: NonNullable<TextProperties["textAlign"]>,
+    ) => {
+      setNodes((prevNodes) =>
+        prevNodes.map((node) => {
+          if (node.id === id) {
+            const textProperties = node.data.textProperties || {};
+
+            if (textProperties.textAlign === alignment) {
+              return node;
+            }
+
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                textProperties: {
+                  ...textProperties,
+                  textAlign: alignment,
+                },
+              },
+            };
+          }
+
+          return node;
+        }),
+      );
+    };
+
     return (
       <div style={toolbarStyles}>
+        <Tooltip title="Align left">
+          <IconButton
+            size="small"
+            sx={createButtonStyles(
+              !currentTextAlign || currentTextAlign === "left",
+            )}
+            onClick={() => handleTextAlignChange("left")}
+          >
+            <PiTextAlignLeft className="w-4 h-4" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Align center">
+          <IconButton
+            size="small"
+            sx={createButtonStyles(currentTextAlign === "center")}
+            onClick={() => handleTextAlignChange("center")}
+          >
+            <PiTextAlignCenter className="w-4 h-4" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Align right">
+          <IconButton
+            size="small"
+            sx={createButtonStyles(currentTextAlign === "right")}
+            onClick={() => handleTextAlignChange("right")}
+          >
+            <PiTextAlignRight className="w-4 h-4" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Align justify">
+          <IconButton
+            size="small"
+            sx={createButtonStyles(currentTextAlign === "justify")}
+            onClick={() => handleTextAlignChange("justify")}
+          >
+            <PiTextAlignJustify className="w-4 h-4" />
+          </IconButton>
+        </Tooltip>
+        <Box
+          component="span"
+          sx={{
+            width: "1px",
+            alignSelf: "stretch",
+            backgroundColor: "#e2e8f0",
+            margin: "0 4px",
+          }}
+        />
         <Tooltip title="Bold">
           <IconButton
             size="small"
@@ -453,6 +548,17 @@ export const FormatToolbar = memo(
             <PiTextStrikethrough className="w-4 h-4" />
           </IconButton>
         </Tooltip>
+        {!isNoteNode && (
+          <Box
+            component="span"
+            sx={{
+              width: "1px",
+              alignSelf: "stretch",
+              backgroundColor: "#e2e8f0",
+              margin: "0 4px",
+            }}
+          />
+        )}
         {!isNoteNode && (
           <Tooltip
             title={
