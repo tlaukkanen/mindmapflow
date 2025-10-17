@@ -1,10 +1,12 @@
 import React, { memo, ReactElement, useRef, useEffect } from "react";
 import { Handle, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import clsx from "clsx";
+import { PiArrowsHorizontalBold } from "react-icons/pi";
 
 import { AddNodeButtons } from "./add-node-buttons";
 import { FormatToolbar } from "./format-toolbar";
 
+import { setHasUnsavedChanges } from "@/hooks/use-auto-save";
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 
@@ -40,6 +42,9 @@ export const BaseNode = memo(
   }: BaseNodeProps) => {
     const { setNodes, getNodes, getEdges, deleteElements } = useReactFlow();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const isResizingRef = useRef(false);
+    const startXRef = useRef(0);
+    const startWidthRef = useRef<number | undefined>(undefined);
 
     // Add effect to handle text selection when entering edit mode
     useEffect(() => {
@@ -118,6 +123,90 @@ export const BaseNode = memo(
       }
     };
 
+    // --- Horizontal Resize logic (drag handle) ---
+    const MIN_WIDTH = 120;
+    const MAX_WIDTH = 720;
+
+    const getCurrentWidth = () => {
+      // Prefer explicit style.width, fallback to measured width from node prop
+      const styleWidth = (data as any)?.style?.width as number | undefined;
+      // NodeProps already spreads style prop; but width might exist on node
+      const nodeObj = getNodes().find((n) => n.id === id);
+      const nodeWidth = nodeObj?.style?.width ?? nodeObj?.width;
+
+      return (styleWidth ??
+        (typeof nodeWidth === "number" ? nodeWidth : undefined)) as
+        | number
+        | undefined;
+    };
+
+    const applyWidth = (newWidth: number) => {
+      const clamped = Math.max(
+        MIN_WIDTH,
+        Math.min(MAX_WIDTH, Math.round(newWidth)),
+      );
+
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === id
+            ? {
+                ...n,
+                style: { ...(n.style || {}), width: clamped },
+                // optional: keep width in node for layouting libraries that read it
+                width: clamped,
+              }
+            : n,
+        ),
+      );
+    };
+
+    const onResizeMove = (clientX: number) => {
+      if (!isResizingRef.current) return;
+      const dx = clientX - startXRef.current;
+      const base = startWidthRef.current ?? MIN_WIDTH;
+
+      applyWidth(base + dx);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => onResizeMove(e.clientX);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) onResizeMove(e.touches[0].clientX);
+    };
+
+    const endResize = () => {
+      if (!isResizingRef.current) return;
+      isResizingRef.current = false;
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", endResize);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", endResize);
+      // mark change for autosave system if present by toggling a benign value
+      setNodes((prev) => prev.map((n) => (n.id === id ? { ...n } : n)));
+      setHasUnsavedChanges(true);
+    };
+
+    const beginResize = (clientX: number) => {
+      isResizingRef.current = true;
+      startXRef.current = clientX;
+      startWidthRef.current = getCurrentWidth() ?? 240; // default starting width
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", endResize);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      window.addEventListener("touchend", endResize);
+    };
+
+    const onHandleMouseDown = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      beginResize(e.clientX);
+    };
+
+    const onHandleTouchStart = (e: React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.touches && e.touches[0]) beginResize(e.touches[0].clientX);
+    };
+
     // Create a function to wrap description text with proper styling
     const StyledDescription = () => {
       const resolvedDescriptionClass =
@@ -129,7 +218,7 @@ export const BaseNode = memo(
         return (
           <div
             className={clsx(
-              "whitespace-pre-wrap h-full flex flex-col min-h-[16px]",
+              "whitespace-pre-wrap break-words h-full flex flex-col min-h-[16px]",
               resolvedDescriptionClass,
               "px-1 ", // Add consistent padding
               // Text alignment horizontal
@@ -164,7 +253,7 @@ export const BaseNode = memo(
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             className={clsx(
-              "whitespace-pre-wrap w-full resize-none",
+              "whitespace-pre-wrap break-words w-full resize-none",
               resolvedDescriptionClass,
               "bg-transparent outline-none m-0 pt-2 border-0",
               "font-['Roboto',_'Helvetica',_'Arial',_sans-serif']",
@@ -271,6 +360,24 @@ export const BaseNode = memo(
             />
             <FormatToolbar id={id} resourceType={data.resourceType} />
           </>
+        )}
+        {/* Horizontal resize handle - bottom-left, white background like add buttons */}
+        {selected && (
+          <button
+            aria-label="Resize width"
+            className={clsx(
+              "absolute nodrag nopan right-0 -bottom-8 z-[9999]",
+              "rounded bg-white text-slate-700 shadow-md border border-slate-200 p-1",
+              "hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary",
+              "w-7 h-7 flex items-center justify-center cursor-ew-resize",
+            )}
+            title="Drag to resize width"
+            type="button"
+            onMouseDown={onHandleMouseDown}
+            onTouchStart={onHandleTouchStart}
+          >
+            <PiArrowsHorizontalBold size={16} />
+          </button>
         )}
         {renderContent()}
         {data.isEditing && (

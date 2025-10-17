@@ -13,7 +13,7 @@ interface RectangleNodeProps extends NodeProps<MindMapNode> {
 
 export default memo(function RectangleNode(props: RectangleNodeProps) {
   const getNodeStyle = () => {
-    const base = "h-full w-full max-w-[250px]";
+    const base = "h-full w-full"; // allow width to be controlled via node style
 
     if (props.data.depth === 0)
       return `${base} px-3 py-2 shadow-md rounded-md border border-solid border-canvas-node-border bg-root-node-background text-root-node-text`;

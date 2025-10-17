@@ -40,23 +40,36 @@ export function setLastSavedState(
 }
 
 const cleanNodesForComparison = (nodes: MindMapNode[]) =>
-  nodes.map((node) => ({
-    ...node,
-    height: undefined,
-    width: undefined,
-    selected: undefined,
-    data: {
-      ...node.data,
-      showHandles: undefined,
-      resizing: undefined,
-      onAddChild: undefined,
-      onAddSibling: undefined,
-    },
-    zIndex: undefined,
-    style: undefined,
-    interactionWidth: undefined,
-    className: undefined,
-  }));
+  nodes.map((node) => {
+    // Preserve persisted style properties (width/height) but drop volatile ones
+    const persistedStyle = node.style
+      ? {
+          ...(typeof node.style.width !== "undefined"
+            ? { width: node.style.width as number }
+            : {}),
+          ...(typeof node.style.height !== "undefined"
+            ? { height: node.style.height as number }
+            : {}),
+        }
+      : undefined;
+
+    return {
+      ...node,
+      // Keep width/height to persist user-resized size
+      selected: undefined,
+      data: {
+        ...node.data,
+        showHandles: undefined,
+        resizing: undefined,
+        onAddChild: undefined,
+        onAddSibling: undefined,
+      },
+      zIndex: undefined,
+      style: persistedStyle,
+      interactionWidth: undefined,
+      className: undefined,
+    } as MindMapNode;
+  });
 
 const cleanEdgesForComparison = (edges: Edge[]) =>
   edges.map((edge) => ({
