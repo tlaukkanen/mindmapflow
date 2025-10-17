@@ -1,5 +1,7 @@
 "use client";
 
+import type { MindMapNode } from "@/model/types";
+
 import {
   AppBar,
   Toolbar as MUIToolbar,
@@ -16,12 +18,7 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import Image from "next/image";
 import React, { useState, useEffect } from "react"; // Modified import: added useEffect
 import { toast } from "sonner";
-import {
-  getNodesBounds,
-  getViewportForBounds,
-  useReactFlow,
-} from "@xyflow/react";
-import { toPng } from "html-to-image";
+import { useReactFlow } from "@xyflow/react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { PiUser } from "react-icons/pi";
 
@@ -31,6 +28,7 @@ import { useEditor } from "@/store/editor-context";
 import { logger } from "@/services/logger";
 import { getHasUnsavedChanges } from "@/hooks/use-auto-save";
 import { ThemeSelector } from "@/components/theme-selector";
+import { MindmapExportError, renderMindmapToPng } from "@/utils/mindmap-export";
 
 interface MenubarProps {
   onNewProject: () => void;
@@ -198,45 +196,50 @@ export const Menubar = ({
   const downloadImage = (dataUrl: string) => {
     const a = document.createElement("a");
 
-    a.setAttribute("download", "reactflow.png");
+    a.setAttribute("download", "MindMapFlow.png");
     a.setAttribute("href", dataUrl);
     a.click();
   };
 
   const handleCopyAsImage = () => {
     handleMenuClose();
-    const nodesBounds = getNodesBounds(getNodes());
+    const nodes = getNodes() as MindMapNode[];
 
-    logger.debug("Nodes bounds", nodesBounds);
-    const imageWidth = nodesBounds.width + 200;
-    const imageHeight = nodesBounds.height + 200;
-    const viewport = getViewportForBounds(
-      nodesBounds,
-      imageWidth,
-      imageHeight,
-      0.5,
-      2,
-      0.03,
-    );
+    if (nodes.length === 0) {
+      toast.info("Nothing to export yet");
 
-    logger.debug("Viewport", viewport);
+      return;
+    }
 
-    const element = document.querySelector(".react-flow__viewport");
+    renderMindmapToPng(nodes, { logger })
+      .then(({ dataUrl, width, height }) => {
+        downloadImage(dataUrl);
+        toast.success(`Downloading image: ${width}x${height}`);
+      })
+      .catch((error) => {
+        if (error instanceof MindmapExportError) {
+          if (error.code === "mindmap-export/bounds") {
+            toast.error("Unable to calculate diagram size");
 
-    if (!element) return;
+            return;
+          }
 
-    toPng(element as HTMLElement, {
-      backgroundColor: "#fff",
-      width: imageWidth,
-      height: imageHeight,
-      style: {
-        width: String(imageWidth),
-        height: String(imageHeight),
-        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-      },
-    }).then(downloadImage);
+          if (error.code === "mindmap-export/element-not-found") {
+            toast.error("Mindmap canvas not found");
 
-    toast.info(`Downloading image: ${viewport.x}x${viewport.y}`);
+            return;
+          }
+
+          if (error.code === "mindmap-export/no-nodes") {
+            toast.info("Nothing to export yet");
+
+            return;
+          }
+        }
+
+        logger.error("Failed to export image", error);
+        toast.error("Export failed. Please try again.");
+      });
   };
 
   if (isFullScreen) {

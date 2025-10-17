@@ -4,6 +4,8 @@ Meet MindMapFlow, your ultimate brainstorming companion. Designed to unleash cre
 
 ![Screenshot](/public/screens/mindmapflow_20251016.png)
 
+![EU Cyber Resilience Act](/public/screens/eu_cyber_resilience_act_cra.png)
+
 ### AI suggestions using Azure OpenAI services
 ![AI suggestions](/public/screens/ai-suggestions-2025-10-16.png)
 
@@ -41,4 +43,4 @@ Set the following environment variables to enable AI-powered suggestions via Azu
 
 ## 3rd Party Notes
 
-- https://screely.com/ used for browser screenshots
+- https://screely.com/ used for browser mockup screenshots
