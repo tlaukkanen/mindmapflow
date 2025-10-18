@@ -65,7 +65,7 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-5xl space-y-12 py-8 md:py-16">
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-surface p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-gray-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
                 Capture Every Spark of Creativity
@@ -92,7 +92,7 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-            <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md bg-surface md:order-last">
+            <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md md:order-last">
               <button
                 aria-label="Expand MindMapFlow editor screenshot"
                 className="group relative block h-full w-full cursor-zoom-in border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
@@ -116,8 +116,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-surface p-8 shadow-xl md:grid-cols-[1fr_1.1fr]">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-surface md:order-first">
+          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-gray-200 p-8 shadow-xl md:grid-cols-[1fr_1.1fr]">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md  md:order-first">
               <button
                 aria-label="Expand AI suggestions screenshot"
                 className="group relative block h-full w-full cursor-zoom-in border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
@@ -155,7 +155,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-surface p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-gray-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
                 Themes That Match Your Mindset
@@ -171,7 +171,7 @@ export default function Home() {
                 ship final visuals that look polished in every export.
               </p>
             </div>
-            <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md bg-surface md:order-last">
+            <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md md:order-last">
               <button
                 aria-label="Expand themes gallery screenshot"
                 className="group relative block h-full w-full cursor-zoom-in border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
