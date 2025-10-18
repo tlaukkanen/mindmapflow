@@ -65,7 +65,7 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-5xl space-y-12 py-8 md:py-16">
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-gray-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-stone-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
                 Capture Every Spark of Creativity
@@ -116,7 +116,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-gray-200 p-8 shadow-xl md:grid-cols-[1fr_1.1fr]">
+          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-stone-200 p-8 shadow-xl md:grid-cols-[1fr_1.1fr]">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md  md:order-first">
               <button
                 aria-label="Expand AI suggestions screenshot"
@@ -155,7 +155,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-gray-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-stone-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
                 Themes That Match Your Mindset

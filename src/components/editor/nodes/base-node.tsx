@@ -1,7 +1,8 @@
 import React, { memo, ReactElement, useRef, useEffect } from "react";
 import { Handle, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import clsx from "clsx";
-import { PiArrowsHorizontalBold } from "react-icons/pi";
+import { PiArrowsHorizontalBold, PiLinkSimpleBold } from "react-icons/pi";
+import { IconButton } from "@mui/material";
 
 import { AddNodeButtons } from "./add-node-buttons";
 import { FormatToolbar } from "./format-toolbar";
@@ -124,7 +125,7 @@ export const BaseNode = memo(
     };
 
     // --- Horizontal Resize logic (drag handle) ---
-    const MIN_WIDTH = 120;
+    const MIN_WIDTH = 60;
     const MAX_WIDTH = 720;
 
     const getCurrentWidth = () => {
@@ -207,6 +208,60 @@ export const BaseNode = memo(
       if (e.touches && e.touches[0]) beginResize(e.touches[0].clientX);
     };
 
+    const resolveNodeUrl = (value?: string | null) => {
+      if (!value) {
+        return null;
+      }
+
+      const trimmed = value.trim();
+
+      if (!trimmed) {
+        return null;
+      }
+
+      const candidate = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmed)
+        ? trimmed
+        : `https://${trimmed}`;
+
+      try {
+        const url = new URL(candidate);
+
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          return null;
+        }
+
+        return url.toString();
+      } catch (error) {
+        logger.warn("BaseNode: invalid URL detected", {
+          nodeId: id,
+          value,
+          error,
+        });
+
+        return null;
+      }
+    };
+
+    const handleLinkIconClick = (
+      event: React.MouseEvent<HTMLButtonElement>,
+      url: string,
+    ) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const resolved = resolveNodeUrl(url);
+
+      if (!resolved) {
+        return;
+      }
+
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      window.open(resolved, "_blank", "noopener,noreferrer");
+    };
+
     // Create a function to wrap description text with proper styling
     const StyledDescription = () => {
       const resolvedDescriptionClass =
@@ -214,11 +269,13 @@ export const BaseNode = memo(
 
       if (!data.isEditing) {
         const textProps = data.textProperties;
+        const resolvedUrl = resolveNodeUrl(data.url);
+        const textAlign = textProps?.textAlign ?? "left";
 
         return (
           <div
             className={clsx(
-              "whitespace-pre-wrap break-words h-full flex flex-col min-h-[16px]",
+              "h-full flex flex-col min-h-[16px]",
               resolvedDescriptionClass,
               "px-1 ", // Add consistent padding
               // Text alignment horizontal
@@ -236,10 +293,40 @@ export const BaseNode = memo(
               textProps?.underline && "underline",
               textProps?.strikethrough && "line-through",
             )}
-            style={{ pointerEvents: "none" }} // Add this to prevent touch event interception
             onDoubleClick={handleDoubleClick}
           >
-            {data.description || ""}
+            <div
+              className={clsx(
+                "inline-flex w-full flex-wrap items-start gap-1",
+                textAlign === "center" && "justify-center",
+                textAlign === "right" && "justify-end",
+                textAlign === "justify" && "justify-center",
+              )}
+            >
+              <span className="min-w-0 whitespace-pre-wrap break-words">
+                {data.description || ""}
+              </span>
+              {resolvedUrl && !data.isEditing && (
+                <IconButton
+                  disableRipple
+                  aria-label="Open link"
+                  className="pointer-events-auto"
+                  size="small"
+                  sx={{
+                    padding: "2px",
+                    backgroundColor: "transparent",
+                    color: "var(--color-canvas-node-text)",
+                    "&:hover": {
+                      backgroundColor: "rgba(148, 163, 184, 0.25)",
+                    },
+                  }}
+                  title={resolvedUrl}
+                  onClick={(event) => handleLinkIconClick(event, resolvedUrl)}
+                >
+                  <PiLinkSimpleBold className="h-3.5 w-3.5" />
+                </IconButton>
+              )}
+            </div>
           </div>
         );
       }

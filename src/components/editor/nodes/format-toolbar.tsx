@@ -3,7 +3,7 @@
 import type { AiSubnodeSuggestion } from "@/services/ai-suggestion-service";
 import type { TextProperties } from "./base-node";
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useState, ChangeEvent } from "react";
 import { useReactFlow, Edge } from "@xyflow/react";
 import {
   IconButton,
@@ -15,6 +15,7 @@ import {
   Button,
   Typography,
   Box,
+  TextField,
 } from "@mui/material";
 import {
   PiTextB,
@@ -26,6 +27,7 @@ import {
   PiTextAlignCenter,
   PiTextAlignRight,
   PiTextAlignJustify,
+  PiLinkSimple,
 } from "react-icons/pi";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -56,6 +58,10 @@ export const FormatToolbar = memo(
     >(null);
     const [pendingParentId, setPendingParentId] = useState<string | null>(null);
     const [pendingParentTitle, setPendingParentTitle] = useState<string>("");
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [linkValue, setLinkValue] = useState("");
+    const [linkError, setLinkError] = useState<string | null>(null);
+    const [hasExistingLink, setHasExistingLink] = useState(false);
     const isNoteNode = resourceType === "Note";
 
     // Remove the position styling from button styles as it's conflicting
@@ -400,6 +406,7 @@ export const FormatToolbar = memo(
     const currentNode = getNodes().find((node) => node.id === id);
     const currentTextAlign =
       currentNode?.data.textProperties?.textAlign ?? "left";
+    const currentUrl = currentNode?.data.url ?? "";
 
     const createButtonStyles = (isActive: boolean) => ({
       ...buttonStyles,
@@ -462,6 +469,123 @@ export const FormatToolbar = memo(
         }),
       );
     };
+
+    const normalizeUrl = useCallback((value: string) => {
+      const trimmed = value.trim();
+
+      if (!trimmed) {
+        return "";
+      }
+
+      const hasProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmed);
+      const candidate = hasProtocol ? trimmed : `https://${trimmed}`;
+
+      try {
+        const url = new URL(candidate);
+
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          return null;
+        }
+
+        return url.toString();
+      } catch {
+        return null;
+      }
+    }, []);
+
+    const handleOpenLinkDialog = useCallback(() => {
+      const node = getNodes().find((n) => n.id === id);
+      const existing = node?.data.url ?? "";
+
+      setLinkValue(existing);
+      setHasExistingLink(Boolean(existing));
+      setLinkError(null);
+      setIsLinkDialogOpen(true);
+    }, [getNodes, id]);
+
+    const handleLinkDialogClose = useCallback(() => {
+      setIsLinkDialogOpen(false);
+      setLinkError(null);
+    }, []);
+
+    const handleLinkRemove = useCallback(() => {
+      setNodes((prevNodes) =>
+        prevNodes.map((node) =>
+          node.id === id
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  url: undefined,
+                },
+              }
+            : node,
+        ),
+      );
+      setIsLinkDialogOpen(false);
+      setLinkValue("");
+      setLinkError(null);
+      setHasExistingLink(false);
+      toast.success("Link removed from node");
+    }, [id, setNodes]);
+
+    const handleLinkSave = useCallback(() => {
+      const normalized = normalizeUrl(linkValue);
+
+      if (normalized === null) {
+        setLinkError("Enter a valid HTTP or HTTPS URL.");
+
+        return;
+      }
+
+      if (!normalized) {
+        if (hasExistingLink) {
+          handleLinkRemove();
+        } else {
+          setIsLinkDialogOpen(false);
+          setLinkError(null);
+          setLinkValue("");
+          setHasExistingLink(false);
+        }
+      } else {
+        setNodes((prevNodes) =>
+          prevNodes.map((node) =>
+            node.id === id
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    url: normalized,
+                  },
+                }
+              : node,
+          ),
+        );
+        setIsLinkDialogOpen(false);
+        setLinkError(null);
+        setHasExistingLink(true);
+        setLinkValue(normalized);
+        toast.success(hasExistingLink ? "Link updated" : "Link added");
+      }
+    }, [
+      handleLinkRemove,
+      hasExistingLink,
+      id,
+      linkValue,
+      normalizeUrl,
+      setNodes,
+    ]);
+
+    const handleLinkInputChange = useCallback(
+      (event: ChangeEvent<HTMLInputElement>) => {
+        setLinkValue(event.target.value);
+
+        if (linkError) {
+          setLinkError(null);
+        }
+      },
+      [linkError],
+    );
 
     return (
       <div style={toolbarStyles}>
@@ -548,6 +672,16 @@ export const FormatToolbar = memo(
             <PiTextStrikethrough className="w-4 h-4" />
           </IconButton>
         </Tooltip>
+        <Tooltip title={currentUrl ? "Edit or remove link" : "Add link"}>
+          <IconButton
+            aria-label={currentUrl ? "Edit or remove link" : "Add link"}
+            size="small"
+            sx={createButtonStyles(Boolean(currentUrl))}
+            onClick={handleOpenLinkDialog}
+          >
+            <PiLinkSimple className="w-4 h-4" />
+          </IconButton>
+        </Tooltip>
         {!isNoteNode && (
           <Box
             component="span"
@@ -581,6 +715,49 @@ export const FormatToolbar = memo(
             </span>
           </Tooltip>
         )}
+        <Dialog
+          fullWidth
+          maxWidth="xs"
+          open={isLinkDialogOpen}
+          onClose={handleLinkDialogClose}
+        >
+          <DialogTitle>
+            {hasExistingLink ? "Edit Link" : "Add Link"}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              error={Boolean(linkError)}
+              helperText={
+                linkError ??
+                "HTTP or HTTPS links are supported. We'll add https:// when missing."
+              }
+              label="URL"
+              margin="dense"
+              placeholder="https://example.com"
+              type="url"
+              value={linkValue}
+              onChange={handleLinkInputChange}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleLinkSave();
+                }
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            {hasExistingLink && (
+              <Button color="error" onClick={handleLinkRemove}>
+                Remove Link
+              </Button>
+            )}
+            <Button onClick={handleLinkDialogClose}>Cancel</Button>
+            <Button variant="contained" onClick={handleLinkSave}>
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Dialog
           fullWidth
           maxWidth="sm"

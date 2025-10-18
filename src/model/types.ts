@@ -24,6 +24,7 @@ export interface MindMapNode extends Node {
     showHandles?: boolean;
     sku?: string;
     isEditing?: boolean;
+    url?: string;
     textProperties?: TextProperties;
     resourceOptions?: ResourceOption[];
     depth?: number; // Depth of the node in the tree
