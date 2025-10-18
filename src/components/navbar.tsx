@@ -10,7 +10,6 @@ import {
   List,
   ListItem,
   Link,
-  Divider,
 } from "@mui/material";
 import clsx from "clsx";
 import Image from "next/image";
@@ -18,7 +17,6 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 
 import { siteConfig } from "@/config/site";
-import { ThemeSelector } from "@/components/theme-selector";
 
 export const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -181,8 +179,6 @@ export const Navbar = () => {
                 </ListItem>
               ))}
             </List>
-            <Divider sx={{ my: 2, borderColor: "var(--color-divider)" }} />
-            <ThemeSelector onSelected={handleDrawerToggle} />
           </Box>
         </Drawer>
       </Toolbar>

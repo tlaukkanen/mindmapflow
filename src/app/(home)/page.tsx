@@ -51,6 +51,19 @@ export default function Home() {
           </span>
         </div>
 
+        <div className="w-full max-w-5xl py-8">
+          <div className="relative aspect-video w-full overflow-hidden rounded-md  ">
+            <Image
+              fill
+              priority
+              alt="EU Cyber Resilience Act (CRA) mind map overview"
+              className="object-contain transition group-hover:scale-[1.01]"
+              sizes="(min-width: 1280px) 1024px, (min-width: 768px) 90vw, 100vw"
+              src="/screens/eu_cyber_resilience_act_cra_large.png"
+            />
+          </div>
+        </div>
+
         <div className="w-full max-w-5xl space-y-12 py-8 md:py-16">
           <div className="grid items-center gap-8 rounded-md border border-panels-border bg-surface p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
