@@ -4,13 +4,8 @@ import {
   Toolbar as MUIToolbar,
   Box,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Stack,
-  Typography,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { TbLayoutSidebarRightCollapseFilled } from "react-icons/tb";
 import { MdFullscreen } from "react-icons/md";
@@ -54,21 +49,23 @@ export const Toolbar = ({
   onAutoLayout,
   autoLayoutMode,
 }: ToolbarProps) => {
-  const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false);
+  const [layoutAnchorEl, setLayoutAnchorEl] = useState<null | HTMLElement>(
+    null,
+  );
 
-  const handleOpenLayoutDialog = () => {
+  const handleOpenLayoutMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!onAutoLayout) return;
 
-    setIsLayoutDialogOpen(true);
+    setLayoutAnchorEl(event.currentTarget);
   };
 
-  const handleCloseLayoutDialog = () => {
-    setIsLayoutDialogOpen(false);
+  const handleCloseLayoutMenu = () => {
+    setLayoutAnchorEl(null);
   };
 
   const handleSelectLayout = (mode: AutoLayoutMode) => {
     onAutoLayout?.(mode);
-    setIsLayoutDialogOpen(false);
+    setLayoutAnchorEl(null);
   };
 
   return (
@@ -148,11 +145,15 @@ export const Toolbar = ({
           </IconButton>
           <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
           <IconButton
+            aria-controls={layoutAnchorEl ? "auto-layout-menu" : undefined}
+            aria-expanded={layoutAnchorEl ? "true" : undefined}
+            aria-haspopup="true"
             aria-label="Auto layout mindmap"
             disabled={!onAutoLayout}
+            id="auto-layout-menu-button"
             size="medium"
             title="Auto layout mindmap"
-            onClick={handleOpenLayoutDialog}
+            onClick={handleOpenLayoutMenu}
           >
             <PiShareNetworkThin />
           </IconButton>
@@ -194,30 +195,28 @@ export const Toolbar = ({
           </IconButton>
         </Box>
       </MUIToolbar>
-      <Dialog open={isLayoutDialogOpen} onClose={handleCloseLayoutDialog}>
-        <DialogTitle>Select Auto Layout</DialogTitle>
-        <DialogContent dividers>
-          <Typography sx={{ mb: 2 }}>Choose how to arrange nodes.</Typography>
-          <Stack spacing={1}>
-            {(["horizontal", "vertical", "radial"] as AutoLayoutMode[]).map(
-              (mode) => (
-                <Button
-                  key={mode}
-                  fullWidth
-                  disabled={!onAutoLayout}
-                  variant={mode === autoLayoutMode ? "contained" : "outlined"}
-                  onClick={() => handleSelectLayout(mode)}
-                >
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </Button>
-              ),
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseLayoutDialog}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+      <Menu
+        MenuListProps={{ "aria-labelledby": "auto-layout-menu-button" }}
+        anchorEl={layoutAnchorEl}
+        anchorOrigin={{ horizontal: "right", vertical: "top" }}
+        id="auto-layout-menu"
+        open={Boolean(layoutAnchorEl)}
+        transformOrigin={{ horizontal: "left", vertical: "top" }}
+        onClose={handleCloseLayoutMenu}
+      >
+        {(["horizontal", "vertical", "radial"] as AutoLayoutMode[]).map(
+          (mode) => (
+            <MenuItem
+              key={mode}
+              disabled={!onAutoLayout}
+              selected={mode === autoLayoutMode}
+              onClick={() => handleSelectLayout(mode)}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </MenuItem>
+          ),
+        )}
+      </Menu>
     </AppBar>
   );
 };

@@ -56,7 +56,7 @@ const cleanNodesForComparison = (nodes: MindMapNode[]) =>
     return {
       ...node,
       // Keep width/height to persist user-resized size
-      selected: undefined,
+      selected: false,
       data: {
         ...node.data,
         showHandles: undefined,

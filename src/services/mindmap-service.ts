@@ -22,6 +22,43 @@ export interface MindMapData {
   paletteId?: string;
 }
 
+type SanitizedMindMapNode = Omit<
+  MindMapNode,
+  "selected" | "dragging" | "data"
+> & {
+  data: Omit<MindMapNode["data"], "isEditing">;
+};
+
+type SanitizedEdge = Omit<Edge, "selected">;
+
+const sanitizeNodesForSave = (nodes: MindMapNode[]): SanitizedMindMapNode[] =>
+  nodes.map((node) => {
+    const sanitizedNode = {
+      ...node,
+      data: {
+        ...node.data,
+      },
+    };
+
+    delete (sanitizedNode as Partial<MindMapNode>).selected;
+    delete (sanitizedNode as Partial<MindMapNode>).dragging;
+    delete (sanitizedNode as Partial<MindMapNode>).resizing;
+    delete (sanitizedNode.data as { isEditing?: boolean }).isEditing;
+
+    return sanitizedNode as SanitizedMindMapNode;
+  });
+
+const sanitizeEdgesForSave = (edges: Edge[]): SanitizedEdge[] =>
+  edges.map((edge) => {
+    const sanitizedEdge = {
+      ...edge,
+    };
+
+    delete (sanitizedEdge as Partial<Edge>).selected;
+
+    return sanitizedEdge as SanitizedEdge;
+  });
+
 class MindMapService {
   async saveMindMap({
     mindMapId,
@@ -31,6 +68,9 @@ class MindMapService {
     paletteId,
   }: SaveMindMapParams) {
     try {
+      const sanitizedNodes = sanitizeNodesForSave(nodes);
+      const sanitizedEdges = sanitizeEdgesForSave(edges);
+
       const response = await fetch("/api/mindmaps", {
         method: "POST",
         headers: {
@@ -38,8 +78,8 @@ class MindMapService {
         },
         body: JSON.stringify({
           mindMapId,
-          nodes,
-          edges,
+          nodes: sanitizedNodes,
+          edges: sanitizedEdges,
           lastModified,
           paletteId,
         }),
