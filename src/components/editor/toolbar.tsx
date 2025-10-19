@@ -19,8 +19,8 @@ import {
   PiCopyThin,
   PiFloppyDiskThin,
   PiFolderOpenThin,
-  PiGridFour,
-  PiNote,
+  PiGridFourThin,
+  PiNoteThin,
   PiShareNetworkThin,
   PiTrashThin,
 } from "react-icons/pi";
@@ -94,7 +94,6 @@ export const Toolbar = ({
         >
           <IconButton
             aria-label="Load mindmap"
-            size="medium"
             title="Load mindmap"
             onClick={() => {
               onLoadMindMap();
@@ -145,7 +144,7 @@ export const Toolbar = ({
             title="Add note"
             onClick={onAddNote}
           >
-            <PiNote />
+            <PiNoteThin />
           </IconButton>
           <div className="h-6 my-4 pr-1 border-0 border-r border-panels-border border-solid inline-block" />
           <IconButton
@@ -174,15 +173,13 @@ export const Toolbar = ({
         >
           <IconButton
             aria-label="Toggle grid"
-            size="small"
             title="Toggle grid"
             onClick={onToggleGrid}
           >
-            <PiGridFour />
+            <PiGridFourThin />
           </IconButton>
           <IconButton
             aria-label="Toggle menubar"
-            size="small"
             title="Toggle menubar"
             onClick={onToggleFullScreen}
           >

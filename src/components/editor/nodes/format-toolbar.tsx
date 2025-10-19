@@ -4,7 +4,12 @@ import type { AiSubnodeSuggestion } from "@/services/ai-suggestion-service";
 import type { TextProperties } from "./base-node";
 
 import { memo, useCallback, useState, ChangeEvent } from "react";
-import { useReactFlow, Edge } from "@xyflow/react";
+import {
+  useReactFlow,
+  Edge,
+  useStore,
+  type ReactFlowState,
+} from "@xyflow/react";
 import {
   IconButton,
   Tooltip,
@@ -403,10 +408,20 @@ export const FormatToolbar = memo(
       ? countTotalSuggestions(pendingSuggestions)
       : 0;
 
-    const currentNode = getNodes().find((node) => node.id === id);
+    const selectCurrentNodeData = useCallback(
+      (state: ReactFlowState) => {
+        const lookupNode = state.nodeLookup.get(id);
+
+        return lookupNode
+          ? ((lookupNode.data as MindMapNode["data"]) ?? null)
+          : null;
+      },
+      [id],
+    );
+    const currentNodeData = useStore(selectCurrentNodeData);
     const currentTextAlign =
-      currentNode?.data.textProperties?.textAlign ?? "left";
-    const currentUrl = currentNode?.data.url ?? "";
+      currentNodeData?.textProperties?.textAlign ?? "left";
+    const currentUrl = currentNodeData?.url ?? "";
 
     const createButtonStyles = (isActive: boolean) => ({
       ...buttonStyles,
