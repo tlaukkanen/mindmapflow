@@ -3,13 +3,22 @@
 import type { AiSubnodeSuggestion } from "@/services/ai-suggestion-service";
 import type { TextProperties } from "./base-node";
 
-import { memo, useCallback, useState, ChangeEvent } from "react";
+import {
+  memo,
+  useCallback,
+  useState,
+  ChangeEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import {
   useReactFlow,
   Edge,
   useStore,
   type ReactFlowState,
 } from "@xyflow/react";
+import { createPortal } from "react-dom";
 import {
   IconButton,
   Tooltip,
@@ -40,6 +49,9 @@ import { toast } from "sonner";
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 
+const TOOLBAR_VERTICAL_OFFSET = 56;
+const FORMAT_TOOLBAR_Z_INDEX = 2147483647;
+
 const countTotalSuggestions = (items: AiSubnodeSuggestion[]): number =>
   items.reduce(
     (total, item) =>
@@ -56,6 +68,12 @@ export const FormatToolbar = memo(
   ({ id, resourceType }: FormatToolbarProps) => {
     const { data: session } = useSession();
     const { setNodes, setEdges, getNodes } = useReactFlow<MindMapNode>();
+    const toolbarAnchorRef = useRef<HTMLDivElement | null>(null);
+    const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
+    const [toolbarPosition, setToolbarPosition] = useState<{
+      top: number;
+      left: number;
+    } | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [pendingSuggestions, setPendingSuggestions] = useState<
@@ -68,6 +86,14 @@ export const FormatToolbar = memo(
     const [linkError, setLinkError] = useState<string | null>(null);
     const [hasExistingLink, setHasExistingLink] = useState(false);
     const isNoteNode = resourceType === "Note";
+
+    useEffect(() => {
+      const host =
+        document.querySelector<HTMLElement>(".react-flow__overlay") ??
+        document.body;
+
+      setPortalHost(host);
+    }, []);
 
     // Remove the position styling from button styles as it's conflicting
     const buttonStyles = {
@@ -82,10 +108,6 @@ export const FormatToolbar = memo(
     };
 
     const toolbarStyles = {
-      position: "absolute" as const,
-      top: "-48px",
-      left: "50%",
-      transform: "translateX(-50%)",
       display: "flex",
       flexDirection: "row" as const,
       gap: "2px",
@@ -94,7 +116,6 @@ export const FormatToolbar = memo(
       border: "1px solid #e2e8f0",
       boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
       padding: "2px",
-      zIndex: 9999,
     };
 
     // Define formatProperties to only include boolean properties
@@ -418,10 +439,118 @@ export const FormatToolbar = memo(
       },
       [id],
     );
+    const selectNodeGeometryKey = useCallback(
+      (state: ReactFlowState) => {
+        const lookupNode = state.nodeLookup.get(id);
+
+        if (!lookupNode) {
+          return null;
+        }
+
+        const position = lookupNode.position;
+        const width = lookupNode.width ?? 0;
+        const height = lookupNode.height ?? 0;
+
+        return `${position?.x ?? 0}:${position?.y ?? 0}:${width}:${height}`;
+      },
+      [id],
+    );
     const currentNodeData = useStore(selectCurrentNodeData);
+    const nodeGeometryKey = useStore(selectNodeGeometryKey);
+    const viewportTransform = useStore((state) => state.transform);
     const currentTextAlign =
       currentNodeData?.textProperties?.textAlign ?? "left";
     const currentUrl = currentNodeData?.url ?? "";
+
+    const updateToolbarPosition = useCallback(() => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const anchor = toolbarAnchorRef.current;
+
+      if (!anchor) {
+        setToolbarPosition(null);
+
+        return;
+      }
+
+      const nodeElement = anchor.closest<HTMLElement>("[data-id]");
+
+      if (!nodeElement) {
+        setToolbarPosition(null);
+
+        return;
+      }
+
+      const rect = nodeElement.getBoundingClientRect();
+      const nextPosition = {
+        top: rect.top - TOOLBAR_VERTICAL_OFFSET,
+        left: rect.left + rect.width / 2,
+      };
+
+      setToolbarPosition((prev) => {
+        if (
+          prev &&
+          Math.abs(prev.top - nextPosition.top) < 0.5 &&
+          Math.abs(prev.left - nextPosition.left) < 0.5
+        ) {
+          return prev;
+        }
+
+        return nextPosition;
+      });
+    }, []);
+
+    useLayoutEffect(() => {
+      updateToolbarPosition();
+    }, [updateToolbarPosition, nodeGeometryKey, viewportTransform]);
+
+    useEffect(() => {
+      updateToolbarPosition();
+    }, [updateToolbarPosition, portalHost]);
+
+    useEffect(() => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const handleViewportChange = () => {
+        updateToolbarPosition();
+      };
+
+      window.addEventListener("resize", handleViewportChange);
+      window.addEventListener("scroll", handleViewportChange, true);
+
+      return () => {
+        window.removeEventListener("resize", handleViewportChange);
+        window.removeEventListener("scroll", handleViewportChange, true);
+      };
+    }, [updateToolbarPosition]);
+
+    useEffect(() => {
+      const anchor = toolbarAnchorRef.current;
+
+      if (!anchor || typeof ResizeObserver === "undefined") {
+        return undefined;
+      }
+
+      const nodeElement = anchor.closest<HTMLElement>("[data-id]");
+
+      if (!nodeElement) {
+        return undefined;
+      }
+
+      const observer = new ResizeObserver(() => {
+        updateToolbarPosition();
+      });
+
+      observer.observe(nodeElement);
+
+      return () => {
+        observer.disconnect();
+      };
+    }, [updateToolbarPosition]);
 
     const createButtonStyles = (isActive: boolean) => ({
       ...buttonStyles,
@@ -602,7 +731,7 @@ export const FormatToolbar = memo(
       [linkError],
     );
 
-    return (
+    const toolbarContent = (
       <div style={toolbarStyles}>
         <Tooltip title="Align left">
           <IconButton
@@ -816,6 +945,38 @@ export const FormatToolbar = memo(
           </DialogActions>
         </Dialog>
       </div>
+    );
+
+    return (
+      <>
+        <div
+          ref={toolbarAnchorRef}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: "50%",
+            width: 0,
+            height: 0,
+          }}
+        />
+        {portalHost && toolbarPosition
+          ? createPortal(
+              <div
+                style={{
+                  position: "fixed",
+                  top: `${toolbarPosition.top}px`,
+                  left: `${toolbarPosition.left}px`,
+                  transform: "translate(-50%, 0)",
+                  zIndex: FORMAT_TOOLBAR_Z_INDEX,
+                  pointerEvents: "auto",
+                }}
+              >
+                {toolbarContent}
+              </div>,
+              portalHost,
+            )
+          : null}
+      </>
     );
   },
 );
