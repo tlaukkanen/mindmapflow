@@ -6,7 +6,7 @@ import { BaseNode } from "../base-node";
 import { MindMapNode } from "@/model/types";
 
 export default memo(function TextNode(props: NodeProps<MindMapNode>) {
-  const { id, data, selected } = props;
+  const { data } = props;
 
   return (
     <BaseNode
