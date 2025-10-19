@@ -127,6 +127,13 @@ export function paletteToCssVariables(palette: Palette): PaletteCssVariableMap {
     ? (extractFirstHexColor(palette.vars["--bg"]) ?? "#FFFFFF")
     : palette.vars["--bg"];
 
+  const gridBaseHex =
+    extractFirstHexColor(palette.vars["--muted"]) ??
+    extractFirstHexColor(palette.vars["--header"]) ??
+    extractFirstHexColor(solidBackground) ??
+    "#000000";
+  const gridColor = hexToRgba(gridBaseHex, 0.25);
+
   const vars: PaletteCssVariableMap = {
     "--palette-id": palette.id,
     "--palette-bg": palette.vars["--bg"],
@@ -165,6 +172,7 @@ export function paletteToCssVariables(palette: Palette): PaletteCssVariableMap {
     "--color-canvas-node-background": palette.vars["--node-bg"],
     "--color-canvas-node-border": palette.vars["--muted"],
     "--color-canvas-node-text": palette.vars["--text"],
+    "--color-grid-lines": gridColor,
     "--color-root-node-background": palette.vars["--accent"],
     "--color-root-node-text": palette.vars["--node-bg"],
     "--color-first-node-background": palette.vars["--node-bg"],
@@ -186,4 +194,33 @@ export function paletteToCssVariables(palette: Palette): PaletteCssVariableMap {
   };
 
   return vars;
+}
+
+function normalizeHex(hex: string): string | undefined {
+  const match = hex.trim().match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+
+  if (!match) {
+    return undefined;
+  }
+
+  let value = match[1];
+
+  if (value.length === 3) {
+    value = value
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  return `#${value.toLowerCase()}`;
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = normalizeHex(hex) ?? "#000000";
+  const clampedAlpha = Math.min(Math.max(alpha, 0), 1);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${clampedAlpha})`;
 }

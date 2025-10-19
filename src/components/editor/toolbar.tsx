@@ -175,6 +175,7 @@ export const Toolbar = ({
           <IconButton
             aria-label="Toggle grid"
             size="small"
+            title="Toggle grid"
             onClick={onToggleGrid}
           >
             <PiGridFour />
@@ -182,13 +183,14 @@ export const Toolbar = ({
           <IconButton
             aria-label="Toggle menubar"
             size="small"
+            title="Toggle menubar"
             onClick={onToggleFullScreen}
           >
             <MdFullscreen />
           </IconButton>
           <IconButton
             aria-label="Toggle properties panel"
-            size="small"
+            title="Toggle properties panel"
             onClick={onToggleProperties}
           >
             <TbLayoutSidebarRightCollapseFilled />

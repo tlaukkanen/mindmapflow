@@ -22,6 +22,7 @@ import rectangleNode from "./nodes/generic/rectangle-node";
 import commentNode from "./nodes/generic/comment-node";
 import noteNode from "./nodes/generic/note-node";
 import textNode from "./nodes/generic/text-node";
+import { GridSettingsProvider } from "./grid-context";
 
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
@@ -221,64 +222,66 @@ export default function Canvas({
   });
 
   return (
-    <div
-      ref={canvasRef}
-      className="w-full h-full border-0  relative bg-canvas-background"
-      style={{ width: "100%", height: "100%" }}
-      onDragOver={handleDragOver}
-    >
-      <ReactFlow
-        defaultViewport={defaultViewport}
-        disableKeyboardA11y={true}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        nodes={nodes} // <-- This is the key change. We're now using the nodes directly which include the callbacks
-        proOptions={proOptions}
-        selectionOnDrag={true}
-        snapGrid={[10, 10]}
-        snapToGrid={showGrid}
-        onConnect={onConnect}
-        onEdgesChange={onEdgesChange}
-        onInit={onInit}
-        onNodeContextMenu={onNodeContextMenu}
-        onNodeDoubleClick={handleNodeDoubleClick}
-        onNodesChange={onNodesChange}
-        onSelectionChange={onSelectionChange}
+    <GridSettingsProvider enabled={showGrid}>
+      <div
+        ref={canvasRef}
+        className="w-full h-full border-0  relative bg-canvas-background"
+        style={{ width: "100%", height: "100%" }}
+        onDragOver={handleDragOver}
       >
-        {showGrid && (
-          <Background
-            color="#fff"
-            gap={20}
-            id="2"
-            lineWidth={0.2}
-            variant={BackgroundVariant.Lines}
-          />
-        )}
-        <Controls />
-      </ReactFlow>
-      <Menu
-        anchorPosition={{
-          top: contextMenuPosition.y,
-          left: contextMenuPosition.x,
-        }}
-        anchorReference="anchorPosition"
-        className="text-xs"
-        open={isContextMenuOpen}
-        onClose={handleContextMenuClose}
-      >
-        <MenuItem onClick={moveNodeToBack}>
-          <ListItemIcon>
-            <PiArrowLineDownThin />
-          </ListItemIcon>
-          <ListItemText className="text-xs">Move to back</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={moveNodeToFront}>
-          <ListItemIcon>
-            <PiArrowLineUpThin />
-          </ListItemIcon>
-          <ListItemText className="text-xs">Move to front</ListItemText>
-        </MenuItem>
-      </Menu>
-    </div>
+        <ReactFlow
+          defaultViewport={defaultViewport}
+          disableKeyboardA11y={true}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          nodes={nodes} // <-- This is the key change. We're now using the nodes directly which include the callbacks
+          proOptions={proOptions}
+          selectionOnDrag={true}
+          snapGrid={[10, 10]}
+          snapToGrid={showGrid}
+          onConnect={onConnect}
+          onEdgesChange={onEdgesChange}
+          onInit={onInit}
+          onNodeContextMenu={onNodeContextMenu}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          onNodesChange={onNodesChange}
+          onSelectionChange={onSelectionChange}
+        >
+          {showGrid && (
+            <Background
+              color="var(--color-grid-lines, rgba(160, 160, 160, 0.25))"
+              gap={20}
+              id="2"
+              lineWidth={0.2}
+              variant={BackgroundVariant.Lines}
+            />
+          )}
+          <Controls />
+        </ReactFlow>
+        <Menu
+          anchorPosition={{
+            top: contextMenuPosition.y,
+            left: contextMenuPosition.x,
+          }}
+          anchorReference="anchorPosition"
+          className="text-xs"
+          open={isContextMenuOpen}
+          onClose={handleContextMenuClose}
+        >
+          <MenuItem onClick={moveNodeToBack}>
+            <ListItemIcon>
+              <PiArrowLineDownThin />
+            </ListItemIcon>
+            <ListItemText className="text-xs">Move to back</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={moveNodeToFront}>
+            <ListItemIcon>
+              <PiArrowLineUpThin />
+            </ListItemIcon>
+            <ListItemText className="text-xs">Move to front</ListItemText>
+          </MenuItem>
+        </Menu>
+      </div>
+    </GridSettingsProvider>
   );
 }

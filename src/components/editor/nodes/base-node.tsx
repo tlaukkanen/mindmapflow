@@ -4,6 +4,8 @@ import clsx from "clsx";
 import { PiArrowsHorizontalBold, PiLinkSimpleBold } from "react-icons/pi";
 import { IconButton } from "@mui/material";
 
+import { useGridSettings } from "../grid-context";
+
 import { AddNodeButtons } from "./add-node-buttons";
 import { FormatToolbar } from "./format-toolbar";
 
@@ -34,6 +36,7 @@ export const BaseNode = memo(
     id,
     data,
     selected,
+    dragging,
     children,
     className = "",
     style,
@@ -43,9 +46,11 @@ export const BaseNode = memo(
   }: BaseNodeProps) => {
     const { setNodes, getNodes, getEdges, deleteElements } = useReactFlow();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const isResizingRef = useRef(false);
     const startXRef = useRef(0);
     const startWidthRef = useRef<number | undefined>(undefined);
+    const { enabled: gridEnabled, step: gridStep } = useGridSettings();
 
     // Add effect to handle text selection when entering edit mode
     useEffect(() => {
@@ -128,23 +133,45 @@ export const BaseNode = memo(
     const MIN_WIDTH = 60;
     const MAX_WIDTH = 720;
 
-    const getCurrentWidth = () => {
-      // Prefer explicit style.width, fallback to measured width from node prop
-      const styleWidth = (data as any)?.style?.width as number | undefined;
-      // NodeProps already spreads style prop; but width might exist on node
-      const nodeObj = getNodes().find((n) => n.id === id);
-      const nodeWidth = nodeObj?.style?.width ?? nodeObj?.width;
+    const resolveWidthValue = (value: unknown): number | undefined => {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+      }
 
-      return (styleWidth ??
-        (typeof nodeWidth === "number" ? nodeWidth : undefined)) as
-        | number
-        | undefined;
+      if (typeof value === "string") {
+        const parsed = parseFloat(value.replace("px", ""));
+
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+
+      return undefined;
+    };
+
+    const getCurrentWidth = () => {
+      const nodeObj = getNodes().find((n) => n.id === id);
+      const domWidth = containerRef.current
+        ? containerRef.current.getBoundingClientRect().width
+        : undefined;
+
+      return (
+        resolveWidthValue(style?.width) ??
+        resolveWidthValue((data as any)?.style?.width) ??
+        resolveWidthValue(nodeObj?.style?.width) ??
+        resolveWidthValue(domWidth) ??
+        resolveWidthValue(nodeObj?.width)
+      );
     };
 
     const applyWidth = (newWidth: number) => {
+      const effectiveStep = gridEnabled ? Math.max(1, gridStep) : 1;
+      const snappedWidth = gridEnabled
+        ? Math.round(newWidth / effectiveStep) * effectiveStep
+        : newWidth;
       const clamped = Math.max(
         MIN_WIDTH,
-        Math.min(MAX_WIDTH, Math.round(newWidth)),
+        Math.min(MAX_WIDTH, Math.round(snappedWidth)),
       );
 
       setNodes((prev) =>
@@ -424,8 +451,12 @@ export const BaseNode = memo(
     const { rightTarget } = getConnectedHandles();
     const childButtonOnRight = !rightTarget;
 
+    const showToolbar = selected && data.resourceType !== "Note" && !dragging;
+    const showResizeHandle = selected && !dragging;
+
     return (
       <div
+        ref={containerRef}
         className={`group relative ${className} ${selected ? "border-2" : "border"} touch-none`}
         style={{
           ...style,
@@ -437,7 +468,7 @@ export const BaseNode = memo(
             : "var(--color-canvas-node-border)",
         }}
       >
-        {selected && data.resourceType !== "Note" && (
+        {showToolbar && (
           <>
             <AddNodeButtons
               childButtonOnRight={childButtonOnRight}
@@ -449,7 +480,7 @@ export const BaseNode = memo(
           </>
         )}
         {/* Horizontal resize handle - bottom-left, white background like add buttons */}
-        {selected && (
+        {showResizeHandle && (
           <button
             aria-label="Resize width"
             className={clsx(
@@ -467,7 +498,7 @@ export const BaseNode = memo(
           </button>
         )}
         {renderContent()}
-        {data.isEditing && (
+        {data.isEditing && !dragging && (
           <FormatToolbar id={id} resourceType={data.resourceType} />
         )}
         <Handle

@@ -81,6 +81,8 @@ class AiSuggestionService {
             '{"suggestions": [{"title": string, "children"?: Suggestion[]}]} where Suggestion follows the same shape. ' +
             "Provide concise titles for the first level (ideally under 8 words, maximum 12). " +
             "You may extend nested suggestions up to three levels deep; deeper children can use slightly longer, phrase-like titles when that adds clarity. " +
+            "Don't suggest many levels when suggesting to deeply nested ideas. " +
+            "When suggesting child nodes, focus on relevance especially to the parent and root topic and diversity from existing children. " +
             "You can also add more descriptive text to the suggestions when it helps convey the idea or information - like actual numerical values or dates if relevant. " +
             "Include a relevant emoji when it enhances understanding.",
         },
@@ -90,7 +92,7 @@ class AiSuggestionService {
             `The parent node is: "${params.parentDescription}".\n` +
             `Existing children are:\n${childSummary}\n\n` +
             `Full mind map outline:\n${mindmapOutline}\n\n` +
-            `Suggest 1-5 additional child nodes relevant to the parent. ` +
+            `Suggest 1-5 additional child nodes relevant to the parent and root topics. ` +
             `Avoid duplicates of existing topics. ` +
             `Include nested child ideas when useful by populating children arrays.`,
         },
