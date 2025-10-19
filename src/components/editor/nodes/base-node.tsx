@@ -457,7 +457,10 @@ export const BaseNode = memo(
     return (
       <div
         ref={containerRef}
-        className={`group relative ${className} ${selected ? "border-2" : "border"} touch-none`}
+        className={clsx(
+          "group relative border touch-none transition-[border-color]",
+          className,
+        )}
         style={{
           ...style,
           touchAction: "none",
@@ -466,6 +469,8 @@ export const BaseNode = memo(
           borderColor: selected
             ? "var(--color-primary)"
             : "var(--color-canvas-node-border)",
+          outline: selected ? "2px solid var(--color-primary)" : undefined,
+          outlineOffset: selected ? "0px" : undefined,
         }}
       >
         {showToolbar && (
