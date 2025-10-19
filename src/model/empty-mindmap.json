@@ -33,5 +33,6 @@
       "selected": false
     }
   ],
-  "edges": []
+  "edges": [],
+  "showGrid": false
 }

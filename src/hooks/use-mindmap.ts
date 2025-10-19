@@ -34,6 +34,7 @@ export function useMindMap() {
       nodes: MindMapNode[],
       edges: Edge[],
       paletteId?: string,
+      showGrid?: boolean,
     ) => {
       try {
         const newLastModified = await mindMapService.saveMindMap({
@@ -42,6 +43,7 @@ export function useMindMap() {
           edges,
           lastModified,
           paletteId,
+          showGrid,
         });
 
         setLastModified(new Date(newLastModified));
@@ -64,6 +66,7 @@ export function useMindMap() {
               nodes,
               edges,
               paletteId,
+              showGrid,
             });
 
             setLastModified(new Date(newLastModified));

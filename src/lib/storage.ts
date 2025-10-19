@@ -58,6 +58,7 @@ export class StorageService {
     edges: Edge[],
     lastModified: Date,
     paletteId?: string,
+    showGrid?: boolean,
   ) {
     const containerClient = await this.getContainerClient();
     const userPath = this.sanitizeEmailForPath(userEmail);
@@ -71,6 +72,7 @@ export class StorageService {
       edges,
       lastModified,
       paletteId,
+      showGrid,
     });
 
     const blobUploadResponse = await blobClient.upload(content, content.length);
@@ -110,7 +112,7 @@ export class StorageService {
       const content = await streamToText(
         downloadBlockBlobResponse.readableStreamBody as NodeJS.ReadableStream,
       );
-      const { nodes, edges, lastModified, paletteId } = JSON.parse(
+      const { nodes, edges, lastModified, paletteId, showGrid } = JSON.parse(
         content.toString(),
       );
 
@@ -119,6 +121,7 @@ export class StorageService {
         edges,
         lastModified: lastModified || downloadBlockBlobResponse.lastModified,
         paletteId,
+        showGrid,
       };
     } catch (error) {
       logger.error("Error loading diagram:", error);

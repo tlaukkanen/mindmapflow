@@ -62,6 +62,7 @@ export default async function handler(
       originalMindMap.edges,
       newLastModified,
       originalMindMap.paletteId,
+      originalMindMap.showGrid,
     );
 
     res

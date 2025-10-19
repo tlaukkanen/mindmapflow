@@ -13,6 +13,7 @@ let hasUnsavedChanges = false;
 let lastSavedNodes: MindMapNode[] = [];
 let lastSavedEdges: Edge[] = [];
 let lastSavedPaletteId: string | undefined;
+let lastSavedShowGrid: boolean | undefined;
 
 export function getHasUnsavedChanges() {
   return hasUnsavedChanges;
@@ -33,10 +34,12 @@ export function setLastSavedState(
   nodes: MindMapNode[],
   edges: Edge[],
   paletteId?: string,
+  showGrid?: boolean,
 ) {
   lastSavedNodes = cleanNodesForComparison(nodes);
   lastSavedEdges = cleanEdgesForComparison(edges);
   lastSavedPaletteId = paletteId;
+  lastSavedShowGrid = showGrid;
 }
 
 const cleanNodesForComparison = (nodes: MindMapNode[]) =>
@@ -88,6 +91,7 @@ export function useAutoSave(
   enabled: boolean = true,
   onAutoSave?: (timestamp: Date) => void,
   paletteId?: string,
+  showGrid?: boolean,
 ) {
   const { data: session } = useSession();
 
@@ -99,6 +103,7 @@ export function useAutoSave(
         edges: Edge[],
         mindMapId: string,
         currentPaletteId?: string,
+        currentShowGrid?: boolean,
       ) => {
         try {
           // Double check mindMapId hasn't changed since debounce was triggered
@@ -113,11 +118,13 @@ export function useAutoSave(
             nodes,
             edges,
             paletteId: currentPaletteId,
+            showGrid: currentShowGrid,
           });
           logger.info(`Auto-saved diagram ${mindMapId} to cloud storage`);
           lastSavedNodes = cleanNodesForComparison(nodes);
           lastSavedEdges = cleanEdgesForComparison(edges);
           lastSavedPaletteId = currentPaletteId;
+          lastSavedShowGrid = currentShowGrid;
           setHasUnsavedChanges(false); // Use the function instead of direct assignment
           if (onAutoSave) {
             onAutoSave(new Date());
@@ -136,12 +143,18 @@ export function useAutoSave(
 
   // Check if there are actual changes
   const checkForChanges = useCallback(
-    (nodes: MindMapNode[], edges: Edge[], currentPaletteId?: string) => {
+    (
+      nodes: MindMapNode[],
+      edges: Edge[],
+      currentPaletteId?: string,
+      currentShowGrid?: boolean,
+    ) => {
       const cleanedCurrentNodes = cleanNodesForComparison(nodes);
       const cleanedCurrentEdges = cleanEdgesForComparison(edges);
       const hasNodesChanged = !isEqual(cleanedCurrentNodes, lastSavedNodes);
       const hasEdgesChanged = !isEqual(cleanedCurrentEdges, lastSavedEdges);
       const hasPaletteChanged = currentPaletteId !== lastSavedPaletteId;
+      const hasShowGridChanged = currentShowGrid !== lastSavedShowGrid;
 
       if (hasNodesChanged) {
         // Log node changes by comparing JSON strings
@@ -233,11 +246,13 @@ export function useAutoSave(
       logger.debug("Nodes changed:", hasNodesChanged);
       logger.debug("Edges changed:", hasEdgesChanged);
       logger.debug("Palette changed:", hasPaletteChanged);
+      logger.debug("Show grid changed:", hasShowGridChanged);
 
       return (
         hasNodesChanged ||
         hasEdgesChanged ||
         hasPaletteChanged ||
+        hasShowGridChanged ||
         hasUnsavedChanges
       );
     },
@@ -248,10 +263,10 @@ export function useAutoSave(
     if (!enabled || !mindMapId || !session) return;
 
     // Only mark as unsaved if there are actual changes
-    if (checkForChanges(nodes, edges, paletteId)) {
+    if (checkForChanges(nodes, edges, paletteId, showGrid)) {
       setHasUnsavedChanges(true); // Use the function instead of direct assignment
       // Trigger debounced save
-      debouncedSave(nodes, edges, mindMapId, paletteId);
+      debouncedSave(nodes, edges, mindMapId, paletteId, showGrid);
     }
 
     return () => {
@@ -267,6 +282,7 @@ export function useAutoSave(
     checkForChanges,
     hasUnsavedChanges,
     paletteId,
+    showGrid,
   ]);
 
   // Add beforeunload event listener
@@ -294,6 +310,7 @@ export function useAutoSave(
       lastSavedNodes = cleanNodesForComparison(nodes);
       lastSavedEdges = cleanEdgesForComparison(edges);
       lastSavedPaletteId = paletteId;
+      lastSavedShowGrid = showGrid;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

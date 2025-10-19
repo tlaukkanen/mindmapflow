@@ -13,6 +13,7 @@ export interface SaveMindMapParams {
   edges: Edge[];
   lastModified?: Date;
   paletteId?: string;
+  showGrid?: boolean;
 }
 
 export interface MindMapData {
@@ -20,6 +21,7 @@ export interface MindMapData {
   edges: Edge[];
   lastModified: Date;
   paletteId?: string;
+  showGrid?: boolean;
 }
 
 type SanitizedMindMapNode = Omit<
@@ -66,6 +68,7 @@ class MindMapService {
     edges,
     lastModified,
     paletteId,
+    showGrid,
   }: SaveMindMapParams) {
     try {
       const sanitizedNodes = sanitizeNodesForSave(nodes);
@@ -82,6 +85,7 @@ class MindMapService {
           edges: sanitizedEdges,
           lastModified,
           paletteId,
+          showGrid,
         }),
       });
 
@@ -129,6 +133,7 @@ class MindMapService {
       return {
         ...data,
         paletteId: data.paletteId ?? DEFAULT_PALETTE_ID,
+        showGrid: data.showGrid ?? false,
       };
     } catch (error) {
       logger.error("Error loading diagram:", error);
@@ -142,6 +147,7 @@ class MindMapService {
     return {
       ...emptyMindMap,
       paletteId: DEFAULT_PALETTE_ID,
+      showGrid: (emptyMindMap as { showGrid?: boolean }).showGrid ?? false,
     };
   }
 

@@ -125,6 +125,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
         edges: emptyProject.edges,
         lastModified: new Date(),
         paletteId: palette.id ?? emptyProject.paletteId,
+        showGrid: emptyProject.showGrid ?? false,
       });
 
       router.push(`/editor/${newMindMapId}`);

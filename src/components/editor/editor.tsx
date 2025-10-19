@@ -271,6 +271,8 @@ export default function Editor() {
   const { loadMindMap } = useMindMap();
   const settingUpNewProject = useRef(false);
   const { palette, setPaletteId: setThemePaletteId } = useTheme();
+  const paletteIdRef = useRef<string | undefined>(palette.id);
+  const showGridRef = useRef(showGrid);
 
   // Add the auto-save hook
   useAutoSave(
@@ -282,14 +284,23 @@ export default function Editor() {
       window.dispatchEvent(new CustomEvent("saved", { detail: timestamp }));
     },
     palette.id,
+    showGrid,
   );
+
+  useEffect(() => {
+    paletteIdRef.current = palette.id;
+  }, [palette.id]);
+
+  useEffect(() => {
+    showGridRef.current = showGrid;
+  }, [showGrid]);
 
   const handleLoadMindMap = useCallback(async () => {
     if (!mindMapId) return;
 
     // Force clear unsaved changes state when explicitly loading a new mindmap
     setHasUnsavedChanges(false);
-    setLastSavedState([], [], palette.id);
+    setLastSavedState([], [], paletteIdRef.current, showGridRef.current);
     if (settingUpNewProject.current) {
       settingUpNewProject.current = false;
       logger.debug("Setting up new project, skipping load");
@@ -301,12 +312,19 @@ export default function Editor() {
 
     if (data) {
       const loadedPaletteId = data.paletteId ?? DEFAULT_PALETTE_ID;
+      const loadedShowGrid = data.showGrid ?? false;
 
       setThemePaletteId(loadedPaletteId);
       setNodes(data.nodes);
       setEdges(data.edges);
+      setShowGrid(loadedShowGrid);
       // Update last saved state with the newly loaded data
-      setLastSavedState(data.nodes, data.edges, loadedPaletteId);
+      setLastSavedState(
+        data.nodes,
+        data.edges,
+        loadedPaletteId,
+        loadedShowGrid,
+      );
       fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     }
   }, [
@@ -317,6 +335,7 @@ export default function Editor() {
     fitView,
     settingUpNewProject,
     setThemePaletteId,
+    setShowGrid,
   ]);
 
   // Add useEffect to load diagram on mount
@@ -335,6 +354,7 @@ export default function Editor() {
     const project = {
       nodes: cleanedNodes,
       edges,
+      showGrid,
     };
 
     navigator.clipboard.writeText(JSON.stringify(project, null, 2));
@@ -347,10 +367,12 @@ export default function Editor() {
     const newMindMapId = nanoid(10);
     const emptyProject = mindMapService.createEmptyMindmap();
     const initialPaletteId = palette.id ?? DEFAULT_PALETTE_ID;
+    const initialShowGrid = emptyProject.showGrid ?? false;
 
     setMindMapId(newMindMapId);
     setNodes(emptyProject.nodes as MindMapNode[]);
     setEdges(emptyProject.edges);
+    setShowGrid(initialShowGrid);
     window.history.pushState({}, "", `/editor/${newMindMapId}`);
     fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     // Set hasUnsavedChanges to false since this is a fresh project
@@ -360,6 +382,7 @@ export default function Editor() {
       emptyProject.nodes as MindMapNode[],
       emptyProject.edges,
       initialPaletteId,
+      initialShowGrid,
     );
   };
 
