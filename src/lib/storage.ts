@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Edge } from "@xyflow/react";
 
@@ -22,6 +24,15 @@ export interface MindMapMetadata {
   id: string;
   name: string;
   lastModified: Date;
+}
+
+export interface ShareMapping {
+  id: string;
+  ownerEmail: string;
+  ownerPath: string;
+  mindMapId: string;
+  blobName: string;
+  createdAt: string;
 }
 
 export class StorageService {
@@ -49,6 +60,14 @@ export class StorageService {
   private sanitizeEmailForPath(email: string): string {
     // Replace special characters and convert to lowercase
     return email.toLowerCase().replace(/[^a-z0-9]/g, "-");
+  }
+
+  private getPublicShareBlobName(shareId: string): string {
+    return `public-shares/${encodeURIComponent(shareId)}.json`;
+  }
+
+  public getUserPath(userEmail: string): string {
+    return this.sanitizeEmailForPath(userEmail);
   }
 
   async saveMindMap(
@@ -206,6 +225,125 @@ export class StorageService {
     } catch (error) {
       logger.error("Error deleting mindmap:", error);
       throw error;
+    }
+  }
+
+  async createShareMapping(
+    userEmail: string,
+    mindMapId: string,
+  ): Promise<ShareMapping> {
+    const containerClient = await this.getContainerClient();
+    const ownerPath = this.sanitizeEmailForPath(userEmail);
+    const encodedMindMapId = encodeURIComponent(mindMapId);
+    const blobName = `${ownerPath}/${encodedMindMapId}.json`;
+    const mindMapBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    logger.info(
+      `Creating share mapping for mindmap ${blobName} (user: ${userEmail})`,
+    );
+
+    const exists = await mindMapBlobClient.exists();
+
+    if (!exists) {
+      logger.warn(
+        `Cannot create share mapping; mindmap not found: ${blobName}`,
+      );
+      throw new Error("Mindmap not found");
+    }
+
+    const shareId = randomUUID();
+    const mapping: ShareMapping = {
+      id: shareId,
+      ownerEmail: userEmail,
+      ownerPath,
+      mindMapId,
+      blobName,
+      createdAt: new Date().toISOString(),
+    };
+
+    const shareBlobClient = containerClient.getBlockBlobClient(
+      this.getPublicShareBlobName(shareId),
+    );
+
+    const content = JSON.stringify(mapping);
+    const uploadResponse = await shareBlobClient.upload(
+      content,
+      Buffer.byteLength(content),
+    );
+
+    if (uploadResponse.errorCode) {
+      logger.error(
+        `Failed to create share mapping for ${blobName}: ${uploadResponse.errorCode}`,
+      );
+      throw new Error("Failed to create share mapping");
+    }
+
+    return mapping;
+  }
+
+  async getShareMapping(shareId: string): Promise<ShareMapping | null> {
+    try {
+      const containerClient = await this.getContainerClient();
+      const blobClient = containerClient.getBlockBlobClient(
+        this.getPublicShareBlobName(shareId),
+      );
+      const download = await blobClient.download();
+      const content = await streamToText(
+        download.readableStreamBody as NodeJS.ReadableStream,
+      );
+
+      return JSON.parse(content) as ShareMapping;
+    } catch (error) {
+      logger.warn(`Share mapping not found for id ${shareId}`, error);
+
+      return null;
+    }
+  }
+
+  async deleteShareMapping(shareId: string): Promise<boolean> {
+    const containerClient = await this.getContainerClient();
+    const blobClient = containerClient.getBlockBlobClient(
+      this.getPublicShareBlobName(shareId),
+    );
+
+    try {
+      const response = await blobClient.deleteIfExists();
+
+      if (!response.succeeded) {
+        logger.warn(`Share mapping not found when deleting id ${shareId}`);
+      }
+
+      return response.succeeded;
+    } catch (error) {
+      logger.error(`Failed to delete share mapping ${shareId}`, error);
+      throw error;
+    }
+  }
+
+  async loadMindMapByBlobName(blobName: string) {
+    const containerClient = await this.getContainerClient();
+    const blobClient = containerClient.getBlockBlobClient(blobName);
+
+    try {
+      const download = await blobClient.download();
+      const content = await streamToText(
+        download.readableStreamBody as NodeJS.ReadableStream,
+      );
+      const { nodes, edges, lastModified, paletteId, showGrid } = JSON.parse(
+        content.toString(),
+      );
+
+      return {
+        nodes,
+        edges,
+        lastModified: lastModified || download.lastModified,
+        paletteId,
+        showGrid,
+      };
+    } catch (error) {
+      logger.error(`Error loading mindmap by blob name: ${blobName}`, error);
+
+      return null;
     }
   }
 }

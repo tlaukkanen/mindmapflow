@@ -20,6 +20,7 @@ import React, { useState, useEffect } from "react"; // Modified import: added us
 import { toast } from "sonner";
 import { useReactFlow } from "@xyflow/react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
 import { PiUser } from "react-icons/pi";
 
 import { OpenProjectDialog } from "./open-project-dialog";
@@ -58,6 +59,8 @@ export const Menubar = ({
   const profileMenuOpen = Boolean(profileAchorEl);
   const themeMenuOpen = Boolean(themeAnchorEl);
   const { data: session } = useSession();
+  const params = useParams();
+  const mindMapId = (params?.id as string | undefined) ?? undefined;
 
   // Update saved status whenever hasUnsavedChanges changes
   useEffect(() => {
@@ -201,6 +204,44 @@ export const Menubar = ({
     a.click();
   };
 
+  const handleCreatePublicShare = async () => {
+    if (!mindMapId) {
+      toast.error("No project ID found");
+
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/shares", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mindMapId }),
+      });
+
+      if (!response.ok) {
+        const message =
+          response.status === 404
+            ? "Mindmap not found"
+            : "Failed to create share link";
+
+        toast.error(message);
+
+        return;
+      }
+
+      const { shareId } = (await response.json()) as { shareId: string };
+      const shareUrl = `${window.location.origin}/shared/${shareId}`;
+
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Share link copied to clipboard");
+    } catch (error) {
+      logger.error("Failed to create public share", error);
+      toast.error("Failed to create share link");
+    }
+  };
+
   const handleCopyAsImage = () => {
     handleMenuClose();
     const nodes = getNodes() as MindMapNode[];
@@ -315,6 +356,15 @@ export const Menubar = ({
                   }}
                 >
                   Open Project
+                </MenuItem>
+                <MenuItem
+                  disabled={!session}
+                  onClick={() => {
+                    handleCreatePublicShare();
+                    handleMenuClose();
+                  }}
+                >
+                  Share public link
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
                   Export (Coming later)
