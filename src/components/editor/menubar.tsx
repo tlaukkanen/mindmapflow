@@ -24,6 +24,7 @@ import { useParams } from "next/navigation";
 import { PiUser } from "react-icons/pi";
 
 import { OpenProjectDialog } from "./open-project-dialog";
+import { ManageSharesDialog } from "./manage-shares-dialog";
 
 import { useEditor } from "@/store/editor-context";
 import { logger } from "@/services/logger";
@@ -54,6 +55,8 @@ export const Menubar = ({
     null,
   );
   const [openProjectDialogOpen, setOpenProjectDialogOpen] = useState(false);
+  const [manageSharesDialogOpen, setManageSharesDialogOpen] = useState(false);
+  const [sharesRefreshToken, setSharesRefreshToken] = useState(0);
   const projectMenuOpen = Boolean(anchorEl);
   const editMenuOpen = Boolean(editAnchorEl);
   const profileMenuOpen = Boolean(profileAchorEl);
@@ -236,6 +239,7 @@ export const Menubar = ({
 
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Share link copied to clipboard");
+      setSharesRefreshToken((value) => value + 1);
     } catch (error) {
       logger.error("Failed to create public share", error);
       toast.error("Failed to create share link");
@@ -365,6 +369,15 @@ export const Menubar = ({
                   }}
                 >
                   Share public link
+                </MenuItem>
+                <MenuItem
+                  disabled={!session || !mindMapId}
+                  onClick={() => {
+                    setManageSharesDialogOpen(true);
+                    handleMenuClose();
+                  }}
+                >
+                  Manage share links
                 </MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
                   Export (Coming later)
@@ -524,6 +537,12 @@ export const Menubar = ({
       <OpenProjectDialog
         open={openProjectDialogOpen}
         onClose={() => setOpenProjectDialogOpen(false)}
+      />
+      <ManageSharesDialog
+        mindMapId={mindMapId}
+        open={manageSharesDialogOpen}
+        refreshToken={sharesRefreshToken}
+        onClose={() => setManageSharesDialogOpen(false)}
       />
     </>
   );

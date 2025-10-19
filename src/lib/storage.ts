@@ -35,6 +35,11 @@ export interface ShareMapping {
   createdAt: string;
 }
 
+interface MindMapShareEntry {
+  id: string;
+  createdAt: string;
+}
+
 export class StorageService {
   private blobServiceClient: BlobServiceClient;
 
@@ -68,6 +73,95 @@ export class StorageService {
 
   public getUserPath(userEmail: string): string {
     return this.sanitizeEmailForPath(userEmail);
+  }
+
+  private getShareIndexBlobName(ownerPath: string, mindMapId: string): string {
+    return `${ownerPath}/${encodeURIComponent(mindMapId)}.shares.json`;
+  }
+
+  private async loadShareIndexEntries(
+    ownerPath: string,
+    mindMapId: string,
+  ): Promise<MindMapShareEntry[]> {
+    const containerClient = await this.getContainerClient();
+    const blobClient = containerClient.getBlockBlobClient(
+      this.getShareIndexBlobName(ownerPath, mindMapId),
+    );
+
+    try {
+      const download = await blobClient.download();
+      const content = await streamToText(
+        download.readableStreamBody as NodeJS.ReadableStream,
+      );
+      const parsed = JSON.parse(content);
+      const shares = Array.isArray(parsed?.shares) ? parsed.shares : [];
+
+      return shares.filter(
+        (entry: any) =>
+          entry &&
+          typeof entry.id === "string" &&
+          typeof entry.createdAt === "string",
+      );
+    } catch (error: any) {
+      if (error?.statusCode === 404) {
+        return [];
+      }
+
+      logger.warn(
+        `Failed to load share index for ${ownerPath}/${mindMapId}`,
+        error,
+      );
+
+      return [];
+    }
+  }
+
+  private async saveShareIndexEntries(
+    ownerPath: string,
+    mindMapId: string,
+    entries: MindMapShareEntry[],
+  ): Promise<void> {
+    const containerClient = await this.getContainerClient();
+    const blobClient = containerClient.getBlockBlobClient(
+      this.getShareIndexBlobName(ownerPath, mindMapId),
+    );
+
+    if (entries.length === 0) {
+      await blobClient.deleteIfExists();
+
+      return;
+    }
+
+    const payload = JSON.stringify({ mindMapId, shares: entries });
+
+    await blobClient.upload(payload, Buffer.byteLength(payload));
+  }
+
+  private async addShareToIndex(
+    ownerPath: string,
+    mindMapId: string,
+    entry: MindMapShareEntry,
+  ): Promise<void> {
+    const entries = await this.loadShareIndexEntries(ownerPath, mindMapId);
+    const exists = entries.some((share) => share.id === entry.id);
+
+    if (!exists) {
+      entries.push(entry);
+      await this.saveShareIndexEntries(ownerPath, mindMapId, entries);
+    }
+  }
+
+  private async removeShareFromIndex(
+    ownerPath: string,
+    mindMapId: string,
+    shareId: string,
+  ): Promise<void> {
+    const entries = await this.loadShareIndexEntries(ownerPath, mindMapId);
+    const filtered = entries.filter((entry) => entry.id !== shareId);
+
+    if (filtered.length !== entries.length) {
+      await this.saveShareIndexEntries(ownerPath, mindMapId, filtered);
+    }
   }
 
   async saveMindMap(
@@ -278,6 +372,26 @@ export class StorageService {
       throw new Error("Failed to create share mapping");
     }
 
+    // Store metadata to make filtering by owner easier later
+    await shareBlobClient.setMetadata({
+      ownerpath: ownerPath,
+      mindmapid: mindMapId,
+    });
+
+    try {
+      await this.addShareToIndex(ownerPath, mindMapId, {
+        id: shareId,
+        createdAt: mapping.createdAt,
+      });
+    } catch (error) {
+      logger.error(
+        `Failed to update share index for ${ownerPath}/${mindMapId}`,
+        error,
+      );
+      await shareBlobClient.deleteIfExists();
+      throw error;
+    }
+
     return mapping;
   }
 
@@ -292,7 +406,31 @@ export class StorageService {
         download.readableStreamBody as NodeJS.ReadableStream,
       );
 
-      return JSON.parse(content) as ShareMapping;
+      const mapping = JSON.parse(content) as ShareMapping;
+      const entries = await this.loadShareIndexEntries(
+        mapping.ownerPath,
+        mapping.mindMapId,
+      );
+      const isIndexed = entries.some((entry) => entry.id === mapping.id);
+
+      if (!isIndexed) {
+        logger.warn(
+          `Share ${shareId} missing from index, treating as not found`,
+        );
+
+        try {
+          await this.deleteShareMapping(mapping);
+        } catch (cleanupError) {
+          logger.error(
+            `Failed to cleanup orphaned share mapping ${shareId}`,
+            cleanupError,
+          );
+        }
+
+        return null;
+      }
+
+      return mapping;
     } catch (error) {
       logger.warn(`Share mapping not found for id ${shareId}`, error);
 
@@ -300,22 +438,28 @@ export class StorageService {
     }
   }
 
-  async deleteShareMapping(shareId: string): Promise<boolean> {
+  async deleteShareMapping(mapping: ShareMapping): Promise<boolean> {
     const containerClient = await this.getContainerClient();
     const blobClient = containerClient.getBlockBlobClient(
-      this.getPublicShareBlobName(shareId),
+      this.getPublicShareBlobName(mapping.id),
     );
 
     try {
       const response = await blobClient.deleteIfExists();
 
       if (!response.succeeded) {
-        logger.warn(`Share mapping not found when deleting id ${shareId}`);
+        logger.warn(`Share mapping not found when deleting id ${mapping.id}`);
       }
+
+      await this.removeShareFromIndex(
+        mapping.ownerPath,
+        mapping.mindMapId,
+        mapping.id,
+      );
 
       return response.succeeded;
     } catch (error) {
-      logger.error(`Failed to delete share mapping ${shareId}`, error);
+      logger.error(`Failed to delete share mapping ${mapping.id}`, error);
       throw error;
     }
   }
@@ -345,6 +489,66 @@ export class StorageService {
 
       return null;
     }
+  }
+
+  async listShareMappingsForUser(userEmail: string): Promise<ShareMapping[]> {
+    const containerClient = await this.getContainerClient();
+    const ownerPath = this.sanitizeEmailForPath(userEmail);
+    const prefix = `${ownerPath}/`;
+    const suffix = ".shares.json";
+    const shares: ShareMapping[] = [];
+
+    for await (const blob of containerClient.listBlobsFlat({
+      prefix,
+    })) {
+      if (!blob.name.endsWith(suffix)) {
+        continue;
+      }
+
+      const encodedMindMapId = blob.name.slice(
+        prefix.length,
+        blob.name.length - suffix.length,
+      );
+      const mindMapId = decodeURIComponent(encodedMindMapId);
+      const entries = await this.loadShareIndexEntries(ownerPath, mindMapId);
+
+      for (const entry of entries) {
+        const shareBlobClient = containerClient.getBlockBlobClient(
+          this.getPublicShareBlobName(entry.id),
+        );
+        let exists = false;
+
+        try {
+          exists = await shareBlobClient.exists();
+        } catch (error) {
+          logger.error(`Failed to check share blob ${entry.id}`, error);
+          continue;
+        }
+
+        if (!exists) {
+          await this.removeShareFromIndex(ownerPath, mindMapId, entry.id);
+          continue;
+        }
+
+        shares.push({
+          id: entry.id,
+          ownerEmail: userEmail,
+          ownerPath,
+          mindMapId,
+          blobName: `${ownerPath}/${encodedMindMapId}.json`,
+          createdAt: entry.createdAt,
+        });
+      }
+    }
+
+    shares.sort((a, b) => {
+      const aTime = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const bTime = b.createdAt ? Date.parse(b.createdAt) : 0;
+
+      return bTime - aTime;
+    });
+
+    return shares;
   }
 }
 

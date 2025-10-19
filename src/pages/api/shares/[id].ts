@@ -81,7 +81,7 @@ export default async function handler(
         return;
       }
 
-      await storageService.deleteShareMapping(shareId);
+      await storageService.deleteShareMapping(mapping);
 
       res.status(200).json({ success: true });
 
