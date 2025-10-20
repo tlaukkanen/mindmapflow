@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 
 import { SharedViewer } from "@/components/editor/shared-viewer";
 import { siteConfig } from "@/config/site";
-import { storageService } from "@/lib/storage";
 import { logger } from "@/services/logger";
 
 type SharedPageParams = {
@@ -82,9 +81,14 @@ export async function generateMetadata({
   }
 
   try {
-    const mapping = await storageService.getShareMapping(shareId);
+    const shareResponse = await fetch(`${origin}/api/shares/${shareId}`, {
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
 
-    if (!mapping) {
+    if (shareResponse.status === 404) {
       return {
         metadataBase,
         title: `Shared Mindmap Not Found – ${siteConfig.name}`,
@@ -104,13 +108,30 @@ export async function generateMetadata({
       };
     }
 
+    if (!shareResponse.ok) {
+      throw new Error(
+        `Failed to resolve share metadata: ${shareResponse.status}`,
+      );
+    }
+
+    const payload = (await shareResponse.json()) as {
+      title?: string;
+      share?: { id: string; ownerEmail: string; createdAt: string };
+      thumbnailPath?: string | null;
+      nodes?: unknown;
+      edges?: unknown;
+      paletteId?: string | null;
+    };
+
     const title =
-      mapping.title && mapping.title.length > 0
-        ? mapping.title
-        : `Mind map ${mapping.mindMapId}`;
+      typeof payload.title === "string" && payload.title.trim().length > 0
+        ? payload.title.trim()
+        : payload.share?.id
+          ? `Mind map ${payload.share.id}`
+          : `Mind map ${shareId}`;
     const description = `View the shared mind map "${title}" from ${siteConfig.name}.`;
-    const imageUrl = mapping.thumbnailBlobName
-      ? `${origin}/api/shares/${mapping.id}/thumbnail`
+    const imageUrl = payload.thumbnailPath
+      ? `${origin}${payload.thumbnailPath}`
       : `${origin}/favicon-512x512.png`;
 
     return {
