@@ -1,3 +1,4 @@
+import type { MindMapNode } from "@/model/types";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { getToken } from "next-auth/jwt";
@@ -37,8 +38,26 @@ export default async function handler(
         return;
       }
 
+      const nodes = Array.isArray(payload.nodes)
+        ? (payload.nodes as MindMapNode[])
+        : [];
+      const titleFromMapping = mapping.title?.trim();
+      const titleFromNodes = nodes
+        .find((node) => node.id === "root")
+        ?.data?.description?.trim();
+      const shareTitle =
+        titleFromMapping && titleFromMapping.length > 0
+          ? titleFromMapping
+          : titleFromNodes && titleFromNodes.length > 0
+            ? titleFromNodes
+            : `Mind map ${mapping.mindMapId}`;
+
       res.status(200).json({
         ...payload,
+        title: shareTitle,
+        thumbnailPath: mapping.thumbnailBlobName
+          ? `/api/shares/${mapping.id}/thumbnail`
+          : null,
         share: {
           id: mapping.id,
           ownerEmail: mapping.ownerEmail,

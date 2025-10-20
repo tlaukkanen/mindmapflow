@@ -299,12 +299,57 @@ export const BaseNode = memo(
         const resolvedUrl = resolveNodeUrl(data.url);
         const textAlign = textProps?.textAlign ?? "left";
 
+        const forwardTouchPointer = (
+          event: React.PointerEvent<HTMLDivElement>,
+        ) => {
+          if (event.pointerType !== "touch") {
+            return;
+          }
+
+          const nodeElement = containerRef.current;
+
+          if (!nodeElement) {
+            return;
+          }
+
+          const interactiveAncestor = (
+            event.target as HTMLElement | null
+          )?.closest("button, a, textarea, input");
+
+          if (interactiveAncestor) {
+            return;
+          }
+
+          const pointerInit: PointerEventInit = {
+            bubbles: true,
+            cancelable: true,
+            pointerType: "touch",
+            clientX: event.clientX,
+            clientY: event.clientY,
+          };
+
+          if (typeof PointerEvent === "function") {
+            nodeElement.dispatchEvent(
+              new PointerEvent("pointerdown", pointerInit),
+            );
+          } else {
+            nodeElement.dispatchEvent(
+              new MouseEvent("mousedown", {
+                bubbles: true,
+                cancelable: true,
+                clientX: event.clientX,
+                clientY: event.clientY,
+              }),
+            );
+          }
+        };
+
         return (
           <div
             className={clsx(
               "h-full flex flex-col min-h-[16px]",
               resolvedDescriptionClass,
-              "px-1 ", // Add consistent padding
+              "px-1 touch-none select-none", // Add consistent padding and ensure touch dragging propagates
               // Text alignment horizontal
               textProps?.textAlign === "left" && "text-left",
               textProps?.textAlign === "center" && "text-center",
@@ -321,10 +366,11 @@ export const BaseNode = memo(
               textProps?.strikethrough && "line-through",
             )}
             onDoubleClick={handleDoubleClick}
+            onPointerDownCapture={forwardTouchPointer}
           >
             <div
               className={clsx(
-                "inline-flex w-full flex-wrap items-start gap-1",
+                "inline-flex w-full flex-wrap items-start gap-1 touch-none pointer-events-none select-none",
                 textAlign === "center" && "justify-center",
                 textAlign === "right" && "justify-end",
                 textAlign === "justify" && "justify-center",
@@ -337,7 +383,7 @@ export const BaseNode = memo(
                 <IconButton
                   disableRipple
                   aria-label="Open link"
-                  className="pointer-events-auto"
+                  className="pointer-events-auto select-none"
                   size="small"
                   sx={{
                     padding: "2px",

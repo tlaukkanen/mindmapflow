@@ -3,7 +3,7 @@ export type SiteConfig = typeof siteConfig;
 export const siteConfig = {
   name: "MindMapFlow",
   description:
-    "MindMapFlow - Meet MindMapFlow, your ultimate brainstorming companion. Designed to unleash creativity and enhance productivity, MindMapFlow transforms complex ideas into clear, structured visuals.",
+    "Transform ideas into visual mind maps. A powerful brainstorming tool for organizing your thoughts.",
   navItems: [
     {
       label: "Home",

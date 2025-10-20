@@ -214,13 +214,57 @@ export const Menubar = ({
       return;
     }
 
+    const nodes = getNodes() as MindMapNode[];
+    let shareTitle: string | undefined;
+    let thumbnailDataUrl: string | undefined;
+
+    if (nodes.length > 0) {
+      const rootNode =
+        nodes.find((node) => node.id === "root") ||
+        nodes.find((node) => (node.data.depth ?? 0) === 0);
+      const candidateTitle = rootNode?.data?.description?.trim();
+
+      if (candidateTitle && candidateTitle.length > 0) {
+        shareTitle = candidateTitle;
+      }
+
+      try {
+        const { dataUrl } = await renderMindmapToPng(nodes, {
+          logger,
+          pixelRatio: 1.25,
+        });
+
+        thumbnailDataUrl = dataUrl;
+      } catch (error) {
+        if (error instanceof MindmapExportError) {
+          logger.warn("Unable to render share thumbnail", {
+            code: error.code,
+          });
+        } else {
+          logger.warn("Unexpected error rendering share thumbnail", error);
+        }
+      }
+    }
+
+    const shareToastId = toast.loading("Creating share link...");
+
     try {
+      const payload: Record<string, unknown> = { mindMapId };
+
+      if (shareTitle) {
+        payload.title = shareTitle;
+      }
+
+      if (thumbnailDataUrl) {
+        payload.thumbnailDataUrl = thumbnailDataUrl;
+      }
+
       const response = await fetch("/api/shares", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ mindMapId }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -234,15 +278,38 @@ export const Menubar = ({
         return;
       }
 
-      const { shareId } = (await response.json()) as { shareId: string };
+      const { shareId, title: responseTitle } = (await response.json()) as {
+        shareId: string;
+        title?: string;
+      };
       const shareUrl = `${window.location.origin}/shared/${shareId}`;
+      const successTitle =
+        responseTitle && responseTitle.length > 0 ? responseTitle : shareTitle;
 
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Share link copied to clipboard");
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success(
+          successTitle
+            ? `Share link copied for "${successTitle}"`
+            : "Share link copied to clipboard",
+        );
+      } catch (clipboardError) {
+        logger.warn("Failed to copy share link to clipboard", clipboardError);
+        toast.success(
+          successTitle
+            ? `Share link ready for "${successTitle}"`
+            : "Share link ready",
+        );
+        toast.info("Copy link", {
+          description: shareUrl,
+        });
+      }
       setSharesRefreshToken((value) => value + 1);
     } catch (error) {
       logger.error("Failed to create public share", error);
       toast.error("Failed to create share link");
+    } finally {
+      toast.dismiss(shareToastId);
     }
   };
 

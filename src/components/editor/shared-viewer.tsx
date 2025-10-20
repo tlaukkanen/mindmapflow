@@ -131,9 +131,12 @@ function SharedViewerCanvas({
 
         setPaletteId(resolvedPaletteId);
         setShowGrid(Boolean(data.showGrid));
-        const title = resolveTitle((data.nodes ?? []) as MindMapNode[]);
+        const responseTitle =
+          typeof data.title === "string" && data.title.trim().length > 0
+            ? data.title.trim()
+            : resolveTitle((data.nodes ?? []) as MindMapNode[]);
 
-        onTitleChange(title);
+        onTitleChange(responseTitle);
         setStatus("loaded");
       } catch (error) {
         logger.error(`Failed to load shared mindmap ${shareId}`, error);

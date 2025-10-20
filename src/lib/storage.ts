@@ -18,6 +18,24 @@ async function streamToText(readable: NodeJS.ReadableStream): Promise<string> {
   return data;
 }
 
+async function streamToBuffer(
+  readable: NodeJS.ReadableStream,
+): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of readable) {
+    if (typeof chunk === "string") {
+      chunks.push(Buffer.from(chunk, "utf8"));
+    } else if (Buffer.isBuffer(chunk)) {
+      chunks.push(chunk);
+    } else {
+      chunks.push(Buffer.from(chunk as Uint8Array));
+    }
+  }
+
+  return Buffer.concat(chunks as unknown as Uint8Array[]);
+}
+
 const containerName = "user-mindmaps";
 
 export interface MindMapMetadata {
@@ -33,6 +51,9 @@ export interface ShareMapping {
   mindMapId: string;
   blobName: string;
   createdAt: string;
+  title?: string;
+  thumbnailBlobName?: string;
+  thumbnailContentType?: string;
 }
 
 interface MindMapShareEntry {
@@ -69,6 +90,32 @@ export class StorageService {
 
   private getPublicShareBlobName(shareId: string): string {
     return `public-shares/${encodeURIComponent(shareId)}.json`;
+  }
+
+  private getShareThumbnailBlobName(
+    shareId: string,
+    extension: string,
+  ): string {
+    const normalizedExtension = extension.startsWith(".")
+      ? extension
+      : `.${extension}`;
+
+    return `public-shares/${encodeURIComponent(shareId)}.thumbnail${normalizedExtension}`;
+  }
+
+  private getThumbnailExtensionForContentType(contentType: string): string {
+    switch (contentType.toLowerCase()) {
+      case "image/jpeg":
+      case "image/jpg":
+        return ".jpg";
+      case "image/webp":
+        return ".webp";
+      case "image/svg+xml":
+        return ".svg";
+      case "image/png":
+      default:
+        return ".png";
+    }
   }
 
   public getUserPath(userEmail: string): string {
@@ -325,6 +372,10 @@ export class StorageService {
   async createShareMapping(
     userEmail: string,
     mindMapId: string,
+    options?: {
+      title?: string | null;
+      thumbnail?: { buffer: Buffer; contentType: string } | null;
+    },
   ): Promise<ShareMapping> {
     const containerClient = await this.getContainerClient();
     const ownerPath = this.sanitizeEmailForPath(userEmail);
@@ -336,16 +387,68 @@ export class StorageService {
       `Creating share mapping for mindmap ${blobName} (user: ${userEmail})`,
     );
 
-    const exists = await mindMapBlobClient.exists();
+    let mindMapProperties;
 
-    if (!exists) {
-      logger.warn(
-        `Cannot create share mapping; mindmap not found: ${blobName}`,
-      );
-      throw new Error("Mindmap not found");
+    try {
+      mindMapProperties = await mindMapBlobClient.getProperties();
+    } catch (error: any) {
+      if (error?.statusCode === 404) {
+        logger.warn(
+          `Cannot create share mapping; mindmap not found: ${blobName}`,
+        );
+        throw new Error("Mindmap not found");
+      }
+
+      logger.error(`Failed to load mindmap properties for ${blobName}`, error);
+      throw error;
     }
 
     const shareId = randomUUID();
+    let resolvedTitle =
+      typeof options?.title === "string" && options.title.trim().length > 0
+        ? options.title.trim()
+        : undefined;
+
+    if (!resolvedTitle) {
+      const encodedName = mindMapProperties.metadata?.name;
+      const decodedName = encodedName ? decodeURIComponent(encodedName) : "";
+      const cleanedName = decodedName?.trim();
+
+      resolvedTitle =
+        cleanedName && cleanedName.length > 0 ? cleanedName : undefined;
+    }
+
+    if (!resolvedTitle) {
+      resolvedTitle = `Mind map ${mindMapId}`;
+    }
+
+    let thumbnailBlobName: string | undefined;
+    let thumbnailContentType: string | undefined;
+
+    if (options?.thumbnail?.buffer && options.thumbnail.contentType) {
+      thumbnailContentType = options.thumbnail.contentType;
+      const extension =
+        this.getThumbnailExtensionForContentType(thumbnailContentType);
+
+      thumbnailBlobName = this.getShareThumbnailBlobName(shareId, extension);
+
+      const thumbnailClient =
+        containerClient.getBlockBlobClient(thumbnailBlobName);
+
+      try {
+        await thumbnailClient.uploadData(options.thumbnail.buffer, {
+          blobHTTPHeaders: { blobContentType: thumbnailContentType },
+        });
+      } catch (error) {
+        logger.error(
+          `Failed to upload thumbnail for share ${shareId}, continuing without thumbnail`,
+          error,
+        );
+        thumbnailBlobName = undefined;
+        thumbnailContentType = undefined;
+      }
+    }
+
     const mapping: ShareMapping = {
       id: shareId,
       ownerEmail: userEmail,
@@ -353,7 +456,13 @@ export class StorageService {
       mindMapId,
       blobName,
       createdAt: new Date().toISOString(),
+      title: resolvedTitle,
     };
+
+    if (thumbnailBlobName && thumbnailContentType) {
+      mapping.thumbnailBlobName = thumbnailBlobName;
+      mapping.thumbnailContentType = thumbnailContentType;
+    }
 
     const shareBlobClient = containerClient.getBlockBlobClient(
       this.getPublicShareBlobName(shareId),
@@ -389,6 +498,13 @@ export class StorageService {
         error,
       );
       await shareBlobClient.deleteIfExists();
+
+      if (thumbnailBlobName) {
+        const thumbnailClient =
+          containerClient.getBlockBlobClient(thumbnailBlobName);
+
+        await thumbnailClient.deleteIfExists();
+      }
       throw error;
     }
 
@@ -430,11 +546,79 @@ export class StorageService {
         return null;
       }
 
+      if (!mapping.title) {
+        try {
+          const mindMapBlobClient = containerClient.getBlockBlobClient(
+            mapping.blobName,
+          );
+          const properties = await mindMapBlobClient.getProperties();
+          const encodedName = properties.metadata?.name;
+          const decodedName = encodedName
+            ? decodeURIComponent(encodedName)
+            : "";
+          const cleanedName = decodedName.trim();
+
+          mapping.title =
+            cleanedName.length > 0
+              ? cleanedName
+              : `Mind map ${mapping.mindMapId}`;
+        } catch (metadataError) {
+          logger.warn(
+            `Failed to backfill title for share ${mapping.id}`,
+            metadataError,
+          );
+          mapping.title = `Mind map ${mapping.mindMapId}`;
+        }
+      }
+
       return mapping;
     } catch (error) {
       logger.warn(`Share mapping not found for id ${shareId}`, error);
 
       return null;
+    }
+  }
+
+  async downloadShareThumbnail(
+    mapping: ShareMapping,
+  ): Promise<{ buffer: Buffer; contentType: string } | null> {
+    if (!mapping.thumbnailBlobName) {
+      return null;
+    }
+
+    const containerClient = await this.getContainerClient();
+    const blobClient = containerClient.getBlockBlobClient(
+      mapping.thumbnailBlobName,
+    );
+
+    try {
+      const download = await blobClient.download();
+      const stream =
+        download.readableStreamBody as NodeJS.ReadableStream | null;
+      let buffer: Buffer;
+
+      if (stream) {
+        buffer = await streamToBuffer(stream);
+      } else {
+        buffer = await blobClient.downloadToBuffer();
+      }
+
+      const contentType =
+        download.contentType ??
+        mapping.thumbnailContentType ??
+        "application/octet-stream";
+
+      return { buffer, contentType };
+    } catch (error: any) {
+      if (error?.statusCode === 404) {
+        return null;
+      }
+
+      logger.error(
+        `Failed to download thumbnail for share ${mapping.id}`,
+        error,
+      );
+      throw error;
     }
   }
 
@@ -456,6 +640,14 @@ export class StorageService {
         mapping.mindMapId,
         mapping.id,
       );
+
+      if (mapping.thumbnailBlobName) {
+        const thumbnailClient = containerClient.getBlockBlobClient(
+          mapping.thumbnailBlobName,
+        );
+
+        await thumbnailClient.deleteIfExists();
+      }
 
       return response.succeeded;
     } catch (error) {
