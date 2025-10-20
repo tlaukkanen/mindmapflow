@@ -27,7 +27,7 @@ export default async function SharedPage({ params }: SharedPageProps) {
 export const dynamic = "force-dynamic";
 
 type SharedGenerateMetadataProps = {
-  params: SharedPageParams | Promise<SharedPageParams>;
+  params?: Promise<SharedPageParams>;
 };
 
 function resolveShareId(rawId: SharedPageParams["id"]): string {
@@ -54,7 +54,7 @@ async function resolveOrigin(): Promise<string> {
 export async function generateMetadata({
   params,
 }: SharedGenerateMetadataProps): Promise<Metadata> {
-  const resolvedParams = await params;
+  const resolvedParams = params ? await params : undefined;
   const shareId = resolveShareId(resolvedParams?.id);
   const origin = await resolveOrigin();
   const metadataBase = new URL(origin);
