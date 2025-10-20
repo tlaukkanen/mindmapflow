@@ -732,7 +732,12 @@ export const FormatToolbar = memo(
     );
 
     const toolbarContent = (
-      <div style={toolbarStyles}>
+      <div
+        style={{
+          ...toolbarStyles,
+          display: isLinkDialogOpen ? "none" : "flex",
+        }}
+      >
         <Tooltip title="Align left">
           <IconButton
             size="small"

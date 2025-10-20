@@ -361,6 +361,7 @@ export const Menubar = ({
                 >
                   Open Project
                 </MenuItem>
+                <Divider component="li" sx={{ my: 0.5 }} />
                 <MenuItem
                   disabled={!session}
                   onClick={() => {
@@ -379,6 +380,8 @@ export const Menubar = ({
                 >
                   Manage share links
                 </MenuItem>
+                <Divider component="li" sx={{ my: 0.5 }} />
+                <MenuItem onClick={handleCopyAsImage}>Export as image</MenuItem>
                 <MenuItem disabled onClick={handleMenuClose}>
                   Export (Coming later)
                 </MenuItem>
@@ -447,7 +450,6 @@ export const Menubar = ({
                 open={editMenuOpen}
                 onClose={handleMenuClose}
               >
-                <MenuItem onClick={handleCopyAsImage}>Save as image</MenuItem>
                 <MenuItem onClick={onCopyJsonToClipboard}>
                   Copy as JSON to clipboard
                 </MenuItem>
