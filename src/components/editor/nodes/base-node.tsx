@@ -50,6 +50,8 @@ export const BaseNode = memo(
     const isResizingRef = useRef(false);
     const startXRef = useRef(0);
     const startWidthRef = useRef<number | undefined>(undefined);
+    const lastTapRef = useRef<number>(0);
+    const touchStartPositionRef = useRef<{ x: number; y: number } | null>(null);
     const { enabled: gridEnabled, step: gridStep } = useGridSettings();
 
     // Add effect to handle text selection when entering edit mode
@@ -233,6 +235,115 @@ export const BaseNode = memo(
       e.preventDefault();
       e.stopPropagation();
       if (e.touches && e.touches[0]) beginResize(e.touches[0].clientX);
+    };
+
+    const DOUBLE_TAP_DELAY_MS = 400;
+    const TAP_MOVE_THRESHOLD_PX = 12;
+
+    const recordTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+      if (event.touches.length !== 1) {
+        touchStartPositionRef.current = null;
+
+        return;
+      }
+
+      const touch = event.touches[0];
+
+      touchStartPositionRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+      };
+    };
+
+    const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+      if (data.isEditing || isResizingRef.current) {
+        lastTapRef.current = 0;
+
+        return;
+      }
+
+      const shouldIgnore = (() => {
+        const target = event.target as HTMLElement | null;
+
+        if (!target) {
+          return false;
+        }
+
+        if (target.closest("button, a, textarea, input")) {
+          return true;
+        }
+
+        return false;
+      })();
+
+      if (shouldIgnore) {
+        lastTapRef.current = 0;
+
+        return;
+      }
+
+      const changedTouch = event.changedTouches[0];
+
+      if (!changedTouch) {
+        lastTapRef.current = 0;
+
+        return;
+      }
+
+      const start = touchStartPositionRef.current;
+
+      if (start) {
+        const dx = Math.abs(changedTouch.clientX - start.x);
+        const dy = Math.abs(changedTouch.clientY - start.y);
+
+        if (dx > TAP_MOVE_THRESHOLD_PX || dy > TAP_MOVE_THRESHOLD_PX) {
+          lastTapRef.current = 0;
+
+          touchStartPositionRef.current = null;
+
+          return;
+        }
+      }
+
+      const now = Date.now();
+
+      const timeSinceLastTap = now - lastTapRef.current;
+
+      if (timeSinceLastTap > 0 && timeSinceLastTap <= DOUBLE_TAP_DELAY_MS) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        handleDoubleClick();
+        lastTapRef.current = 0;
+        touchStartPositionRef.current = null;
+      } else {
+        lastTapRef.current = now;
+        touchStartPositionRef.current = null;
+      }
+    };
+
+    const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType !== "touch") {
+        return;
+      }
+
+      if (isResizingRef.current || data.isEditing) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+
+      if (target && target.closest("button, a, textarea, input")) {
+        return;
+      }
+
+      if (event.nativeEvent.detail === 2) {
+        event.preventDefault();
+        event.stopPropagation();
+        lastTapRef.current = 0;
+        touchStartPositionRef.current = null;
+        handleDoubleClick();
+      }
     };
 
     const resolveNodeUrl = (value?: string | null) => {
@@ -478,6 +589,13 @@ export const BaseNode = memo(
           outlineOffset: selected ? "0px" : undefined,
         }}
         onDoubleClick={handleDoubleClick}
+        onPointerDownCapture={handlePointerDown}
+        onTouchCancel={() => {
+          touchStartPositionRef.current = null;
+          lastTapRef.current = 0;
+        }}
+        onTouchEndCapture={handleTouchEnd}
+        onTouchStartCapture={recordTouchStart}
       >
         {showToolbar && (
           <>
