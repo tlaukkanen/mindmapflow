@@ -302,9 +302,8 @@ export const BaseNode = memo(
         return (
           <div
             className={clsx(
-              "h-full flex flex-col min-h-[16px]",
+              "h-full flex flex-col min-h-[16px] px-1 select-none pointer-events-none",
               resolvedDescriptionClass,
-              "px-1 ", // Add consistent padding
               // Text alignment horizontal
               textProps?.textAlign === "left" && "text-left",
               textProps?.textAlign === "center" && "text-center",
@@ -320,7 +319,7 @@ export const BaseNode = memo(
               textProps?.underline && "underline",
               textProps?.strikethrough && "line-through",
             )}
-            onDoubleClick={handleDoubleClick}
+            style={{ touchAction: "none" }}
           >
             <div
               className={clsx(
@@ -329,10 +328,15 @@ export const BaseNode = memo(
                 textAlign === "right" && "justify-end",
                 textAlign === "justify" && "justify-center",
               )}
+              style={{ touchAction: "none" }}
             >
-              <span className="min-w-0 whitespace-pre-wrap break-words">
+              <span
+                className="min-w-0 whitespace-pre-wrap break-words"
+                style={{ touchAction: "none" }}
+              >
                 {data.description || ""}
               </span>
+
               {resolvedUrl && !data.isEditing && (
                 <IconButton
                   disableRipple
@@ -343,6 +347,7 @@ export const BaseNode = memo(
                     padding: "2px",
                     backgroundColor: "transparent",
                     color: "var(--color-canvas-node-text)",
+                    touchAction: "manipulation",
                     "&:hover": {
                       backgroundColor: "rgba(148, 163, 184, 0.25)",
                     },
@@ -359,7 +364,7 @@ export const BaseNode = memo(
       }
 
       return (
-        <div className="inset-0 px-1 ">
+        <div className="inset-0 px-1" style={{ touchAction: "none" }}>
           {" "}
           {/* Wrapper div with padding */}
           <textarea
@@ -465,13 +470,14 @@ export const BaseNode = memo(
           ...style,
           touchAction: "none",
           userSelect: "none",
-          minHeight: "16px", // Add minimum height
+          minHeight: "36px", // Add minimum height
           borderColor: selected
             ? "var(--color-primary)"
             : "var(--color-canvas-node-border)",
           outline: selected ? "2px solid var(--color-primary)" : undefined,
           outlineOffset: selected ? "0px" : undefined,
         }}
+        onDoubleClick={handleDoubleClick}
       >
         {showToolbar && (
           <>
