@@ -235,10 +235,14 @@ export default function Canvas({
           edges={edges}
           nodeTypes={nodeTypes}
           nodes={nodes} // <-- This is the key change. We're now using the nodes directly which include the callbacks
+          panOnDrag={true}
+          panOnScroll={false}
           proOptions={proOptions}
           selectionOnDrag={true}
           snapGrid={[10, 10]}
           snapToGrid={showGrid}
+          zoomOnPinch={true}
+          zoomOnScroll={true}
           onConnect={onConnect}
           onEdgesChange={onEdgesChange}
           onInit={onInit}
