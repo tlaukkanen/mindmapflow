@@ -18,8 +18,8 @@
   --color-body-text: #212529;
   --color-heading-text: #2f2f37;
   --color-muted-text: #52525c;
-  --color-link-text: #3d4877;
-  --color-link-text-hover: #464a4e;
+  --color-link-text: #2d3558;
+  --color-link-text-hover: #333538;
 
   --color-panels-background: #ffffff;
   --color-panels-border: #6b6b76;
@@ -137,6 +137,11 @@ body {
 
 .text-link {
   color: var(--color-link-text);
+}
+
+.promotion-text-link {
+  color: #202b5e !important;
+  text-decoration: none !important;
 }
 
 .text-link:hover,

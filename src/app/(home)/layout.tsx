@@ -59,7 +59,7 @@ export default function RootLayout({
           {siteConfig.footerItems?.map((item, index) => (
             <Link
               key={`footer-${index}`}
-              className="text-muted text-sm no-underline hover:text-link"
+              className="text-sm no-underline promotion-text-link"
               href={item.href}
               underline="none"
             >
@@ -74,7 +74,7 @@ export default function RootLayout({
           underline="none"
         >
           <span className="text-muted">Created with ❤️ by&nbsp;</span>
-          <p className="text-link">Tommi Laukkanen</p>
+          <p className="promotion-text-link">Tommi Laukkanen</p>
         </Link>
       </footer>
     </div>

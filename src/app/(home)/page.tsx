@@ -39,8 +39,9 @@ export default function Home() {
         <AppInsightService />
         <Image
           alt="MindMapFlow logo"
-          className="object-contain"
+          className="h-auto w-full max-w-[480px] object-contain pt-8 pb-4"
           height={260}
+          sizes="(max-width: 640px) 80vw, 480px"
           src="/mindmapflow_logo_with_text.png"
           width={480}
         />
@@ -65,7 +66,7 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-5xl space-y-12 py-8 md:py-16">
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-stone-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-center gap-8  p-8 md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
                 Capture Every Spark of Creativity
@@ -155,7 +156,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid items-center gap-8 rounded-md border border-panels-border bg-stone-200 p-8 shadow-xl md:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-center gap-8 p-8 md:grid-cols-[1.1fr_1fr]">
             <div className="space-y-4 text-left">
               <span className={title({ size: "sm", class: "block text-left" })}>
                 Themes That Match Your Mindset
