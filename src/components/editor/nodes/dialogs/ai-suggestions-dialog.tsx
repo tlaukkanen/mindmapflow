@@ -88,7 +88,7 @@ export function AiSuggestionsDialog({
         </Typography>
         {hasSuggestions ? (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {renderSuggestionTree(suggestions)}
+            {renderSuggestionTree(suggestions ?? [])}
           </Box>
         ) : (
           <Typography color="text.secondary" variant="body2">
