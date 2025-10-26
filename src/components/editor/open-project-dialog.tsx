@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,13 +9,12 @@ import {
   ListItemText,
   CircularProgress,
   Typography,
-  IconButton,
   DialogActions,
   Button,
-  ListItemSecondaryAction,
+  Checkbox,
+  ListItemIcon,
+  Box,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { nanoid } from "nanoid";
@@ -36,15 +35,16 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
   const [mindMaps, setMindMaps] = useState<MindMapMetadata[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [selectedMindMapId, setSelectedMindMapId] = useState<string | null>(
-    null,
-  );
+  const [selectedMindMapIds, setSelectedMindMapIds] = useState<string[]>([]);
   const router = useRouter();
   const { palette } = useTheme();
 
   useEffect(() => {
     if (open) {
+      setSelectedMindMapIds([]);
       loadMindMaps();
+    } else {
+      setSelectedMindMapIds([]);
     }
   }, [open]);
 
@@ -71,46 +71,74 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     onClose();
   };
 
-  const handleDeleteClick = (mindMapId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setSelectedMindMapId(mindMapId);
-    setDeleteConfirmOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedMindMapId) return;
-
-    try {
-      const response = await fetch(`/api/mindmaps/${selectedMindMapId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete mindmap");
-      }
-
-      setMindMaps(mindMaps.filter((m) => m.id !== selectedMindMapId));
-    } catch (error) {
-      logger.error("Error deleting mindmap:", error);
-    } finally {
-      setDeleteConfirmOpen(false);
-      setSelectedMindMapId(null);
-    }
-  };
-
-  const handleCopyMindMap = async (
+  const handleToggleSelection = (
     mindMapId: string,
-    event: React.MouseEvent,
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     event.stopPropagation();
+    setSelectedMindMapIds((prev) =>
+      prev.includes(mindMapId)
+        ? prev.filter((id) => id !== mindMapId)
+        : [...prev, mindMapId],
+    );
+  };
+
+  const handleClone = async () => {
+    if (selectedMindMapIds.length !== 1) return;
+
+    const mindMapId = selectedMindMapIds[0];
+
     try {
       await mindMapService.copyMindMap(mindMapId);
 
       await loadMindMaps();
+      setSelectedMindMapIds([]);
       toast.success("Mind map copied successfully");
     } catch (error) {
       logger.error("Error copying mindmap:", error);
       toast.error("Failed to copy mindmap");
+    }
+  };
+
+  const handleDeleteRequest = () => {
+    if (selectedMindMapIds.length === 0) {
+      return;
+    }
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (selectedMindMapIds.length === 0) return;
+
+    const idsToDelete = [...selectedMindMapIds];
+
+    try {
+      await Promise.all(
+        idsToDelete.map(async (mindMapId) => {
+          const response = await fetch(`/api/mindmaps/${mindMapId}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to delete mindmap");
+          }
+        }),
+      );
+
+      setMindMaps((prev) =>
+        prev.filter((mindMap) => !idsToDelete.includes(mindMap.id)),
+      );
+      setSelectedMindMapIds([]);
+      toast.success(
+        idsToDelete.length === 1
+          ? "Mind map deleted successfully"
+          : "Mind maps deleted successfully",
+      );
+    } catch (error) {
+      logger.error("Error deleting mindmap:", error);
+      toast.error("Failed to delete mindmap");
+    } finally {
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -141,6 +169,9 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
       <Dialog fullWidth maxWidth="sm" open={open} onClose={onClose}>
         <DialogTitle>Open Project</DialogTitle>
         <DialogContent>
+          <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
+            Select projects to clone or delete. Click a row to open it.
+          </Typography>
           {loading ? (
             <div className="flex justify-center p-4">
               <CircularProgress />
@@ -158,6 +189,18 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
                     <ListItemButton
                       onClick={() => handleMindMapSelect(mindMap.id)}
                     >
+                      <ListItemIcon>
+                        <Checkbox
+                          disableRipple
+                          checked={selectedMindMapIds.includes(mindMap.id)}
+                          edge="start"
+                          tabIndex={-1}
+                          onChange={(event) =>
+                            handleToggleSelection(mindMap.id, event)
+                          }
+                          onClick={(event) => event.stopPropagation()}
+                        />
+                      </ListItemIcon>
                       <ListItemText
                         primary={mindMap.name}
                         secondary={`Last modified: ${format(
@@ -165,31 +208,35 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
                           "PPp",
                         )}`}
                       />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          aria-label="copy"
-                          edge="end"
-                          sx={{ mr: 1 }}
-                          onClick={(e) => handleCopyMindMap(mindMap.id, e)}
-                        >
-                          <ContentCopyIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label="delete"
-                          edge="end"
-                          onClick={(e) => handleDeleteClick(mindMap.id, e)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
                     </ListItemButton>
                   </ListItem>
                 ))}
             </List>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleNewProject}>New Project</Button>
+        <DialogActions
+          sx={{ justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}
+        >
+          <Button variant="contained" onClick={handleNewProject}>
+            Create new
+          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              disabled={selectedMindMapIds.length !== 1}
+              variant="outlined"
+              onClick={handleClone}
+            >
+              Clone
+            </Button>
+            <Button
+              color="error"
+              disabled={selectedMindMapIds.length === 0}
+              variant="outlined"
+              onClick={handleDeleteRequest}
+            >
+              Delete
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
 
@@ -200,7 +247,8 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
         <DialogTitle>Delete Mind Map</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this mind map? This action cannot be
+            Are you sure you want to delete the selected mind map
+            {selectedMindMapIds.length > 1 ? "s" : ""}? This action cannot be
             undone.
           </Typography>
         </DialogContent>
