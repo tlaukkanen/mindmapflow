@@ -39,7 +39,7 @@ export default function Home() {
         <AppInsightService />
         <Image
           alt="MindMapFlow logo"
-          className="h-auto w-full max-w-[480px] object-contain pt-8 pb-4"
+          className="h-auto w-full max-w-[480px] object-contain pt-24 pb-20"
           height={260}
           sizes="(max-width: 640px) 80vw, 480px"
           src="/mindmapflow_logo_with_text.png"
@@ -48,7 +48,11 @@ export default function Home() {
 
         <div className="inline-block max-w-3xl text-center justify-center">
           <span className={title({ class: "text-heading" })}>
-            Organize Your Ideas, Simplify Your Workflow, Enhance Productivity
+            Organize Your Ideas,
+            <br />
+            Simplify Your Workflow,
+            <br />
+            Enhance Productivity
           </span>
         </div>
 

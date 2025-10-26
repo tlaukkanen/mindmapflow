@@ -20,19 +20,7 @@ import {
   type ReactFlowState,
 } from "@xyflow/react";
 import { createPortal } from "react-dom";
-import {
-  IconButton,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Box,
-  TextField,
-  Chip,
-} from "@mui/material";
+import { IconButton, Tooltip, Box } from "@mui/material";
 import {
   PiTextB,
   PiTextItalic,
@@ -49,8 +37,12 @@ import {
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
-import { MindMapNode } from "@/model/types";
+import { LinkDialog } from "./dialogs/link-dialog";
+import { TagDialog } from "./dialogs/tag-dialog";
+import { AiSuggestionsDialog } from "./dialogs/ai-suggestions-dialog";
+
 import { logger } from "@/services/logger";
+import { MindMapNode } from "@/model/types";
 
 const TOOLBAR_VERTICAL_OFFSET = 56;
 const FORMAT_TOOLBAR_Z_INDEX = 2147483647;
@@ -78,13 +70,6 @@ const sanitizeTagList = (values: readonly string[]): string[] => {
 
   return sanitized;
 };
-
-const countTotalSuggestions = (items: AiSubnodeSuggestion[]): number =>
-  items.reduce(
-    (total, item) =>
-      total + 1 + (item.children ? countTotalSuggestions(item.children) : 0),
-    0,
-  );
 
 interface FormatToolbarProps {
   id: string;
@@ -338,6 +323,14 @@ export const FormatToolbar = memo(
       );
     }, []);
 
+    const handleRemoveLastPendingTag = useCallback(() => {
+      setPendingTags((prev) => prev.slice(0, -1));
+    }, []);
+
+    const handleTagInputChange = useCallback((value: string) => {
+      setTagInput(value);
+    }, []);
+
     const handleTagDialogSave = useCallback(() => {
       if (!onProjectTagsChange) {
         handleCloseTagDialog();
@@ -512,35 +505,6 @@ export const FormatToolbar = memo(
         toast.error("Unable to add AI suggestions");
       }
     };
-
-    const renderSuggestionTree = (
-      items: AiSubnodeSuggestion[],
-      depth = 0,
-    ): JSX.Element[] =>
-      items.map((item, index) => (
-        <Box
-          key={`${depth}-${index}-${item.title}`}
-          sx={{ ml: depth * 2, mb: 1.5 }}
-        >
-          <Typography variant="subtitle2">&bull; {item.title}</Typography>
-          {item.children && item.children.length > 0 && (
-            <Box
-              sx={{
-                mt: 0.75,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-              }}
-            >
-              {renderSuggestionTree(item.children, depth + 1)}
-            </Box>
-          )}
-        </Box>
-      ));
-
-    const totalSuggestionCount = pendingSuggestions
-      ? countTotalSuggestions(pendingSuggestions)
-      : 0;
 
     const selectCurrentNodeData = useCallback(
       (state: ReactFlowState) => {
@@ -1012,158 +976,36 @@ export const FormatToolbar = memo(
             </span>
           </Tooltip>
         )}
-        <Dialog
-          fullWidth
-          maxWidth="xs"
+        <LinkDialog
+          hasExistingLink={hasExistingLink}
+          inputRef={linkInputRef}
+          linkError={linkError}
+          linkValue={linkValue}
           open={isLinkDialogOpen}
+          onChange={handleLinkInputChange}
           onClose={handleLinkDialogClose}
-        >
-          <DialogTitle>
-            {hasExistingLink ? "Edit Link" : "Add Link"}
-          </DialogTitle>
-          <DialogContent>
-            <TextField
-              fullWidth
-              error={Boolean(linkError)}
-              helperText={
-                linkError ??
-                "HTTP or HTTPS links are supported. We'll add https:// when missing."
-              }
-              inputRef={linkInputRef}
-              label="URL"
-              margin="dense"
-              placeholder="https://example.com"
-              type="url"
-              value={linkValue}
-              onChange={handleLinkInputChange}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleLinkSave();
-                }
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            {hasExistingLink && (
-              <Button color="error" onClick={handleLinkRemove}>
-                Remove Link
-              </Button>
-            )}
-            <Button onClick={handleLinkDialogClose}>Cancel</Button>
-            <Button variant="contained" onClick={handleLinkSave}>
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog
-          fullWidth
-          maxWidth="xs"
+          onRemove={handleLinkRemove}
+          onSave={handleLinkSave}
+        />
+        <TagDialog
+          canSave={Boolean(onProjectTagsChange)}
           open={isTagDialogOpen}
+          pendingTags={pendingTags}
+          tagInput={tagInput}
           onClose={handleCloseTagDialog}
-        >
-          <DialogTitle>Edit Project Tags</DialogTitle>
-          <DialogContent>
-            <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
-              Tags help with organizing and filtering your mind maps.
-            </Typography>
-            <TextField
-              fullWidth
-              label="Add tag"
-              margin="dense"
-              placeholder="Press Enter to add"
-              size="small"
-              value={tagInput}
-              onBlur={() => handleTagAdd()}
-              onChange={(event) => setTagInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === ",") {
-                  event.preventDefault();
-                  handleTagAdd();
-                } else if (
-                  event.key === "Backspace" &&
-                  !tagInput &&
-                  pendingTags.length > 0
-                ) {
-                  event.preventDefault();
-                  setPendingTags((prev) => prev.slice(0, -1));
-                }
-              }}
-            />
-            <Box className="flex flex-wrap gap-1 mt-2">
-              {pendingTags.map((tag) => (
-                <Chip
-                  key={tag.toLowerCase()}
-                  label={tag}
-                  size="small"
-                  variant="outlined"
-                  onDelete={() => handleTagRemove(tag)}
-                />
-              ))}
-            </Box>
-            {pendingTags.length === 0 && (
-              <Typography
-                color="text.secondary"
-                sx={{ mt: 1 }}
-                variant="caption"
-              >
-                Add tags to help organize your projects.
-              </Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseTagDialog}>Cancel</Button>
-            <Button
-              disabled={!onProjectTagsChange}
-              variant="contained"
-              onClick={handleTagDialogSave}
-            >
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog
-          fullWidth
-          maxWidth="sm"
+          onRemoveLastTag={handleRemoveLastPendingTag}
+          onSave={handleTagDialogSave}
+          onTagAdd={handleTagAdd}
+          onTagInputChange={handleTagInputChange}
+          onTagRemove={handleTagRemove}
+        />
+        <AiSuggestionsDialog
           open={isDialogOpen}
-          onClose={handleDialogCancel}
-        >
-          <DialogTitle>Review AI Suggestions</DialogTitle>
-          <DialogContent dividers>
-            <Typography sx={{ mb: 1 }} variant="body2">
-              {pendingParentTitle
-                ? `Review AI suggestions generated for "${pendingParentTitle}".`
-                : "Review AI suggestions."}
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
-              {totalSuggestionCount > 0
-                ? `AI prepared ${totalSuggestionCount} new node${
-                    totalSuggestionCount === 1 ? "" : "s"
-                  }.`
-                : "No nodes will be added."}
-            </Typography>
-            {pendingSuggestions && pendingSuggestions.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {renderSuggestionTree(pendingSuggestions)}
-              </Box>
-            ) : (
-              <Typography color="text.secondary" variant="body2">
-                No suggestions to display.
-              </Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogCancel}>Discard</Button>
-            <Button
-              color="primary"
-              disabled={!pendingSuggestions || pendingSuggestions.length === 0}
-              variant="contained"
-              onClick={handleDialogApprove}
-            >
-              Add Suggestions
-            </Button>
-          </DialogActions>
-        </Dialog>
+          parentTitle={pendingParentTitle}
+          suggestions={pendingSuggestions}
+          onApprove={handleDialogApprove}
+          onCancel={handleDialogCancel}
+        />
       </div>
     );
 

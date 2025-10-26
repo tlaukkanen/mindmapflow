@@ -1394,6 +1394,60 @@ export default function Editor() {
     [nodes, setEdges, onNodesChange],
   );
 
+  const clearSelection = useCallback(() => {
+    setSelectedNodeIds([]);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+
+    setNodes((prevNodes) => {
+      let didChange = false;
+
+      const nextNodes = prevNodes.map((node) => {
+        const shouldDeselect = node.selected;
+        const shouldExitEditing = Boolean(node.data?.isEditing);
+
+        if (!shouldDeselect && !shouldExitEditing) {
+          return node;
+        }
+
+        didChange = true;
+
+        return {
+          ...node,
+          ...(shouldDeselect ? { selected: false } : {}),
+          data:
+            shouldExitEditing && node.data
+              ? { ...node.data, isEditing: false }
+              : node.data,
+        };
+      });
+
+      return didChange ? nextNodes : prevNodes;
+    });
+
+    setEdges((prevEdges) => {
+      let didChange = false;
+
+      const nextEdges = prevEdges.map((edge) => {
+        if (!edge.selected) {
+          return edge;
+        }
+
+        didChange = true;
+
+        return { ...edge, selected: false };
+      });
+
+      return didChange ? nextEdges : prevEdges;
+    });
+  }, [
+    setEdges,
+    setNodes,
+    setSelectedEdgeId,
+    setSelectedNodeId,
+    setSelectedNodeIds,
+  ]);
+
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
@@ -1411,6 +1465,7 @@ export default function Editor() {
   return (
     <div className="flex flex-col h-full flex-1 overflow-hidden">
       <Menubar
+        onClearSelection={clearSelection}
         onCopyJsonToClipboard={copyJsonToClipboard}
         onNewProject={onNewProject}
       />

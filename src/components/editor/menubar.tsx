@@ -35,11 +35,13 @@ import { MindmapExportError, renderMindmapToPng } from "@/utils/mindmap-export";
 interface MenubarProps {
   onNewProject: () => void;
   onCopyJsonToClipboard: () => void;
+  onClearSelection: () => void;
 }
 
 export const Menubar = ({
   onNewProject,
   onCopyJsonToClipboard,
+  onClearSelection,
 }: MenubarProps) => {
   const { getNodes } = useReactFlow();
   const { isFullScreen } = useEditor(); // Modified: removed editorVersion
@@ -165,18 +167,22 @@ export const Menubar = ({
   }, [isSaved]);
 
   const handleProjectMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    onClearSelection();
     setAnchorEl(event.currentTarget);
   };
 
   const handleEditMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    onClearSelection();
     setEditAnchorEl(event.currentTarget);
   };
   const handleProfileMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    onClearSelection();
     setProfileAnchorEl(event.currentTarget);
   };
   const handleThemeMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    onClearSelection();
     setThemeAnchorEl(event.currentTarget);
   };
   const handleThemeMenuKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
@@ -186,6 +192,7 @@ export const Menubar = ({
       event.key === " "
     ) {
       event.preventDefault();
+      onClearSelection();
       setThemeAnchorEl(event.currentTarget as HTMLElement);
     }
   };
