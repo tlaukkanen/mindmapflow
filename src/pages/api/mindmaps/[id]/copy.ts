@@ -63,6 +63,7 @@ export default async function handler(
       newLastModified,
       originalMindMap.paletteId,
       originalMindMap.showGrid,
+      originalMindMap.tags,
     );
 
     res

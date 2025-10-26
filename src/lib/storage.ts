@@ -42,6 +42,7 @@ export interface MindMapMetadata {
   id: string;
   name: string;
   lastModified: Date;
+  tags?: string[];
 }
 
 export interface ShareMapping {
@@ -60,6 +61,38 @@ interface MindMapShareEntry {
   id: string;
   createdAt: string;
 }
+
+const sanitizeTags = (tags?: unknown): string[] => {
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const sanitized: string[] = [];
+
+  for (const rawTag of tags) {
+    if (typeof rawTag !== "string") {
+      continue;
+    }
+
+    const trimmed = rawTag.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    sanitized.push(trimmed);
+  }
+
+  return sanitized;
+};
 
 export class StorageService {
   private blobServiceClient: BlobServiceClient;
@@ -219,6 +252,7 @@ export class StorageService {
     lastModified: Date,
     paletteId?: string,
     showGrid?: boolean,
+    tags?: string[],
   ) {
     const containerClient = await this.getContainerClient();
     const userPath = this.sanitizeEmailForPath(userEmail);
@@ -233,6 +267,7 @@ export class StorageService {
       lastModified,
       paletteId,
       showGrid,
+      tags: sanitizeTags(tags),
     });
 
     const blobUploadResponse = await blobClient.upload(content, content.length);
@@ -272,9 +307,8 @@ export class StorageService {
       const content = await streamToText(
         downloadBlockBlobResponse.readableStreamBody as NodeJS.ReadableStream,
       );
-      const { nodes, edges, lastModified, paletteId, showGrid } = JSON.parse(
-        content.toString(),
-      );
+      const { nodes, edges, lastModified, paletteId, showGrid, tags } =
+        JSON.parse(content.toString());
 
       return {
         nodes,
@@ -282,6 +316,7 @@ export class StorageService {
         lastModified: lastModified || downloadBlockBlobResponse.lastModified,
         paletteId,
         showGrid,
+        tags: sanitizeTags(tags),
       };
     } catch (error) {
       logger.error("Error loading diagram:", error);
@@ -305,6 +340,19 @@ export class StorageService {
       for await (const blob of blobs) {
         const blobClient = containerClient.getBlobClient(blob.name);
         const properties = await blobClient.getProperties();
+        let tags: string[] | undefined;
+
+        try {
+          const download = await blobClient.download();
+          const content = await streamToText(
+            download.readableStreamBody as NodeJS.ReadableStream,
+          );
+          const parsed = JSON.parse(content.toString());
+
+          tags = sanitizeTags(parsed?.tags);
+        } catch (error) {
+          logger.warn(`Failed to read tags for mindmap ${blob.name}`, error);
+        }
         const mindMapId = blob.name
           .replace(`${prefix}`, "")
           .replace(".json", "");
@@ -317,6 +365,7 @@ export class StorageService {
           id: mindMapId,
           name: decodedName,
           lastModified: blob.properties.lastModified || new Date(),
+          tags,
         });
       }
 
@@ -665,9 +714,8 @@ export class StorageService {
       const content = await streamToText(
         download.readableStreamBody as NodeJS.ReadableStream,
       );
-      const { nodes, edges, lastModified, paletteId, showGrid } = JSON.parse(
-        content.toString(),
-      );
+      const { nodes, edges, lastModified, paletteId, showGrid, tags } =
+        JSON.parse(content.toString());
 
       return {
         nodes,
@@ -675,6 +723,7 @@ export class StorageService {
         lastModified: lastModified || download.lastModified,
         paletteId,
         showGrid,
+        tags: sanitizeTags(tags),
       };
     } catch (error) {
       logger.error(`Error loading mindmap by blob name: ${blobName}`, error);

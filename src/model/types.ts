@@ -28,6 +28,8 @@ export interface MindMapNode extends Node {
     textProperties?: TextProperties;
     resourceOptions?: ResourceOption[];
     depth?: number; // Depth of the node in the tree
+    projectTags?: string[];
+    onProjectTagsChange?: (tags: string[]) => void;
     onAddChild?: () => void; // Moved inside data
     onAddSibling?: () => void; // Moved inside data
     lastDirection?: "left" | "right" | "top" | "bottom"; // Add this line

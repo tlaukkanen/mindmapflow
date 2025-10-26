@@ -253,6 +253,7 @@ export default function Editor() {
   const [isPropertiesPanelVisible, setIsPropertiesPanelVisible] =
     useState(false);
   const [showGrid, setShowGrid] = useState(false); // Add state for grid visibility
+  const [tags, setTags] = useState<string[]>([]);
   const [nodes, setNodes, onNodesChange] = useNodesState(
     showSample ? initialNodes : [],
   );
@@ -285,6 +286,7 @@ export default function Editor() {
     },
     palette.id,
     showGrid,
+    tags,
   );
 
   useEffect(() => {
@@ -300,7 +302,7 @@ export default function Editor() {
 
     // Force clear unsaved changes state when explicitly loading a new mindmap
     setHasUnsavedChanges(false);
-    setLastSavedState([], [], paletteIdRef.current, showGridRef.current);
+    setLastSavedState([], [], paletteIdRef.current, showGridRef.current, []);
     if (settingUpNewProject.current) {
       settingUpNewProject.current = false;
       logger.debug("Setting up new project, skipping load");
@@ -318,12 +320,14 @@ export default function Editor() {
       setNodes(data.nodes);
       setEdges(data.edges);
       setShowGrid(loadedShowGrid);
+      setTags(data.tags ?? []);
       // Update last saved state with the newly loaded data
       setLastSavedState(
         data.nodes,
         data.edges,
         loadedPaletteId,
         loadedShowGrid,
+        data.tags ?? [],
       );
       fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     }
@@ -355,11 +359,17 @@ export default function Editor() {
       nodes: cleanedNodes,
       edges,
       showGrid,
+      tags,
     };
 
     navigator.clipboard.writeText(JSON.stringify(project, null, 2));
     toast.success("Project copied to clipboard");
   };
+
+  const handleProjectTagsChange = useCallback((nextTags: string[]) => {
+    setTags(nextTags);
+    setHasUnsavedChanges(true);
+  }, []);
 
   const onNewProject = () => {
     logger.info("Creating new project");
@@ -373,6 +383,7 @@ export default function Editor() {
     setNodes(emptyProject.nodes as MindMapNode[]);
     setEdges(emptyProject.edges);
     setShowGrid(initialShowGrid);
+    setTags(emptyProject.tags ?? []);
     window.history.pushState({}, "", `/editor/${newMindMapId}`);
     fitView({ padding: 100, maxZoom: 1.0, duration: 1500, minZoom: 1.0 });
     // Set hasUnsavedChanges to false since this is a fresh project
@@ -383,6 +394,7 @@ export default function Editor() {
       emptyProject.edges,
       initialPaletteId,
       initialShowGrid,
+      emptyProject.tags ?? [],
     );
   };
 
@@ -1338,15 +1350,25 @@ export default function Editor() {
 
   // Update reactflow node creation to include these handlers
   const getNodeWithHandlers = useCallback(
-    (node: MindMapNode) => ({
-      ...node,
-      data: {
-        ...node.data,
-        onAddChild: () => handleAddChildNode(node),
-        onAddSibling: () => handleAddSiblingNode(node),
-      },
-    }),
-    [handleAddChildNode, handleAddSiblingNode],
+    (node: MindMapNode) => {
+      const normalizedTags = Array.isArray(tags) ? tags : [];
+
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          ...(node.id === rootNodeId
+            ? {
+                projectTags: normalizedTags,
+                onProjectTagsChange: handleProjectTagsChange,
+              }
+            : {}),
+          onAddChild: () => handleAddChildNode(node),
+          onAddSibling: () => handleAddSiblingNode(node),
+        },
+      };
+    },
+    [handleAddChildNode, handleAddSiblingNode, handleProjectTagsChange, tags],
   );
 
   // Update the existing onNodesChange handler to include edge updates

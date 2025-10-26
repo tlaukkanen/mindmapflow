@@ -23,8 +23,15 @@ export default async function handler(
     case "POST":
       try {
         const userEmail = await getAuthenticatedUserEmail(req);
-        const { mindMapId, nodes, edges, lastModified, paletteId, showGrid } =
-          req.body;
+        const {
+          mindMapId,
+          nodes,
+          edges,
+          lastModified,
+          paletteId,
+          showGrid,
+          tags,
+        } = req.body;
 
         if (!mindMapId) {
           logger.error("Diagram ID is required");
@@ -72,6 +79,7 @@ export default async function handler(
           newLastModified,
           paletteId,
           showGrid,
+          tags,
         );
 
         res.json({ success: true, lastModified: newLastModified });

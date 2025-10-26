@@ -1,4 +1,4 @@
-import React, { memo, ReactElement, useRef, useEffect } from "react";
+import React, { memo, ReactElement, useRef, useEffect, useMemo } from "react";
 import { Handle, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import clsx from "clsx";
 import { PiArrowsHorizontalBold, PiLinkSimpleBold } from "react-icons/pi";
@@ -53,6 +53,42 @@ export const BaseNode = memo(
     const lastTapRef = useRef<number>(0);
     const touchStartPositionRef = useRef<{ x: number; y: number } | null>(null);
     const { enabled: gridEnabled, step: gridStep } = useGridSettings();
+
+    const { projectTags, shouldShowProjectTags } = useMemo(() => {
+      const tags: string[] = [];
+
+      if (Array.isArray(data.projectTags)) {
+        const seen = new Set<string>();
+
+        for (const rawTag of data.projectTags) {
+          if (typeof rawTag !== "string") {
+            continue;
+          }
+
+          const trimmed = rawTag.trim();
+
+          if (!trimmed) {
+            continue;
+          }
+
+          const key = trimmed.toLowerCase();
+
+          if (seen.has(key)) {
+            continue;
+          }
+
+          seen.add(key);
+          tags.push(trimmed);
+        }
+      }
+
+      const isRootLike = data.depth === 0 || id === "root";
+
+      return {
+        projectTags: tags,
+        shouldShowProjectTags: isRootLike && tags.length > 0,
+      };
+    }, [data.projectTags, data.depth, id]);
 
     // Add effect to handle text selection when entering edit mode
     useEffect(() => {
@@ -605,7 +641,13 @@ export const BaseNode = memo(
               onAddChild={onAddChild || (() => {})}
               onAddSibling={onAddSibling || (() => {})}
             />
-            <FormatToolbar id={id} resourceType={data.resourceType} />
+            <FormatToolbar
+              id={id}
+              isRootNode={data.depth === 0 || id === "root"}
+              projectTags={projectTags}
+              resourceType={data.resourceType}
+              onProjectTagsChange={data.onProjectTagsChange}
+            />
           </>
         )}
         {/* Horizontal resize handle - bottom-left, white background like add buttons */}
@@ -627,8 +669,38 @@ export const BaseNode = memo(
           </button>
         )}
         {renderContent()}
+        {shouldShowProjectTags && (
+          <div
+            className="pointer-events-none flex flex-wrap items-center justify-center gap-1 px-2 pb-2 pt-1 text-[11px] font-medium text-canvas-node-text"
+            style={{ touchAction: "none" }}
+          >
+            {projectTags.map((tag) => (
+              <span
+                key={tag.toLowerCase()}
+                className="pointer-events-none select-none"
+                style={{
+                  borderRadius: "9999px",
+                  border: "1px solid var(--color-canvas-node-border)",
+                  padding: "2px 8px",
+                  backgroundColor:
+                    "var(--color-canvas-node-background, rgba(148, 163, 184, 0.12))",
+                  lineHeight: 1.2,
+                  color: "var(--color-canvas-node-text)",
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         {data.isEditing && !dragging && (
-          <FormatToolbar id={id} resourceType={data.resourceType} />
+          <FormatToolbar
+            id={id}
+            isRootNode={data.depth === 0 || id === "root"}
+            projectTags={projectTags}
+            resourceType={data.resourceType}
+            onProjectTagsChange={data.onProjectTagsChange}
+          />
         )}
         <Handle
           className="w-0 h-0 opacity-0 "

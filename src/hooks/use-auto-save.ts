@@ -14,6 +14,7 @@ let lastSavedNodes: MindMapNode[] = [];
 let lastSavedEdges: Edge[] = [];
 let lastSavedPaletteId: string | undefined;
 let lastSavedShowGrid: boolean | undefined;
+let lastSavedTags: string[] = [];
 
 export function getHasUnsavedChanges() {
   return hasUnsavedChanges;
@@ -35,11 +36,13 @@ export function setLastSavedState(
   edges: Edge[],
   paletteId?: string,
   showGrid?: boolean,
+  tags?: string[],
 ) {
   lastSavedNodes = cleanNodesForComparison(nodes);
   lastSavedEdges = cleanEdgesForComparison(edges);
   lastSavedPaletteId = paletteId;
   lastSavedShowGrid = showGrid;
+  lastSavedTags = normalizeTags(tags);
 }
 
 const cleanNodesForComparison = (nodes: MindMapNode[]) =>
@@ -84,6 +87,22 @@ const cleanEdgesForComparison = (edges: Edge[]) =>
     zIndex: undefined,
   }));
 
+function normalizeTags(tags?: string[]): string[] {
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+
+  return Array.from(
+    new Map(
+      tags
+        .filter((tag): tag is string => typeof tag === "string")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .map((tag) => [tag.toLowerCase(), tag] as const),
+    ).values(),
+  );
+}
+
 export function useAutoSave(
   nodes: MindMapNode[],
   edges: Edge[],
@@ -92,6 +111,7 @@ export function useAutoSave(
   onAutoSave?: (timestamp: Date) => void,
   paletteId?: string,
   showGrid?: boolean,
+  tags?: string[],
 ) {
   const { data: session } = useSession();
 
@@ -104,6 +124,7 @@ export function useAutoSave(
         mindMapId: string,
         currentPaletteId?: string,
         currentShowGrid?: boolean,
+        currentTags?: string[],
       ) => {
         try {
           // Double check mindMapId hasn't changed since debounce was triggered
@@ -119,12 +140,14 @@ export function useAutoSave(
             edges,
             paletteId: currentPaletteId,
             showGrid: currentShowGrid,
+            tags: currentTags,
           });
           logger.info(`Auto-saved diagram ${mindMapId} to cloud storage`);
           lastSavedNodes = cleanNodesForComparison(nodes);
           lastSavedEdges = cleanEdgesForComparison(edges);
           lastSavedPaletteId = currentPaletteId;
           lastSavedShowGrid = currentShowGrid;
+          lastSavedTags = normalizeTags(currentTags);
           setHasUnsavedChanges(false); // Use the function instead of direct assignment
           if (onAutoSave) {
             onAutoSave(new Date());
@@ -148,6 +171,7 @@ export function useAutoSave(
       edges: Edge[],
       currentPaletteId?: string,
       currentShowGrid?: boolean,
+      currentTags?: string[],
     ) => {
       const cleanedCurrentNodes = cleanNodesForComparison(nodes);
       const cleanedCurrentEdges = cleanEdgesForComparison(edges);
@@ -155,6 +179,10 @@ export function useAutoSave(
       const hasEdgesChanged = !isEqual(cleanedCurrentEdges, lastSavedEdges);
       const hasPaletteChanged = currentPaletteId !== lastSavedPaletteId;
       const hasShowGridChanged = currentShowGrid !== lastSavedShowGrid;
+      const hasTagsChanged = !isEqual(
+        normalizeTags(currentTags),
+        lastSavedTags,
+      );
 
       if (hasNodesChanged) {
         // Log node changes by comparing JSON strings
@@ -247,12 +275,14 @@ export function useAutoSave(
       logger.debug("Edges changed:", hasEdgesChanged);
       logger.debug("Palette changed:", hasPaletteChanged);
       logger.debug("Show grid changed:", hasShowGridChanged);
+      logger.debug("Tags changed:", hasTagsChanged);
 
       return (
         hasNodesChanged ||
         hasEdgesChanged ||
         hasPaletteChanged ||
         hasShowGridChanged ||
+        hasTagsChanged ||
         hasUnsavedChanges
       );
     },
@@ -263,10 +293,10 @@ export function useAutoSave(
     if (!enabled || !mindMapId || !session) return;
 
     // Only mark as unsaved if there are actual changes
-    if (checkForChanges(nodes, edges, paletteId, showGrid)) {
+    if (checkForChanges(nodes, edges, paletteId, showGrid, tags)) {
       setHasUnsavedChanges(true); // Use the function instead of direct assignment
       // Trigger debounced save
-      debouncedSave(nodes, edges, mindMapId, paletteId, showGrid);
+      debouncedSave(nodes, edges, mindMapId, paletteId, showGrid, tags);
     }
 
     return () => {
@@ -283,6 +313,7 @@ export function useAutoSave(
     hasUnsavedChanges,
     paletteId,
     showGrid,
+    tags,
   ]);
 
   // Add beforeunload event listener
@@ -311,6 +342,7 @@ export function useAutoSave(
       lastSavedEdges = cleanEdgesForComparison(edges);
       lastSavedPaletteId = paletteId;
       lastSavedShowGrid = showGrid;
+      lastSavedTags = normalizeTags(tags);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

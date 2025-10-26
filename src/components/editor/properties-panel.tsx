@@ -198,14 +198,21 @@ const PropertiesPanel = forwardRef<PropertiesPanelHandle, PropertiesPanelProps>(
             </Typography>
             {selectedNode?.data.depth === 0 && (
               <>
-                <Typography variant="caption">Import outline</Typography>
+                <Divider className="my-2" />
+                <Typography variant="caption">
+                  Import child topics under selected node
+                </Typography>
                 <TextField
                   fullWidth
                   multiline
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
                   label="Child nodes outline"
                   margin="dense"
                   minRows={6}
-                  placeholder="- Section\n  - Detail"
+                  placeholder="- Section
+                    - Detail"
                   size="small"
                   value={outlineInput}
                   onChange={(e) => setOutlineInput(e.target.value)}

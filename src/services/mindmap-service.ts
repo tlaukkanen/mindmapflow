@@ -14,14 +14,16 @@ export interface SaveMindMapParams {
   lastModified?: Date;
   paletteId?: string;
   showGrid?: boolean;
+  tags?: string[];
 }
 
 export interface MindMapData {
   nodes: MindMapNode[];
   edges: Edge[];
-  lastModified: Date;
+  lastModified: Date | string;
   paletteId?: string;
   showGrid?: boolean;
+  tags?: string[];
 }
 
 type SanitizedMindMapNode = Omit<
@@ -32,6 +34,38 @@ type SanitizedMindMapNode = Omit<
 };
 
 type SanitizedEdge = Omit<Edge, "selected">;
+
+const sanitizeTags = (tags?: string[]): string[] => {
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const sanitized: string[] = [];
+
+  for (const rawTag of tags) {
+    if (typeof rawTag !== "string") {
+      continue;
+    }
+
+    const trimmed = rawTag.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    const key = trimmed.toLowerCase();
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    sanitized.push(trimmed);
+  }
+
+  return sanitized;
+};
 
 const sanitizeNodesForSave = (nodes: MindMapNode[]): SanitizedMindMapNode[] =>
   nodes.map((node) => {
@@ -69,10 +103,12 @@ class MindMapService {
     lastModified,
     paletteId,
     showGrid,
+    tags,
   }: SaveMindMapParams) {
     try {
       const sanitizedNodes = sanitizeNodesForSave(nodes);
       const sanitizedEdges = sanitizeEdgesForSave(edges);
+      const sanitizedTags = sanitizeTags(tags);
 
       const response = await fetch("/api/mindmaps", {
         method: "POST",
@@ -86,6 +122,7 @@ class MindMapService {
           lastModified,
           paletteId,
           showGrid,
+          tags: sanitizedTags,
         }),
       });
 
@@ -134,6 +171,7 @@ class MindMapService {
         ...data,
         paletteId: data.paletteId ?? DEFAULT_PALETTE_ID,
         showGrid: data.showGrid ?? false,
+        tags: sanitizeTags(data.tags),
       };
     } catch (error) {
       logger.error("Error loading diagram:", error);
@@ -148,6 +186,7 @@ class MindMapService {
       ...emptyMindMap,
       paletteId: DEFAULT_PALETTE_ID,
       showGrid: (emptyMindMap as { showGrid?: boolean }).showGrid ?? false,
+      tags: sanitizeTags((emptyMindMap as { tags?: string[] }).tags),
     };
   }
 

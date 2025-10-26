@@ -1,5 +1,6 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
+  Autocomplete,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -14,6 +15,9 @@ import {
   Checkbox,
   ListItemIcon,
   Box,
+  TextField,
+  Chip,
+  MenuItem,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -26,6 +30,27 @@ import { logger } from "@/services/logger";
 import { MindMapNode } from "@/model/types";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
+const normalizeTagsArray = (values: readonly unknown[]): string[] => {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  values.forEach((value) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+
+    if (!trimmed) return;
+
+    const key = trimmed.toLowerCase();
+
+    if (seen.has(key)) return;
+
+    seen.add(key);
+    normalized.push(trimmed);
+  });
+
+  return normalized;
+};
+
 interface OpenProjectDialogProps {
   open: boolean;
   onClose: () => void;
@@ -36,15 +61,53 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
   const [loading, setLoading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedMindMapIds, setSelectedMindMapIds] = useState<string[]>([]);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState<"name" | "lastModified">("name");
   const router = useRouter();
   const { palette } = useTheme();
+
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+
+    mindMaps.forEach((mindMap) => {
+      mindMap.tags?.forEach((tag) => tags.add(tag));
+    });
+
+    return Array.from(tags).sort((a, b) => a.localeCompare(b));
+  }, [mindMaps]);
+
+  const filteredMindMaps = useMemo(() => {
+    const byTag =
+      tagFilter.length === 0
+        ? mindMaps
+        : mindMaps.filter((mindMap) => {
+            const mapTags = mindMap.tags ?? [];
+
+            return tagFilter.every((tag) =>
+              mapTags.some(
+                (mapTag) => mapTag.toLowerCase() === tag.toLowerCase(),
+              ),
+            );
+          });
+
+    return [...byTag].sort((a, b) => {
+      if (sortOption === "lastModified") {
+        return b.lastModified.getTime() - a.lastModified.getTime();
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [mindMaps, sortOption, tagFilter]);
 
   useEffect(() => {
     if (open) {
       setSelectedMindMapIds([]);
+      setTagFilter([]);
+      setSortOption("name");
       loadMindMaps();
     } else {
       setSelectedMindMapIds([]);
+      setTagFilter([]);
     }
   }, [open]);
 
@@ -58,7 +121,27 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
       }
       const data = await response.json();
 
-      setMindMaps(data);
+      const parsedMindMaps: MindMapMetadata[] = (
+        Array.isArray(data) ? data : []
+      )
+        .map((item: any) => {
+          const rawTags = Array.isArray(item?.tags) ? item.tags : [];
+          const normalizedTags = normalizeTagsArray(rawTags);
+
+          const parsedLastModified = new Date(item?.lastModified ?? Date.now());
+
+          return {
+            id: typeof item?.id === "string" ? item.id : nanoid(10),
+            name: typeof item?.name === "string" ? item.name : "Untitled",
+            lastModified: Number.isNaN(parsedLastModified.getTime())
+              ? new Date()
+              : parsedLastModified,
+            tags: normalizedTags,
+          } satisfies MindMapMetadata;
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      setMindMaps(parsedMindMaps);
     } catch (error) {
       logger.error("Error loading mindmaps:", error);
     } finally {
@@ -154,6 +237,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
         lastModified: new Date(),
         paletteId: palette.id ?? emptyProject.paletteId,
         showGrid: emptyProject.showGrid ?? false,
+        tags: emptyProject.tags ?? [],
       });
 
       router.push(`/editor/${newMindMapId}`);
@@ -172,6 +256,64 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
           <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
             Select projects to clone or delete. Click a row to open it.
           </Typography>
+          {!loading && mindMaps.length > 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 1,
+                mb: 2,
+                alignItems: { sm: "center" },
+              }}
+            >
+              <Autocomplete
+                filterSelectedOptions
+                freeSolo
+                multiple
+                options={availableTags}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Filter by tags"
+                    placeholder={
+                      availableTags.length > 0
+                        ? "Select tags"
+                        : "Type to filter"
+                    }
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      {...getTagProps({ index })}
+                      key={option.toLowerCase()}
+                      label={option}
+                      size="small"
+                    />
+                  ))
+                }
+                size="small"
+                sx={{ flex: 1, minWidth: 0 }}
+                value={tagFilter}
+                onChange={(_, value) => {
+                  setTagFilter(normalizeTagsArray(value));
+                }}
+              />
+              <TextField
+                select
+                label="Sort by"
+                size="small"
+                sx={{ minWidth: 180 }}
+                value={sortOption}
+                onChange={(event) => {
+                  setSortOption(event.target.value as "name" | "lastModified");
+                }}
+              >
+                <MenuItem value="name">Name (A-Z)</MenuItem>
+                <MenuItem value="lastModified">Last modified (newest)</MenuItem>
+              </TextField>
+            </Box>
+          )}
           {loading ? (
             <div className="flex justify-center p-4">
               <CircularProgress />
@@ -180,37 +322,71 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
             <Typography className="p-4 text-center text-muted">
               No mindmaps found
             </Typography>
+          ) : filteredMindMaps.length === 0 ? (
+            <Typography className="p-4 text-center text-muted">
+              No mindmaps match the selected tags
+            </Typography>
           ) : (
             <List>
-              {mindMaps
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((mindMap) => (
-                  <ListItem key={mindMap.id} disablePadding>
-                    <ListItemButton
-                      onClick={() => handleMindMapSelect(mindMap.id)}
-                    >
-                      <ListItemIcon>
-                        <Checkbox
-                          disableRipple
-                          checked={selectedMindMapIds.includes(mindMap.id)}
-                          edge="start"
-                          tabIndex={-1}
-                          onChange={(event) =>
-                            handleToggleSelection(mindMap.id, event)
-                          }
-                          onClick={(event) => event.stopPropagation()}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={mindMap.name}
-                        secondary={`Last modified: ${format(
-                          new Date(mindMap.lastModified),
-                          "PPp",
-                        )}`}
+              {filteredMindMaps.map((mindMap) => (
+                <ListItem key={mindMap.id} disablePadding>
+                  <ListItemButton
+                    onClick={() => handleMindMapSelect(mindMap.id)}
+                  >
+                    <ListItemIcon>
+                      <Checkbox
+                        disableRipple
+                        checked={selectedMindMapIds.includes(mindMap.id)}
+                        edge="start"
+                        tabIndex={-1}
+                        onChange={(event) =>
+                          handleToggleSelection(mindMap.id, event)
+                        }
+                        onClick={(event) => event.stopPropagation()}
                       />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={mindMap.name}
+                      secondary={
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Typography
+                            color="text.secondary"
+                            component="span"
+                            variant="body2"
+                          >
+                            Last modified: {format(mindMap.lastModified, "PPp")}
+                          </Typography>
+                          {mindMap.tags && mindMap.tags.length > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                              }}
+                            >
+                              {mindMap.tags.map((tag) => (
+                                <Chip
+                                  key={`${mindMap.id}-${tag.toLowerCase()}`}
+                                  label={tag}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      }
+                      secondaryTypographyProps={{ component: "div" }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
             </List>
           )}
         </DialogContent>

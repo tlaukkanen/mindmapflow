@@ -11,6 +11,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useMemo,
 } from "react";
 import {
   useReactFlow,
@@ -30,6 +31,7 @@ import {
   Typography,
   Box,
   TextField,
+  Chip,
 } from "@mui/material";
 import {
   PiTextB,
@@ -42,6 +44,7 @@ import {
   PiTextAlignRight,
   PiTextAlignJustify,
   PiLinkSimple,
+  PiTag,
 } from "react-icons/pi";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -51,6 +54,30 @@ import { logger } from "@/services/logger";
 
 const TOOLBAR_VERTICAL_OFFSET = 56;
 const FORMAT_TOOLBAR_Z_INDEX = 2147483647;
+
+const sanitizeTagList = (values: readonly string[]): string[] => {
+  const seen = new Set<string>();
+  const sanitized: string[] = [];
+
+  values.forEach((raw) => {
+    const trimmed = raw.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    const key = trimmed.toLowerCase();
+
+    if (seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    sanitized.push(trimmed);
+  });
+
+  return sanitized;
+};
 
 const countTotalSuggestions = (items: AiSubnodeSuggestion[]): number =>
   items.reduce(
@@ -62,10 +89,19 @@ const countTotalSuggestions = (items: AiSubnodeSuggestion[]): number =>
 interface FormatToolbarProps {
   id: string;
   resourceType?: string;
+  isRootNode?: boolean;
+  projectTags?: string[];
+  onProjectTagsChange?: (tags: string[]) => void;
 }
 
 export const FormatToolbar = memo(
-  ({ id, resourceType }: FormatToolbarProps) => {
+  ({
+    id,
+    resourceType,
+    isRootNode,
+    projectTags,
+    onProjectTagsChange,
+  }: FormatToolbarProps) => {
     const { data: session } = useSession();
     const { setNodes, setEdges, getNodes } = useReactFlow<MindMapNode>();
     const toolbarAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -85,7 +121,17 @@ export const FormatToolbar = memo(
     const [linkValue, setLinkValue] = useState("");
     const [linkError, setLinkError] = useState<string | null>(null);
     const [hasExistingLink, setHasExistingLink] = useState(false);
+    const linkInputRef = useRef<HTMLInputElement | null>(null);
+    const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
+    const [tagInput, setTagInput] = useState("");
+    const [pendingTags, setPendingTags] = useState<string[]>([]);
     const isNoteNode = resourceType === "Note";
+
+    const normalizedProjectTags = useMemo(
+      () => sanitizeTagList(Array.isArray(projectTags) ? projectTags : []),
+      [projectTags],
+    );
+    const canEditTags = Boolean(isRootNode && onProjectTagsChange);
 
     useEffect(() => {
       const host =
@@ -249,6 +295,73 @@ export const FormatToolbar = memo(
       },
       [getNodes, setEdges, setNodes],
     );
+
+    const handleOpenTagDialog = useCallback(() => {
+      if (!canEditTags) {
+        return;
+      }
+
+      setPendingTags(normalizedProjectTags);
+      setTagInput("");
+      setIsTagDialogOpen(true);
+    }, [canEditTags, normalizedProjectTags]);
+
+    const handleCloseTagDialog = useCallback(() => {
+      setIsTagDialogOpen(false);
+      setTagInput("");
+    }, []);
+
+    const handleTagAdd = useCallback(() => {
+      const trimmed = tagInput.trim();
+
+      if (!trimmed) {
+        return;
+      }
+
+      const exists = pendingTags.some(
+        (tag) => tag.toLowerCase() === trimmed.toLowerCase(),
+      );
+
+      if (exists) {
+        setTagInput("");
+
+        return;
+      }
+
+      setPendingTags((prev) => [...prev, trimmed]);
+      setTagInput("");
+    }, [pendingTags, tagInput]);
+
+    const handleTagRemove = useCallback((tagToRemove: string) => {
+      setPendingTags((prev) =>
+        prev.filter((tag) => tag.toLowerCase() !== tagToRemove.toLowerCase()),
+      );
+    }, []);
+
+    const handleTagDialogSave = useCallback(() => {
+      if (!onProjectTagsChange) {
+        handleCloseTagDialog();
+
+        return;
+      }
+
+      const sanitized = sanitizeTagList(pendingTags);
+      const hasChanges =
+        sanitized.length !== normalizedProjectTags.length ||
+        sanitized.some((tag, index) => tag !== normalizedProjectTags[index]);
+
+      if (hasChanges) {
+        onProjectTagsChange(sanitized);
+        toast.success("Project tags updated");
+      }
+
+      handleCloseTagDialog();
+    }, [
+      handleCloseTagDialog,
+      normalizedProjectTags,
+      onProjectTagsChange,
+      pendingTags,
+    ]);
 
     const handleAiSuggestions = useCallback(async () => {
       if (isGenerating || isDialogOpen) return;
@@ -652,6 +765,25 @@ export const FormatToolbar = memo(
       setLinkError(null);
     }, []);
 
+    useEffect(() => {
+      if (!isLinkDialogOpen) {
+        return;
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        const input = linkInputRef.current;
+
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
+    }, [isLinkDialogOpen]);
+
     const handleLinkRemove = useCallback(() => {
       setNodes((prevNodes) =>
         prevNodes.map((node) =>
@@ -735,7 +867,7 @@ export const FormatToolbar = memo(
       <div
         style={{
           ...toolbarStyles,
-          display: isLinkDialogOpen ? "none" : "flex",
+          display: isLinkDialogOpen || isTagDialogOpen ? "none" : "flex",
         }}
       >
         <Tooltip title="Align left">
@@ -831,6 +963,22 @@ export const FormatToolbar = memo(
             <PiLinkSimple className="w-4 h-4" />
           </IconButton>
         </Tooltip>
+        {canEditTags && (
+          <Tooltip title="Edit project tags">
+            <span>
+              <IconButton
+                aria-label="Edit project tags"
+                size="small"
+                sx={createButtonStyles(
+                  isTagDialogOpen || normalizedProjectTags.length > 0,
+                )}
+                onClick={handleOpenTagDialog}
+              >
+                <PiTag className="w-4 h-4" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
         {!isNoteNode && (
           <Box
             component="span"
@@ -881,6 +1029,7 @@ export const FormatToolbar = memo(
                 linkError ??
                 "HTTP or HTTPS links are supported. We'll add https:// when missing."
               }
+              inputRef={linkInputRef}
               label="URL"
               margin="dense"
               placeholder="https://example.com"
@@ -903,6 +1052,72 @@ export const FormatToolbar = memo(
             )}
             <Button onClick={handleLinkDialogClose}>Cancel</Button>
             <Button variant="contained" onClick={handleLinkSave}>
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          fullWidth
+          maxWidth="xs"
+          open={isTagDialogOpen}
+          onClose={handleCloseTagDialog}
+        >
+          <DialogTitle>Edit Project Tags</DialogTitle>
+          <DialogContent>
+            <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">
+              Tags help with organizing and filtering your mind maps.
+            </Typography>
+            <TextField
+              fullWidth
+              label="Add tag"
+              margin="dense"
+              placeholder="Press Enter to add"
+              size="small"
+              value={tagInput}
+              onBlur={() => handleTagAdd()}
+              onChange={(event) => setTagInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === ",") {
+                  event.preventDefault();
+                  handleTagAdd();
+                } else if (
+                  event.key === "Backspace" &&
+                  !tagInput &&
+                  pendingTags.length > 0
+                ) {
+                  event.preventDefault();
+                  setPendingTags((prev) => prev.slice(0, -1));
+                }
+              }}
+            />
+            <Box className="flex flex-wrap gap-1 mt-2">
+              {pendingTags.map((tag) => (
+                <Chip
+                  key={tag.toLowerCase()}
+                  label={tag}
+                  size="small"
+                  variant="outlined"
+                  onDelete={() => handleTagRemove(tag)}
+                />
+              ))}
+            </Box>
+            {pendingTags.length === 0 && (
+              <Typography
+                color="text.secondary"
+                sx={{ mt: 1 }}
+                variant="caption"
+              >
+                Add tags to help organize your projects.
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseTagDialog}>Cancel</Button>
+            <Button
+              disabled={!onProjectTagsChange}
+              variant="contained"
+              onClick={handleTagDialogSave}
+            >
               Save
             </Button>
           </DialogActions>
