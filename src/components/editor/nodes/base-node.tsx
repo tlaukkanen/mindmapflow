@@ -12,6 +12,7 @@ import { FormatToolbar } from "./format-toolbar";
 import { setHasUnsavedChanges } from "@/hooks/use-auto-save";
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
+import { useEditor } from "@/store/editor-context";
 
 export interface TextProperties {
   textAlign?: "left" | "center" | "right" | "justify";
@@ -89,6 +90,8 @@ export const BaseNode = memo(
         shouldShowProjectTags: isRootLike && tags.length > 0,
       };
     }, [data.projectTags, data.depth, id]);
+
+    const { isGlobalSearchActive } = useEditor();
 
     // Add effect to handle text selection when entering edit mode
     useEffect(() => {
@@ -603,7 +606,11 @@ export const BaseNode = memo(
     const { rightTarget } = getConnectedHandles();
     const childButtonOnRight = !rightTarget;
 
-    const showToolbar = selected && data.resourceType !== "Note" && !dragging;
+    const showToolbar =
+      selected &&
+      data.resourceType !== "Note" &&
+      !dragging &&
+      !isGlobalSearchActive;
     const showResizeHandle = selected && !dragging;
 
     return (
@@ -617,7 +624,7 @@ export const BaseNode = memo(
           ...style,
           touchAction: "none",
           userSelect: "none",
-          minHeight: "36px", // Add minimum height
+          minHeight: "24px", // Add minimum height
           borderColor: selected
             ? "var(--color-primary)"
             : "var(--color-canvas-node-border)",
@@ -693,7 +700,7 @@ export const BaseNode = memo(
             ))}
           </div>
         )}
-        {data.isEditing && !dragging && (
+        {data.isEditing && !dragging && !isGlobalSearchActive && (
           <FormatToolbar
             id={id}
             isRootNode={data.depth === 0 || id === "root"}

@@ -17,6 +17,7 @@ interface KeyboardShortcutHandlers {
   onEscape?: () => void; // Add new handler
   onCtrlS?: () => void; // new handler for CTRL+s
   onAddNote?: () => void; // handler for creating a new note
+  onOpenLinkDialog?: () => void; // handler for opening link dialog
 }
 
 export function useKeyboardShortcuts({
@@ -34,6 +35,7 @@ export function useKeyboardShortcuts({
   onEscape, // Add new handler
   onCtrlS, // new handler
   onAddNote,
+  onOpenLinkDialog,
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -102,6 +104,14 @@ export function useKeyboardShortcuts({
           event.preventDefault();
           onAddNote?.();
           break;
+        case "l":
+        case "L":
+          if (event.ctrlKey || event.metaKey || event.altKey) {
+            break;
+          }
+          event.preventDefault();
+          onOpenLinkDialog?.();
+          break;
         default:
           // Handle Copy & Paste
           if (
@@ -139,6 +149,7 @@ export function useKeyboardShortcuts({
       onEscape,
       onCtrlS,
       onAddNote,
+      onOpenLinkDialog,
     ],
   );
 

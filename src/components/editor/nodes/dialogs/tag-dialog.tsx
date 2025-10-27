@@ -11,7 +11,13 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { useCallback, type ChangeEvent, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
 
 interface TagDialogProps {
   open: boolean;
@@ -38,6 +44,14 @@ export function TagDialog({
   onRemoveLastTag,
   onTagInputChange,
 }: TagDialogProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      inputRef.current?.focus();
+    }
+  }, [open]);
+
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       onTagInputChange(event.target.value);
@@ -47,15 +61,31 @@ export function TagDialog({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter" || event.key === ",") {
+      if (event.key === "Enter") {
+        if (tagInput.trim()) {
+          event.preventDefault();
+          onTagAdd();
+        } else if (canSave) {
+          event.preventDefault();
+          onSave();
+        }
+
+        return;
+      }
+
+      if (event.key === ",") {
         event.preventDefault();
         onTagAdd();
-      } else if (event.key === "Backspace" && !tagInput && pendingTags.length) {
+
+        return;
+      }
+
+      if (event.key === "Backspace" && !tagInput && pendingTags.length) {
         event.preventDefault();
         onRemoveLastTag();
       }
     },
-    [onRemoveLastTag, onTagAdd, pendingTags.length, tagInput],
+    [canSave, onRemoveLastTag, onSave, onTagAdd, pendingTags.length, tagInput],
   );
 
   return (
@@ -67,6 +97,7 @@ export function TagDialog({
         </Typography>
         <TextField
           fullWidth
+          inputRef={inputRef}
           label="Add tag"
           margin="dense"
           placeholder="Press Enter to add"

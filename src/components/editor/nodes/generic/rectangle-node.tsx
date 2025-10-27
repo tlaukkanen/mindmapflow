@@ -19,7 +19,7 @@ export default memo(function RectangleNode(props: RectangleNodeProps) {
       return `${base} px-3 py-2 shadow-md rounded-md border border-solid border-canvas-node-border bg-root-node-background text-root-node-text`;
 
     if (props.data.depth === 1) {
-      const firstLevelBase = `${base} px-3 py-1 shadow-md rounded-3xl border border-solid bg-first-node-background text-first-node-text`;
+      const firstLevelBase = `${base} px-3 py-1 shadow-md rounded-xl border border-solid bg-first-node-background text-first-node-text`;
 
       return props.selected
         ? `${firstLevelBase} border-first-node-selected`

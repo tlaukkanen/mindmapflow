@@ -8,7 +8,6 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  CircularProgress,
   Typography,
   DialogActions,
   Button,
@@ -19,6 +18,7 @@ import {
   Chip,
   MenuItem,
 } from "@mui/material";
+import Skeleton from "react-loading-skeleton";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { nanoid } from "nanoid";
@@ -315,9 +315,53 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
             </Box>
           )}
           {loading ? (
-            <div className="flex justify-center p-4">
-              <CircularProgress />
-            </div>
+            <List sx={{ py: 0 }}>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <ListItem
+                  key={`mindmap-loading-${index}`}
+                  disablePadding
+                  sx={{ opacity: 0.85 }}
+                >
+                  <ListItemButton
+                    disableRipple
+                    sx={{
+                      cursor: "default",
+                      "&:hover": { backgroundColor: "transparent" },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <Skeleton aria-hidden circle height={22} width={22} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={<Skeleton aria-hidden height={20} width="60%" />}
+                      secondary={
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 0.75,
+                            mt: 1,
+                          }}
+                        >
+                          <Skeleton aria-hidden height={16} width="40%" />
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 0.5,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <Skeleton aria-hidden height={22} width={72} />
+                            <Skeleton aria-hidden height={22} width={88} />
+                          </Box>
+                        </Box>
+                      }
+                      secondaryTypographyProps={{ component: "div" }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
           ) : mindMaps.length === 0 ? (
             <Typography className="p-4 text-center text-muted">
               No mindmaps found

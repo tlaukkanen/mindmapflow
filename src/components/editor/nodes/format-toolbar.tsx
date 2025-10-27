@@ -724,6 +724,22 @@ export const FormatToolbar = memo(
       setIsLinkDialogOpen(true);
     }, [getNodes, id]);
 
+    useEffect(() => {
+      const listener = (event: Event) => {
+        const customEvent = event as CustomEvent<{ nodeId: string }>;
+
+        if (customEvent.detail?.nodeId === id) {
+          handleOpenLinkDialog();
+        }
+      };
+
+      window.addEventListener("mindmapflow:open-link-dialog", listener);
+
+      return () => {
+        window.removeEventListener("mindmapflow:open-link-dialog", listener);
+      };
+    }, [handleOpenLinkDialog, id]);
+
     const handleLinkDialogClose = useCallback(() => {
       setIsLinkDialogOpen(false);
       setLinkError(null);
@@ -917,7 +933,7 @@ export const FormatToolbar = memo(
             <PiTextStrikethrough className="w-4 h-4" />
           </IconButton>
         </Tooltip>
-        <Tooltip title={currentUrl ? "Edit or remove link" : "Add link"}>
+        <Tooltip title={currentUrl ? "Edit link (L)" : "Add link (L)"}>
           <IconButton
             aria-label={currentUrl ? "Edit or remove link" : "Add link"}
             size="small"

@@ -1,4 +1,5 @@
 import "@xyflow/react/dist/style.css";
+import "react-loading-skeleton/dist/skeleton.css";
 import "@/styles/globals.css";
 import { Metadata } from "next";
 import clsx from "clsx";

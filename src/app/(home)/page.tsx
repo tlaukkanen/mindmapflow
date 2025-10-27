@@ -1,21 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Link } from "@mui/material";
+import Skeleton from "react-loading-skeleton";
+import clsx from "clsx";
 import { AppInsightsContext } from "@microsoft/applicationinsights-react-js";
 import Image from "next/image";
 
-import { siteConfig } from "@/config/site";
 import { title } from "@/components/primitives";
 import { AppInsightService } from "@/services/app-insight-service";
 import { reactPlugin } from "@/services/app-insight-service";
+
+type ImageKey =
+  | "logo"
+  | "hero"
+  | "editorPreview"
+  | "aiPreview"
+  | "themesPreview";
 export default function Home() {
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
     null,
   );
+  const [loadedImages, setLoadedImages] = useState<
+    Partial<Record<ImageKey, boolean>>
+  >({});
 
   const openLightbox = (src: string, alt: string) => setLightbox({ src, alt });
   const closeLightbox = () => setLightbox(null);
+  const markLoaded = (key: ImageKey) =>
+    setLoadedImages((prev) => (prev?.[key] ? prev : { ...prev, [key]: true }));
 
   useEffect(() => {
     if (!lightbox) {
@@ -37,14 +49,29 @@ export default function Home() {
     <AppInsightsContext.Provider value={reactPlugin}>
       <section className="flex flex-col items-center justify-center gap-4 ">
         <AppInsightService />
-        <Image
-          alt="MindMapFlow logo"
-          className="h-auto w-full max-w-[480px] object-contain pt-24 pb-20"
-          height={260}
-          sizes="(max-width: 640px) 80vw, 480px"
-          src="/mindmapflow_logo_with_text.png"
-          width={480}
-        />
+        <div className="relative w-full max-w-[480px] pt-24 pb-20">
+          {!loadedImages.logo ? (
+            <Skeleton
+              aria-hidden
+              baseColor="#e5e7eb"
+              className="block h-full w-full"
+              containerClassName="absolute inset-0 pointer-events-none"
+              highlightColor="#f3f4f6"
+            />
+          ) : null}
+          <Image
+            alt="MindMapFlow logo"
+            className={clsx(
+              "block h-auto w-full object-contain transition-opacity duration-300",
+              loadedImages.logo ? "opacity-100" : "opacity-0",
+            )}
+            height={260}
+            sizes="(max-width: 640px) 80vw, 480px"
+            src="/mindmapflow_logo_with_text.png"
+            width={480}
+            onLoad={() => markLoaded("logo")}
+          />
+        </div>
 
         <div className="inline-block max-w-3xl text-center justify-center">
           <span className={title({ class: "text-heading" })}>
@@ -57,14 +84,28 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-5xl py-8">
-          <div className="relative aspect-video w-full overflow-hidden rounded-md  ">
+          <div className="relative aspect-video w-full overflow-hidden rounded-md">
+            {!loadedImages.hero ? (
+              <Skeleton
+                aria-hidden
+                baseColor="#e5e7eb"
+                borderRadius="0.375rem"
+                className="block h-full w-full"
+                containerClassName="absolute inset-0 pointer-events-none"
+                highlightColor="#f3f4f6"
+              />
+            ) : null}
             <Image
               fill
               priority
               alt="EU Cyber Resilience Act (CRA) mind map overview"
-              className="object-contain transition group-hover:scale-[1.01]"
+              className={clsx(
+                "object-contain transition duration-300 group-hover:scale-[1.01]",
+                loadedImages.hero ? "opacity-100" : "opacity-0",
+              )}
               sizes="(min-width: 1280px) 1024px, (min-width: 768px) 90vw, 100vw"
               src="/screens/eu_cyber_resilience_act_cra_large.png"
+              onLoad={() => markLoaded("hero")}
             />
           </div>
         </div>
@@ -87,14 +128,8 @@ export default function Home() {
                 concepts, and bring your projects to life. Join the MindMapFlow
                 revolution and unlock the full potential of your mind!
               </p>
-              <div className="flex gap-3 pt-2">
-                <Link
-                  className="text-link no-underline"
-                  href={siteConfig.links.docs}
-                  underline="none"
-                >
-                  Launching Soon
-                </Link>
+              <div className="rounded-md border border-panels-border bg-stone-200 p-4">
+                ℹ️ Currently in invite-only closed beta.
               </div>
             </div>
             <div className="relative order-first aspect-[4/3] w-full overflow-hidden rounded-md md:order-last">
@@ -109,13 +144,27 @@ export default function Home() {
                   )
                 }
               >
+                {!loadedImages.editorPreview ? (
+                  <Skeleton
+                    aria-hidden
+                    baseColor="#e5e7eb"
+                    borderRadius="0.375rem"
+                    className="block h-full w-full"
+                    containerClassName="absolute inset-0 pointer-events-none"
+                    highlightColor="#f3f4f6"
+                  />
+                ) : null}
                 <Image
                   fill
                   priority
                   alt="Overview of the MindMapFlow editor"
-                  className="object-contain transition group-hover:scale-[1.01]"
+                  className={clsx(
+                    "object-contain transition duration-300 group-hover:scale-[1.01]",
+                    loadedImages.editorPreview ? "opacity-100" : "opacity-0",
+                  )}
                   sizes="(min-width: 1280px) 480px, (min-width: 1024px) 420px, (min-width: 768px) 50vw, 100vw"
                   src="/screens/mindmapflow_20251016.png"
+                  onLoad={() => markLoaded("editorPreview")}
                 />
               </button>
             </div>
@@ -134,12 +183,26 @@ export default function Home() {
                   )
                 }
               >
+                {!loadedImages.aiPreview ? (
+                  <Skeleton
+                    aria-hidden
+                    baseColor="#e5e7eb"
+                    borderRadius="0.375rem"
+                    className="block h-full w-full"
+                    containerClassName="absolute inset-0 pointer-events-none"
+                    highlightColor="#f3f4f6"
+                  />
+                ) : null}
                 <Image
                   fill
                   alt="Preview of AI suggestions inside MindMapFlow"
-                  className="object-contain transition group-hover:scale-[1.01]"
+                  className={clsx(
+                    "object-contain transition duration-300 group-hover:scale-[1.01]",
+                    loadedImages.aiPreview ? "opacity-100" : "opacity-0",
+                  )}
                   sizes="(min-width: 1280px) 480px, (min-width: 1024px) 420px, (min-width: 768px) 50vw, 100vw"
                   src="/screens/ai-suggestions-2025-10-16.png"
+                  onLoad={() => markLoaded("aiPreview")}
                 />
               </button>
             </div>
@@ -188,12 +251,26 @@ export default function Home() {
                   )
                 }
               >
+                {!loadedImages.themesPreview ? (
+                  <Skeleton
+                    aria-hidden
+                    baseColor="#e5e7eb"
+                    borderRadius="0.375rem"
+                    className="block h-full w-full"
+                    containerClassName="absolute inset-0 pointer-events-none"
+                    highlightColor="#f3f4f6"
+                  />
+                ) : null}
                 <Image
                   fill
                   alt="Gallery of theme options available in MindMapFlow"
-                  className="object-contain transition group-hover:scale-[1.01]"
+                  className={clsx(
+                    "object-contain transition duration-300 group-hover:scale-[1.01]",
+                    loadedImages.themesPreview ? "opacity-100" : "opacity-0",
+                  )}
                   sizes="(min-width: 1280px) 480px, (min-width: 1024px) 420px, (min-width: 768px) 50vw, 100vw"
                   src="/screens/themes-2025-10-16.png"
+                  onLoad={() => markLoaded("themesPreview")}
                 />
               </button>
             </div>

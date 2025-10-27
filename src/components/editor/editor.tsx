@@ -22,6 +22,7 @@ import PropertiesPanel from "./properties-panel";
 import { Toolbar } from "./toolbar";
 import { Menubar } from "./menubar";
 import { TextProperties } from "./nodes/base-node";
+import { GlobalSearchDialog } from "./global-search-dialog";
 
 import { useEditor } from "@/store/editor-context";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -233,7 +234,8 @@ export default function Editor() {
   const searchParams = useSearchParams();
   const params = useParams();
   const showSample = searchParams?.get("showSample") === "true";
-  const { isFullScreen, setIsFullScreen } = useEditor();
+  const { isFullScreen, setIsFullScreen, setIsGlobalSearchActive } =
+    useEditor();
   const {
     getIntersectingNodes,
     deleteElements,
@@ -265,6 +267,18 @@ export default function Editor() {
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [globalSearchMatches, setGlobalSearchMatches] = useState<string[]>([]);
+  const previousSelectionRef = useRef<{
+    ids: string[];
+    primary: string | null;
+    edgeId: string | null;
+  }>({
+    ids: [],
+    primary: null,
+    edgeId: null,
+  });
   const propertiesPanelRef = useRef<PropertiesPanelHandle>(null);
   const [copiedNodes, setCopiedNodes] = useState<MindMapNode[]>([]);
   const [pasteCount, setPasteCount] = useState(0);
@@ -292,6 +306,12 @@ export default function Editor() {
   useEffect(() => {
     paletteIdRef.current = palette.id;
   }, [palette.id]);
+
+  useEffect(() => {
+    return () => {
+      setIsGlobalSearchActive(false);
+    };
+  }, [setIsGlobalSearchActive]);
 
   useEffect(() => {
     showGridRef.current = showGrid;
@@ -352,6 +372,150 @@ export default function Editor() {
 
   // Derive selected node from selectedNodeId
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+
+  const applySelection = useCallback(
+    (
+      nextSelectedIds: string[],
+      options?: { primaryId?: string | null; edgeId?: string | null },
+    ) => {
+      const resolvedPrimary = (() => {
+        if (typeof options?.primaryId === "string") {
+          return nextSelectedIds.includes(options.primaryId)
+            ? options.primaryId
+            : null;
+        }
+
+        return nextSelectedIds.length === 1 ? nextSelectedIds[0] : null;
+      })();
+
+      const nextEdgeId = options?.edgeId ?? null;
+
+      setSelectedNodeIds((prev) => {
+        if (
+          prev.length === nextSelectedIds.length &&
+          prev.every((id, index) => id === nextSelectedIds[index])
+        ) {
+          return prev;
+        }
+
+        return nextSelectedIds;
+      });
+
+      setSelectedNodeId((prev) =>
+        prev === resolvedPrimary ? prev : resolvedPrimary,
+      );
+
+      setSelectedEdgeId((prev) => (prev === nextEdgeId ? prev : nextEdgeId));
+
+      setNodes((prev) => {
+        let didChange = false;
+        const nextSelectedSet = new Set(nextSelectedIds);
+
+        const nextNodes = prev.map((node) => {
+          const shouldSelect = nextSelectedSet.has(node.id);
+          const wasSelected = Boolean(node.selected);
+          const wasEditing = Boolean(node.data?.isEditing);
+          const shouldExitEditing = wasEditing && !shouldSelect;
+
+          if (wasSelected === shouldSelect && !shouldExitEditing) {
+            return node;
+          }
+
+          didChange = true;
+
+          if (shouldExitEditing && node.data) {
+            const nextData = { ...node.data, isEditing: false };
+
+            return {
+              ...node,
+              data: nextData,
+              selected: shouldSelect,
+            };
+          }
+
+          return {
+            ...node,
+            selected: shouldSelect,
+          };
+        });
+
+        return didChange ? nextNodes : prev;
+      });
+    },
+    [setNodes, setSelectedEdgeId, setSelectedNodeId, setSelectedNodeIds],
+  );
+
+  const applyGlobalSearchSelection = useCallback(
+    (query: string) => {
+      const normalized = query.trim().toLowerCase();
+
+      if (!normalized) {
+        setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
+        const previous = previousSelectionRef.current;
+
+        applySelection(previous.ids, {
+          primaryId: previous.primary,
+          edgeId: previous.edgeId,
+        });
+
+        return;
+      }
+
+      const tokens = normalized.split(/\s+/).filter(Boolean);
+      const matches: string[] = [];
+
+      nodes.forEach((node) => {
+        const parts: string[] = [];
+        const data = node.data;
+
+        if (typeof data?.resourceName === "string") {
+          parts.push(data.resourceName);
+        }
+        if (typeof data?.description === "string") {
+          parts.push(data.description);
+        }
+        if (typeof data?.resourceType === "string") {
+          parts.push(data.resourceType);
+        }
+        if (Array.isArray(data?.projectTags)) {
+          parts.push(data.projectTags.join(" "));
+        }
+
+        if (parts.length === 0) {
+          parts.push(node.id);
+        }
+
+        const haystack = parts.join(" ").toLowerCase();
+        const isMatch = tokens.every((token) => haystack.includes(token));
+
+        if (isMatch) {
+          matches.push(node.id);
+        }
+      });
+
+      setGlobalSearchMatches((prev) => {
+        if (
+          prev.length === matches.length &&
+          prev.every((id, index) => id === matches[index])
+        ) {
+          return prev;
+        }
+
+        return matches;
+      });
+
+      applySelection(matches);
+    },
+    [applySelection, nodes],
+  );
+
+  useEffect(() => {
+    if (!isGlobalSearchOpen) {
+      return;
+    }
+
+    applyGlobalSearchSelection(globalSearchQuery);
+  }, [applyGlobalSearchSelection, globalSearchQuery, isGlobalSearchOpen]);
 
   const copyJsonToClipboard = () => {
     const cleanedNodes = cleanNodesForStorage(nodes);
@@ -734,13 +898,90 @@ export default function Editor() {
   }, [selectedNodeIds, selectedEdgeId, nodes, setNodes]);
 
   const handleSearchFocus = useCallback(() => {
-    logger.info("Focusing search input");
-    const searchInput = document.querySelector<HTMLInputElement>(
-      "#search-resources-input",
-    );
+    logger.info("Opening global search");
+    previousSelectionRef.current = {
+      ids: selectedNodeIds,
+      primary: selectedNodeId,
+      edgeId: selectedEdgeId,
+    };
+    setGlobalSearchQuery("");
+    setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
+    setIsGlobalSearchOpen(true);
+    setIsGlobalSearchActive(true);
+  }, [
+    selectedEdgeId,
+    selectedNodeId,
+    selectedNodeIds,
+    setIsGlobalSearchActive,
+  ]);
 
-    searchInput?.focus();
+  const handleGlobalSearchClose = useCallback(() => {
+    const trimmed = globalSearchQuery.trim();
+
+    setIsGlobalSearchOpen(false);
+    setGlobalSearchQuery("");
+    setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
+    setIsGlobalSearchActive(false);
+
+    if (!trimmed) {
+      const previous = previousSelectionRef.current;
+
+      applySelection(previous.ids, {
+        primaryId: previous.primary,
+        edgeId: previous.edgeId,
+      });
+    }
+  }, [applySelection, globalSearchQuery, setIsGlobalSearchActive]);
+
+  const handleGlobalSearchSubmit = useCallback(() => {
+    setIsGlobalSearchOpen(false);
+    setGlobalSearchQuery("");
+    setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
+    setIsGlobalSearchActive(false);
+  }, [setIsGlobalSearchActive]);
+
+  const handleGlobalSearchQueryChange = useCallback((value: string) => {
+    setGlobalSearchQuery(value);
   }, []);
+
+  const dispatchOpenLinkDialog = useCallback((nodeId: string) => {
+    window.dispatchEvent(
+      new CustomEvent("mindmapflow:open-link-dialog", {
+        detail: { nodeId },
+      }),
+    );
+  }, []);
+
+  const handleOpenLinkDialogShortcut = useCallback(() => {
+    if (!selectedNodeId) {
+      toast.info("Select a node to add a link");
+
+      return;
+    }
+
+    if (selectedNode?.data.resourceType === "Note") {
+      toast.info("Links are not available for note nodes yet");
+
+      return;
+    }
+
+    const trigger = () => dispatchOpenLinkDialog(selectedNodeId);
+
+    if (isGlobalSearchOpen) {
+      handleGlobalSearchClose();
+      window.setTimeout(trigger, 0);
+
+      return;
+    }
+
+    trigger();
+  }, [
+    dispatchOpenLinkDialog,
+    handleGlobalSearchClose,
+    isGlobalSearchOpen,
+    selectedNode,
+    selectedNodeId,
+  ]);
 
   const handleNodeDoubleClick = useCallback(() => {
     setTimeout(() => {
@@ -1448,6 +1689,16 @@ export default function Editor() {
     setSelectedNodeIds,
   ]);
 
+  const handleEscapeKey = useCallback(() => {
+    if (isGlobalSearchOpen) {
+      handleGlobalSearchClose();
+
+      return;
+    }
+
+    clearSelection();
+  }, [clearSelection, handleGlobalSearchClose, isGlobalSearchOpen]);
+
   useKeyboardShortcuts({
     onDelete: handleDeleteNodeOrEdge,
     onSearch: handleSearchFocus,
@@ -1460,10 +1711,20 @@ export default function Editor() {
     onArrowUp: () => handleArrowNavigation("up"),
     onArrowDown: () => handleArrowNavigation("down"),
     onAddNote: handleAddNoteNode,
+    onEscape: handleEscapeKey,
+    onOpenLinkDialog: handleOpenLinkDialogShortcut,
   });
 
   return (
     <div className="flex flex-col h-full flex-1 overflow-hidden">
+      <GlobalSearchDialog
+        matchCount={globalSearchMatches.length}
+        open={isGlobalSearchOpen}
+        query={globalSearchQuery}
+        onClose={handleGlobalSearchClose}
+        onQueryChange={handleGlobalSearchQueryChange}
+        onSubmit={handleGlobalSearchSubmit}
+      />
       <Menubar
         onClearSelection={clearSelection}
         onCopyJsonToClipboard={copyJsonToClipboard}
@@ -1476,6 +1737,7 @@ export default function Editor() {
         onCopy={handleCopy}
         onDeleteNodeOrEdge={handleDeleteNodeOrEdge}
         onLoadMindMap={onLoadMindMap}
+        onOpenSearch={handleSearchFocus}
         onPaste={handlePaste}
         onSaveMindMap={onSaveMindMap}
         onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}

@@ -15,6 +15,7 @@ import {
   PiFloppyDiskThin,
   PiFolderOpenThin,
   PiGridFourThin,
+  PiMagnifyingGlassThin,
   PiNoteThin,
   PiShareNetworkThin,
   PiTrashThin,
@@ -31,6 +32,7 @@ interface ToolbarProps {
   onCopy: () => void;
   onPaste: () => void;
   onAddNote: () => void;
+  onOpenSearch?: () => void;
   onToggleGrid?: () => void;
   onAutoLayout?: (mode?: AutoLayoutMode) => void;
   autoLayoutMode: AutoLayoutMode;
@@ -45,6 +47,7 @@ export const Toolbar = ({
   onCopy,
   onPaste,
   onAddNote,
+  onOpenSearch,
   onToggleGrid,
   onAutoLayout,
   autoLayoutMode,
@@ -156,6 +159,14 @@ export const Toolbar = ({
             onClick={handleOpenLayoutMenu}
           >
             <PiShareNetworkThin />
+          </IconButton>
+          <IconButton
+            aria-label="Search mindmap"
+            size="medium"
+            title="Search mindmap"
+            onClick={onOpenSearch}
+          >
+            <PiMagnifyingGlassThin />
           </IconButton>
         </Box>
         <Box
