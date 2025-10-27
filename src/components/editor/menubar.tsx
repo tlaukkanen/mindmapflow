@@ -527,14 +527,8 @@ export const Menubar = ({
                 <MenuItem onClick={onCopyJsonToClipboard}>
                   Copy as JSON to clipboard
                 </MenuItem>
-                <MenuItem disabled onClick={handleMenuClose}>
-                  Still in progress
-                </MenuItem>
-                <MenuItem disabled onClick={handleMenuClose}>
-                  Still in progress
-                </MenuItem>
               </Menu>
-              {/* Modified: display dynamic saved status */}
+              {/* Display dynamic saved status */}
               <Box className="hidden sm:flex items-center gap-3 border-1 rounded-md px-2 text-xs text-muted">
                 {isSaved
                   ? `Saved at ${savedTimestamp?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) || "now"}`

@@ -88,7 +88,9 @@ export default function FeaturesPage() {
               <thead className="bg-stone-200">
                 <tr className="text-body uppercase tracking-wide">
                   <th className="px-4 py-3 sm:px-6">Feature</th>
-                  <th className="px-4 py-3 sm:px-6">What it unlocks</th>
+                  <th className="hidden px-4 py-3 sm:table-cell sm:px-6">
+                    What it unlocks
+                  </th>
                   <th className="px-4 py-3 sm:px-6">Free</th>
                   <th className="px-4 py-3 sm:px-6">Pro</th>
                 </tr>
@@ -99,7 +101,7 @@ export default function FeaturesPage() {
                     <td className="px-4 py-4 font-semibold text-heading sm:px-6">
                       {row.feature}
                     </td>
-                    <td className="px-4 py-4 text-body opacity-90 sm:px-6">
+                    <td className="hidden px-4 py-4 text-body opacity-90 sm:table-cell sm:px-6">
                       {row.description}
                     </td>
                     <td className="px-4 py-4 text-body opacity-90 sm:px-6">
