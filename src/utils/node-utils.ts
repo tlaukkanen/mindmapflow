@@ -1,8 +1,11 @@
-import { Edge } from "@xyflow/react";
+import { Edge, Node } from "@xyflow/react";
 
 import { MindMapNode } from "@/model/types";
+import { logger } from "@/services/logger";
 
 const ANGLE_THRESHOLD = 45; // 45 degrees on each side = 90 degree scope
+
+export type Direction = "left" | "right" | "top" | "bottom";
 
 function getAngleBetweenPoints(
   x1: number,
@@ -17,7 +20,6 @@ function isNodeInDirection(
   angle: number,
   targetDirection: "left" | "right" | "up" | "down",
 ): boolean {
-  // Normalize angle to 0-360
   const normalizedAngle = ((angle % 360) + 360) % 360;
 
   switch (targetDirection) {
@@ -51,7 +53,6 @@ export const getAbsolutePosition = (
   const position = { x: node.position.x, y: node.position.y };
   let currentNode = node;
 
-  // Traverse up the parent chain and accumulate positions
   while (currentNode.parentId) {
     const parent = nodes.find((n) => n.id === currentNode.parentId);
 
@@ -60,6 +61,179 @@ export const getAbsolutePosition = (
     position.x += parent.position.x;
     position.y += parent.position.y;
     currentNode = parent;
+  }
+
+  return position;
+};
+
+export const getOppositeDirection = (direction: Direction): Direction => {
+  switch (direction) {
+    case "left":
+      return "right";
+    case "right":
+      return "left";
+    case "top":
+      return "bottom";
+    case "bottom":
+      return "top";
+  }
+};
+
+export const getBasePositionForDirection = (
+  direction: Direction,
+): { x: number; y: number } => ({
+  x: direction === "right" ? 200 : direction === "left" ? -200 : 0,
+  y: direction === "bottom" ? 100 : direction === "top" ? -120 : 0,
+});
+
+const getHandleDirectionFromHandle = (
+  handle?: string | null,
+): Direction | null => {
+  if (!handle) {
+    return null;
+  }
+
+  const parts = handle.split("-");
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const directionCandidate = parts[parts.length - 2];
+
+  if (
+    directionCandidate === "left" ||
+    directionCandidate === "right" ||
+    directionCandidate === "top" ||
+    directionCandidate === "bottom"
+  ) {
+    return directionCandidate;
+  }
+
+  return null;
+};
+
+export const determinePreferredDirection = (
+  parentNode: MindMapNode,
+  edges: Edge[],
+  rootNodeId: string,
+): Direction => {
+  const connections: Record<Direction, number> = {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  };
+
+  edges
+    .filter((edge) => edge.source === parentNode.id)
+    .forEach((edge) => {
+      const direction = getHandleDirectionFromHandle(edge.sourceHandle);
+
+      if (direction) {
+        connections[direction] += 1;
+      }
+    });
+
+  if (parentNode.id === rootNodeId) {
+    const minConnections = Math.min(
+      connections.left,
+      connections.right,
+      connections.top,
+      connections.bottom,
+    );
+
+    if (connections.left === minConnections) return "left";
+    if (connections.right === minConnections) return "right";
+    if (connections.top === minConnections) return "top";
+
+    return "bottom";
+  }
+
+  const totalOutgoing =
+    connections.left + connections.right + connections.top + connections.bottom;
+
+  if (totalOutgoing === 0) {
+    const incoming = edges.find((edge) => edge.target === parentNode.id);
+    const incomingDirection = getHandleDirectionFromHandle(
+      incoming?.targetHandle,
+    );
+
+    if (incomingDirection) {
+      return getOppositeDirection(incomingDirection);
+    }
+  }
+
+  const sorted = Object.entries(connections).sort((a, b) => b[1] - a[1]);
+
+  logger.debug(
+    `Sorted connections for ${parentNode.id}: ${JSON.stringify(sorted)}`,
+  );
+
+  return (sorted[0]?.[0] as Direction) ?? "right";
+};
+
+export const findFreePosition = (
+  nodes: MindMapNode[],
+  basePosition: { x: number; y: number },
+  spacing: number = 100,
+  parentId: string | undefined,
+  getIntersectingNodes: (node: Node) => Node[],
+): { x: number; y: number } => {
+  logger.debug(
+    `Finding free position for layout for base position ${basePosition.x}, ${basePosition.y}, spacing ${spacing}`,
+  );
+
+  if (parentId) {
+    const parent = nodes.find((n) => n.id === parentId);
+
+    if (parent) {
+      const parentAbsPos = getAbsolutePosition(parent, nodes);
+
+      basePosition = {
+        x: parentAbsPos.x + basePosition.x,
+        y: parentAbsPos.y + basePosition.y,
+      };
+    }
+  }
+
+  const tempNode: Node = {
+    id: "temp",
+    type: "rectangleShape",
+    position: basePosition,
+    data: {},
+    width: 100,
+    height: 40,
+  };
+
+  let offset = 0;
+  const position = { ...basePosition };
+
+  tempNode.position = position;
+
+  let tries = 0;
+
+  while (getIntersectingNodes(tempNode).length > 0) {
+    if (tries % 2 === 0) {
+      offset += spacing;
+    }
+    position.y = basePosition.y + offset * (tries % 2 === 0 ? 1 : -1);
+    logger.debug(`Trying new vertical position ${position.x}, ${position.y}`);
+    tempNode.position = position;
+    tries++;
+  }
+
+  if (parentId) {
+    const parent = nodes.find((n) => n.id === parentId);
+
+    if (parent) {
+      const parentAbsPos = getAbsolutePosition(parent, nodes);
+
+      return {
+        x: position.x - parentAbsPos.x,
+        y: position.y - parentAbsPos.y,
+      };
+    }
   }
 
   return position;
@@ -99,8 +273,6 @@ export function findClosestNodeInDirection(
 
   return closestNode;
 }
-
-type Direction = "left" | "right" | "top" | "bottom";
 
 export function getOptimalHandlePair(
   parentNode: MindMapNode,

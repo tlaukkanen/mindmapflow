@@ -3,13 +3,12 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Edge,
-  Node,
   MarkerType,
+  NodeChange,
+  OnNodesChange,
   useEdgesState,
   useNodesState,
   useReactFlow,
-  OnNodesChange,
-  NodeChange, // Add this import
 } from "@xyflow/react";
 import { toast } from "sonner";
 import { useParams, useSearchParams } from "next/navigation";
@@ -23,15 +22,19 @@ import { Toolbar } from "./toolbar";
 import { Menubar } from "./menubar";
 import { TextProperties } from "./nodes/base-node";
 import { GlobalSearchDialog } from "./global-search-dialog";
+import { useMindMapGlobalSearch } from "./hooks/use-global-search";
+import { useMindMapClipboard } from "./hooks/use-clipboard";
+import { useMindMapNodeCreation } from "./hooks/use-node-creation";
+import { getDefaultTextProperties } from "./utils/text-properties";
 
 import { useEditor } from "@/store/editor-context";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { MindMapNode } from "@/model/types";
 import { logger } from "@/services/logger";
 import { sampleData } from "@/model/example-data";
-import { ResourceNodeTypes } from "@/model/node-types";
 import {
   findClosestNodeInDirection,
+  findFreePosition,
   getAbsolutePosition,
   recalculateAllEdgeConnections,
   updateEdgeConnections,
@@ -46,189 +49,21 @@ import { mindMapService } from "@/services/mindmap-service"; // Added import
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { DEFAULT_PALETTE_ID } from "@/config/palettes";
 import { AutoLayoutMode, getAutoLayoutedNodes } from "@/utils/auto-layout";
+import {
+  CHILD_VERTICAL_SPACING,
+  ROOT_VERTICAL_SPACING,
+  OutlineItem,
+  cleanNodesForStorage,
+  getVerticalSpacingForDepth,
+  parseOutlineText,
+  updateSelectedNodeData,
+} from "@/utils/editor-utils";
 
 const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
 const rootNodeId = "root";
 
-interface OutlineItem {
-  text: string;
-  children: OutlineItem[];
-}
-
 const NODE_HORIZONTAL_OFFSET = 240;
-const ROOT_VERTICAL_SPACING = 160;
-const CHILD_VERTICAL_SPACING = 100;
-
-const getVerticalSpacingForDepth = (depth: number) =>
-  depth <= 1 ? ROOT_VERTICAL_SPACING : CHILD_VERTICAL_SPACING;
-
-const parseOutlineText = (outline: string): OutlineItem[] => {
-  const lines = outline
-    .split(/\r?\n/)
-    .map((line) => line.replace(/\t/g, "  ").replace(/\s+$/, ""));
-
-  const rootItems: OutlineItem[] = [];
-  const stack: { level: number; item: OutlineItem }[] = [];
-
-  for (const rawLine of lines) {
-    if (!rawLine.trim()) {
-      continue;
-    }
-
-    const match = rawLine.match(/^(\s*)([-*+])\s+(.*)$/);
-
-    if (!match) {
-      const continuation = rawLine.trim();
-
-      if (continuation && stack.length > 0) {
-        const current = stack[stack.length - 1].item;
-
-        current.text = `${current.text} ${continuation}`.trim();
-      }
-
-      continue;
-    }
-
-    const [, indent, , content] = match;
-    const normalizedIndent = indent.replace(/\t/g, "  ");
-    const level = Math.floor(normalizedIndent.length / 2);
-    const text = content.trim();
-
-    if (!text) {
-      continue;
-    }
-
-    const item: OutlineItem = {
-      text,
-      children: [],
-    };
-
-    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
-      stack.pop();
-    }
-
-    if (stack.length === 0) {
-      rootItems.push(item);
-    } else {
-      stack[stack.length - 1].item.children.push(item);
-    }
-
-    stack.push({ level, item });
-  }
-
-  return rootItems;
-};
-
-// Add this helper function before the Editor component
-const cleanNodesForStorage = (nodes: MindMapNode[]) => {
-  return nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      showHandles: undefined,
-      resizing: undefined,
-      selected: undefined,
-    },
-  }));
-};
-
-/** Helper to update data for a selected node */
-function updateSelectedNodeData(
-  nodes: MindMapNode[],
-  selectedNodeId: string | null,
-  updater: (data: any) => any,
-) {
-  if (!selectedNodeId) return nodes;
-
-  return nodes.map((node) =>
-    node.id === selectedNodeId ? { ...node, data: updater(node.data) } : node,
-  );
-}
-
-// Add where nodes are created/initialized
-export const getDefaultTextProperties = (
-  resourceType: string,
-): TextProperties | undefined => {
-  const resource = ResourceNodeTypes.find((r) => r.name === resourceType);
-
-  if (resource?.defaultTextProperties) {
-    return resource.defaultTextProperties;
-  }
-
-  return undefined;
-};
-
-const findFreePosition = (
-  nodes: MindMapNode[],
-  basePosition: { x: number; y: number },
-  spacing: number = 100,
-  parentId: string | undefined,
-  getIntersectingNodes: (node: Node) => Node[],
-): { x: number; y: number } => {
-  // If there's a parent, convert basePosition to absolute coordinates
-  logger.debug(
-    `Finding free position for layout for base position ${basePosition.x}, ${basePosition.y}, spacing ${spacing}`,
-  );
-
-  if (parentId) {
-    const parent = nodes.find((n) => n.id === parentId);
-
-    if (parent) {
-      const parentAbsPos = getAbsolutePosition(parent, nodes);
-
-      basePosition = {
-        x: parentAbsPos.x + basePosition.x,
-        y: parentAbsPos.y + basePosition.y,
-      };
-    }
-  }
-
-  // Create a temporary node to check intersections with absolute position
-  const tempNode: Node = {
-    id: "temp",
-    type: "rectangleShape",
-    position: basePosition,
-    data: {},
-    width: 100,
-    height: 40,
-  };
-
-  let offset = 0;
-  const position = { ...basePosition };
-
-  tempNode.position = position;
-
-  // Keep trying new positions until we find one with no intersections
-  let tries = 0;
-
-  while (getIntersectingNodes(tempNode).length > 0) {
-    if (tries % 2 === 0) {
-      offset += spacing;
-    }
-    position.y = basePosition.y + offset * (tries % 2 === 0 ? 1 : -1);
-    logger.debug(`Trying new vertical position ${position.x}, ${position.y}`);
-    tempNode.position = position;
-    tries++;
-  }
-
-  // Convert back to relative position if there's a parent
-  if (parentId) {
-    const parent = nodes.find((n) => n.id === parentId);
-
-    if (parent) {
-      const parentAbsPos = getAbsolutePosition(parent, nodes);
-      const convertedPosition = {
-        x: position.x - parentAbsPos.x,
-        y: position.y - parentAbsPos.y,
-      };
-
-      return convertedPosition;
-    }
-  }
-
-  return position;
-};
 
 export default function Editor() {
   const searchParams = useSearchParams();
@@ -267,21 +102,7 @@ export default function Editor() {
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
-  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
-  const [globalSearchMatches, setGlobalSearchMatches] = useState<string[]>([]);
-  const previousSelectionRef = useRef<{
-    ids: string[];
-    primary: string | null;
-    edgeId: string | null;
-  }>({
-    ids: [],
-    primary: null,
-    edgeId: null,
-  });
   const propertiesPanelRef = useRef<PropertiesPanelHandle>(null);
-  const [copiedNodes, setCopiedNodes] = useState<MindMapNode[]>([]);
-  const [pasteCount, setPasteCount] = useState(0);
   const { data: session } = useSession();
   const { loadMindMap } = useMindMap();
   const settingUpNewProject = useRef(false);
@@ -445,77 +266,52 @@ export default function Editor() {
     [setNodes, setSelectedEdgeId, setSelectedNodeId, setSelectedNodeIds],
   );
 
-  const applyGlobalSearchSelection = useCallback(
-    (query: string) => {
-      const normalized = query.trim().toLowerCase();
+  const {
+    isGlobalSearchOpen,
+    globalSearchQuery,
+    globalSearchMatches,
+    handleSearchFocus,
+    handleGlobalSearchClose,
+    handleGlobalSearchSubmit,
+    handleGlobalSearchQueryChange,
+  } = useMindMapGlobalSearch({
+    nodes,
+    selectedNodeIds,
+    selectedNodeId,
+    selectedEdgeId,
+    applySelection,
+    setIsGlobalSearchActive,
+  });
 
-      if (!normalized) {
-        setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
-        const previous = previousSelectionRef.current;
+  const { handleCopy, handlePaste } = useMindMapClipboard({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    setSelectedNodeId,
+    setSelectedNodeIds,
+  });
 
-        applySelection(previous.ids, {
-          primaryId: previous.primary,
-          edgeId: previous.edgeId,
-        });
-
-        return;
-      }
-
-      const tokens = normalized.split(/\s+/).filter(Boolean);
-      const matches: string[] = [];
-
-      nodes.forEach((node) => {
-        const parts: string[] = [];
-        const data = node.data;
-
-        if (typeof data?.resourceName === "string") {
-          parts.push(data.resourceName);
-        }
-        if (typeof data?.description === "string") {
-          parts.push(data.description);
-        }
-        if (typeof data?.resourceType === "string") {
-          parts.push(data.resourceType);
-        }
-        if (Array.isArray(data?.projectTags)) {
-          parts.push(data.projectTags.join(" "));
-        }
-
-        if (parts.length === 0) {
-          parts.push(node.id);
-        }
-
-        const haystack = parts.join(" ").toLowerCase();
-        const isMatch = tokens.every((token) => haystack.includes(token));
-
-        if (isMatch) {
-          matches.push(node.id);
-        }
-      });
-
-      setGlobalSearchMatches((prev) => {
-        if (
-          prev.length === matches.length &&
-          prev.every((id, index) => id === matches[index])
-        ) {
-          return prev;
-        }
-
-        return matches;
-      });
-
-      applySelection(matches);
-    },
-    [applySelection, nodes],
-  );
-
-  useEffect(() => {
-    if (!isGlobalSearchOpen) {
-      return;
-    }
-
-    applyGlobalSearchSelection(globalSearchQuery);
-  }, [applyGlobalSearchSelection, globalSearchQuery, isGlobalSearchOpen]);
+  const {
+    handleAddChildNode,
+    handleAddSiblingNode,
+    handleAddNoteNode,
+    handleTabKey,
+  } = useMindMapNodeCreation({
+    nodes,
+    setNodes,
+    setEdges,
+    setSelectedNodeId,
+    setSelectedNodeIds,
+    setSelectedEdgeId,
+    selectedNode,
+    selectedNodeId,
+    getEdges,
+    getIntersectingNodes,
+    getViewport,
+    rootNodeId,
+    markUnsaved: () => setHasUnsavedChanges(true),
+  });
 
   const copyJsonToClipboard = () => {
     const cleanedNodes = cleanNodesForStorage(nodes);
@@ -897,53 +693,6 @@ export default function Editor() {
     }
   }, [selectedNodeIds, selectedEdgeId, nodes, setNodes]);
 
-  const handleSearchFocus = useCallback(() => {
-    logger.info("Opening global search");
-    previousSelectionRef.current = {
-      ids: selectedNodeIds,
-      primary: selectedNodeId,
-      edgeId: selectedEdgeId,
-    };
-    setGlobalSearchQuery("");
-    setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
-    setIsGlobalSearchOpen(true);
-    setIsGlobalSearchActive(true);
-  }, [
-    selectedEdgeId,
-    selectedNodeId,
-    selectedNodeIds,
-    setIsGlobalSearchActive,
-  ]);
-
-  const handleGlobalSearchClose = useCallback(() => {
-    const trimmed = globalSearchQuery.trim();
-
-    setIsGlobalSearchOpen(false);
-    setGlobalSearchQuery("");
-    setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
-    setIsGlobalSearchActive(false);
-
-    if (!trimmed) {
-      const previous = previousSelectionRef.current;
-
-      applySelection(previous.ids, {
-        primaryId: previous.primary,
-        edgeId: previous.edgeId,
-      });
-    }
-  }, [applySelection, globalSearchQuery, setIsGlobalSearchActive]);
-
-  const handleGlobalSearchSubmit = useCallback(() => {
-    setIsGlobalSearchOpen(false);
-    setGlobalSearchQuery("");
-    setGlobalSearchMatches((prev) => (prev.length === 0 ? prev : []));
-    setIsGlobalSearchActive(false);
-  }, [setIsGlobalSearchActive]);
-
-  const handleGlobalSearchQueryChange = useCallback((value: string) => {
-    setGlobalSearchQuery(value);
-  }, []);
-
   const dispatchOpenLinkDialog = useCallback((nodeId: string) => {
     window.dispatchEvent(
       new CustomEvent("mindmapflow:open-link-dialog", {
@@ -998,184 +747,6 @@ export default function Editor() {
       }
     }, 20);
   }, [selectedEdgeId, selectedNode]);
-
-  const handleCopy = useCallback(() => {
-    const selectedNodes = nodes.filter((node) => node.selected);
-
-    if (selectedNodes.length > 0) {
-      setCopiedNodes(selectedNodes);
-      setPasteCount(0); // Reset paste count when copying
-      toast.success(
-        `Copied ${selectedNodes.length} node${selectedNodes.length > 1 ? "s" : ""}`,
-      );
-    }
-  }, [nodes]);
-
-  const handlePaste = useCallback(() => {
-    if (copiedNodes.length === 0) return;
-
-    // Unselect all nodes from canvas before pasting
-    setNodes((prev) =>
-      prev.map((node) => (node.selected ? { ...node, selected: false } : node)),
-    );
-
-    // Create a mapping of old node IDs to new node IDs
-    const idMapping = new Map<string, string>();
-
-    const newNodes = copiedNodes.map((node) => {
-      const newId = crypto.randomUUID();
-
-      idMapping.set(node.id, newId);
-
-      return {
-        ...node,
-        id: newId,
-        position: {
-          x: node.position.x + 20 * (pasteCount + 1),
-          y: node.position.y + 20 * (pasteCount + 1),
-        },
-        selected: true,
-      };
-    });
-
-    // Copy edges that connect copied nodes (both internal and to parents)
-    const newEdges = edges
-      .filter((edge) => {
-        // Include edges where at least the target node is in the copied selection
-        // This ensures we maintain connections to parent nodes
-        const targetNode = copiedNodes.find((node) => node.id === edge.target);
-
-        return targetNode !== undefined;
-      })
-      .map((edge) => {
-        const newTarget = idMapping.get(edge.target)!;
-        // Use either the mapped source (if it was copied) or keep the original source (for parent connections)
-        const newSource = idMapping.get(edge.source) || edge.source;
-
-        return {
-          ...edge,
-          id: `e-${newSource}-${newTarget}`,
-          source: newSource,
-          target: newTarget,
-          sourceHandle: edge.sourceHandle?.replace(edge.source, newSource),
-          targetHandle: edge.targetHandle?.replace(edge.target, newTarget),
-        };
-      });
-
-    setNodes((prev) => [...prev, ...newNodes]);
-    setEdges((prev) => [...prev, ...newEdges]);
-    setPasteCount((count) => count + 1);
-    toast.success(
-      `Pasted ${newNodes.length} node${newNodes.length > 1 ? "s" : ""}`,
-    );
-  }, [copiedNodes, setNodes, setEdges, edges, pasteCount]);
-
-  const handleAddNoteNode = useCallback(() => {
-    const NOTE_WIDTH = 220;
-    const NOTE_HEIGHT = 140;
-    const NOTE_GAP_Y = 24;
-
-    const defaultTextProps = getDefaultTextProperties("Note");
-
-    const newNoteId = crypto.randomUUID();
-
-    let parentId: string | undefined;
-    let resolvedPosition = { x: 0, y: 0 };
-
-    if (selectedNode) {
-      const selectedAbsolute = getAbsolutePosition(selectedNode, nodes);
-      const selectedWidth =
-        typeof selectedNode.width === "number"
-          ? selectedNode.width
-          : typeof selectedNode.style?.width === "number"
-            ? selectedNode.style.width
-            : NOTE_WIDTH;
-      const noteAbsolute = {
-        x: selectedAbsolute.x + (selectedWidth - NOTE_WIDTH) / 2,
-        y: selectedAbsolute.y - NOTE_HEIGHT - NOTE_GAP_Y,
-      };
-
-      parentId = selectedNode.parentId;
-
-      if (parentId) {
-        const parentNode = nodes.find((n) => n.id === parentId);
-
-        if (parentNode) {
-          const parentAbsolute = getAbsolutePosition(parentNode, nodes);
-
-          resolvedPosition = {
-            x: noteAbsolute.x - parentAbsolute.x,
-            y: noteAbsolute.y - parentAbsolute.y,
-          };
-        } else {
-          parentId = undefined;
-          resolvedPosition = noteAbsolute;
-        }
-      } else {
-        resolvedPosition = noteAbsolute;
-      }
-    } else {
-      const viewport = getViewport();
-      const zoom = viewport.zoom ?? 1;
-      const centerX = (-viewport.x + window.innerWidth / 2) / zoom;
-      const centerY = (-viewport.y + window.innerHeight / 2) / zoom;
-
-      resolvedPosition = {
-        x: centerX - NOTE_WIDTH / 2,
-        y: centerY - NOTE_HEIGHT / 2,
-      };
-    }
-
-    const newNode: MindMapNode = {
-      id: newNoteId,
-      type: "noteShape",
-      position: resolvedPosition,
-      data: {
-        resourceType: "Note",
-        iconName: "Note",
-        description: "",
-        isEditing: true,
-        textProperties: defaultTextProps,
-      },
-      style: {
-        width: NOTE_WIDTH,
-        height: NOTE_HEIGHT,
-      },
-      width: NOTE_WIDTH,
-      height: NOTE_HEIGHT,
-      selected: true,
-    };
-
-    if (parentId) {
-      newNode.parentId = parentId;
-    }
-
-    setNodes((prev) => [
-      ...prev.map((node) =>
-        node.selected || node.data.isEditing
-          ? {
-              ...node,
-              selected: false,
-              data: { ...node.data, isEditing: false },
-            }
-          : node,
-      ),
-      newNode,
-    ]);
-    setSelectedNodeId(newNoteId);
-    setSelectedNodeIds([newNoteId]);
-    setSelectedEdgeId(null);
-    setHasUnsavedChanges(true);
-  }, [
-    getViewport,
-    nodes,
-    selectedNode,
-    setNodes,
-    setSelectedEdgeId,
-    setSelectedNodeId,
-    setSelectedNodeIds,
-    setHasUnsavedChanges,
-  ]);
 
   const handleEdgeDirectionSwitch = useCallback(() => {
     if (!selectedEdgeId) return;
@@ -1350,243 +921,6 @@ export default function Editor() {
       }
     },
     [selectedNode, nodes, setNodes],
-  );
-
-  type Direction = "left" | "right" | "top" | "bottom";
-
-  const determineWhichSideToAddChildNode = useCallback(
-    (parentNode: MindMapNode): Direction => {
-      const edges = getEdges();
-      const connections = {
-        right: edges.filter(
-          (e) =>
-            e.source === parentNode.id &&
-            e.sourceHandle === `${parentNode.id}-right-source`,
-        ).length,
-        left: edges.filter(
-          (e) =>
-            e.source === parentNode.id &&
-            e.sourceHandle === `${parentNode.id}-left-source`,
-        ).length,
-        top: edges.filter(
-          (e) =>
-            e.source === parentNode.id &&
-            e.sourceHandle === `${parentNode.id}-top-source`,
-        ).length,
-        bottom: edges.filter(
-          (e) =>
-            e.source === parentNode.id &&
-            e.sourceHandle === `${parentNode.id}-bottom-source`,
-        ).length,
-      };
-
-      // If root node, balance between all sides
-      if (parentNode.id === rootNodeId) {
-        const minConnections = Math.min(
-          connections.left,
-          connections.right,
-          connections.top,
-          connections.bottom,
-        );
-
-        // Prefer horizontal expansion first
-        if (connections.left === minConnections) return "left";
-        if (connections.right === minConnections) return "right";
-        if (connections.top === minConnections) return "top";
-
-        return "bottom";
-      }
-
-      // If parent node doesn't have outgoing connections (parent = source), then prefer
-      // the side that is opposite to the incoming connection (parent = target)
-      const outgoingTotal =
-        connections.left +
-        connections.right +
-        connections.top +
-        connections.bottom;
-
-      if (outgoingTotal === 0) {
-        const incomingEdges = edges.filter(
-          (edge) => edge.target === parentNode.id && edge.targetHandle,
-        );
-
-        if (incomingEdges.length > 0) {
-          const handle = incomingEdges[0].targetHandle || "";
-          const parts = handle.split("-");
-
-          if (parts.length >= 3) {
-            // First part might be GUID of the node
-            // Direction is the second to last part
-            const incomingDirection = parts[parts.length - 2] as Direction;
-
-            return getOppositeHandle(incomingDirection);
-          }
-        }
-      }
-
-      // If no last direction, find the side with most outgoing connections
-      const sorted = Object.entries(connections).sort((a, b) => b[1] - a[1]);
-
-      logger.debug(`Sorted connections: ${JSON.stringify(sorted)}`);
-
-      return sorted[0][0] as Direction;
-    },
-    [edges],
-  );
-
-  // Update getBasePosition helper (new function)
-  const getBasePosition = (direction: Direction) => ({
-    x: direction === "right" ? 200 : direction === "left" ? -200 : 0,
-    y: direction === "bottom" ? 100 : direction === "top" ? -120 : 0,
-  });
-
-  // Update getOppositeHandle helper (new function)
-  const getOppositeHandle = (direction: Direction) => {
-    switch (direction) {
-      case "left":
-        return "right";
-      case "right":
-        return "left";
-      case "top":
-        return "bottom";
-      case "bottom":
-        return "top";
-    }
-  };
-
-  const handleAddChildNode = useCallback(
-    (parentNode: MindMapNode) => {
-      const direction = determineWhichSideToAddChildNode(parentNode);
-
-      logger.debug(`Adding child node to ${direction}`);
-      const basePosition = getBasePosition(direction);
-      const verticalSpace = parentNode.data.depth === 0 ? 80 : 5;
-
-      // Find a free position for the new node using getIntersectingNodes
-      const freePosition = findFreePosition(
-        nodes,
-        basePosition,
-        verticalSpace,
-        parentNode.id,
-        getIntersectingNodes,
-      );
-
-      const newNode: MindMapNode = {
-        id: crypto.randomUUID(),
-        type: "rectangleShape",
-        position: freePosition,
-        data: {
-          description: "",
-          resourceType: "generic",
-          textProperties: getDefaultTextProperties("generic"),
-          isEditing: true,
-          depth: (parentNode.data.depth || 0) + 1,
-          lastDirection: direction, // Store the direction for future reference
-        },
-        selected: true,
-        parentId: parentNode.id,
-      };
-
-      const newEdge: Edge = {
-        id: `e-${parentNode.id}-${newNode.id}`,
-        source: parentNode.id,
-        target: newNode.id,
-        sourceHandle: `${parentNode.id}-${direction}-source`,
-        targetHandle: `${newNode.id}-${getOppositeHandle(direction)}-target`,
-        type: "default",
-      };
-
-      setNodes((nds) => [
-        ...nds.map((n) => ({ ...n, selected: false })),
-        newNode,
-      ]);
-      setEdges((eds) => [...eds, newEdge]);
-      setSelectedNodeId(newNode.id);
-      setSelectedNodeIds([newNode.id]);
-    },
-    [
-      nodes,
-      setNodes,
-      setEdges,
-      getIntersectingNodes,
-      determineWhichSideToAddChildNode,
-    ],
-  );
-
-  const handleTabKey = useCallback(() => {
-    if (
-      !selectedNode ||
-      !selectedNodeId ||
-      selectedNode?.data.isEditing ||
-      selectedNode.type === "noteShape"
-    )
-      return;
-    handleAddChildNode(selectedNode);
-  }, [selectedNode, selectedNodeId, handleAddChildNode]);
-
-  // Update handleAddSiblingNode to use the new direction logic
-  const handleAddSiblingNode = useCallback(
-    (siblingNode: MindMapNode) => {
-      if (!siblingNode.parentId) return;
-
-      const parentNode = nodes.find((n) => n.id === siblingNode.parentId);
-
-      if (!parentNode) return;
-
-      const direction = determineWhichSideToAddChildNode(parentNode);
-
-      // Rest of the function remains similar but uses direction instead of boolean
-      const basePosition = getBasePosition(direction);
-
-      const verticalSpace = parentNode.data.depth === 0 ? 80 : 5;
-
-      const freePosition = findFreePosition(
-        nodes,
-        basePosition,
-        verticalSpace,
-        parentNode.id,
-        getIntersectingNodes,
-      );
-
-      const newNode: MindMapNode = {
-        id: crypto.randomUUID(),
-        type: "rectangleShape",
-        position: freePosition,
-        data: {
-          description: "",
-          resourceType: "generic",
-          textProperties: getDefaultTextProperties("generic"),
-          isEditing: true,
-          depth: (parentNode.data.depth || 0) + 1,
-        },
-        selected: true,
-        parentId: parentNode.id,
-      };
-
-      const newEdge: Edge = {
-        id: `e-${parentNode.id}-${newNode.id}`,
-        source: parentNode.id,
-        target: newNode.id,
-        sourceHandle: `${parentNode.id}-${direction}-source`,
-        targetHandle: `${newNode.id}-${getOppositeHandle(direction)}-target`,
-        type: "default",
-      };
-
-      setNodes((nds) => [
-        ...nds.map((n) => ({ ...n, selected: false })),
-        newNode,
-      ]);
-      setEdges((eds) => [...eds, newEdge]);
-      setSelectedNodeId(newNode.id);
-      setSelectedNodeIds([newNode.id]);
-    },
-    [
-      nodes,
-      setNodes,
-      setEdges,
-      getIntersectingNodes,
-      determineWhichSideToAddChildNode,
-    ],
   );
 
   // Update reactflow node creation to include these handlers
