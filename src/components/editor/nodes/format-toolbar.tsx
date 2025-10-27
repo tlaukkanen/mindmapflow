@@ -45,7 +45,7 @@ import { logger } from "@/services/logger";
 import { MindMapNode } from "@/model/types";
 
 const TOOLBAR_VERTICAL_OFFSET = 56;
-const FORMAT_TOOLBAR_Z_INDEX = 2147483647;
+const FORMAT_TOOLBAR_Z_INDEX = 1200;
 
 const sanitizeTagList = (values: readonly string[]): string[] => {
   const seen = new Set<string>();
@@ -847,7 +847,10 @@ export const FormatToolbar = memo(
       <div
         style={{
           ...toolbarStyles,
-          display: isLinkDialogOpen || isTagDialogOpen ? "none" : "flex",
+          display:
+            isLinkDialogOpen || isTagDialogOpen || isDialogOpen
+              ? "none"
+              : "flex",
         }}
       >
         <Tooltip title="Align left">
