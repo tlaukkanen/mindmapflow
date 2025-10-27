@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import {
   Autocomplete,
   Dialog,
@@ -29,6 +36,11 @@ import { MindMapMetadata } from "@/lib/storage";
 import { logger } from "@/services/logger";
 import { MindMapNode } from "@/model/types";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import {
+  userSettingsService,
+  type OpenProjectDialogPreferences,
+  type ProjectSortOption,
+} from "@/services/user-settings-service";
 
 const normalizeTagsArray = (values: readonly unknown[]): string[] => {
   const seen = new Set<string>();
@@ -51,6 +63,9 @@ const normalizeTagsArray = (values: readonly unknown[]): string[] => {
   return normalized;
 };
 
+const areTagFiltersEqual = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((value, index) => value === b[index]);
+
 interface OpenProjectDialogProps {
   open: boolean;
   onClose: () => void;
@@ -62,7 +77,11 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedMindMapIds, setSelectedMindMapIds] = useState<string[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [sortOption, setSortOption] = useState<"name" | "lastModified">("name");
+  const [sortOption, setSortOption] = useState<ProjectSortOption>("name");
+  const [settingsReady, setSettingsReady] = useState(false);
+  const lastSavedPreferencesRef = useRef<OpenProjectDialogPreferences | null>(
+    null,
+  );
   const router = useRouter();
   const { palette } = useTheme();
 
@@ -99,19 +118,7 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     });
   }, [mindMaps, sortOption, tagFilter]);
 
-  useEffect(() => {
-    if (open) {
-      setSelectedMindMapIds([]);
-      setTagFilter([]);
-      setSortOption("name");
-      loadMindMaps();
-    } else {
-      setSelectedMindMapIds([]);
-      setTagFilter([]);
-    }
-  }, [open]);
-
-  const loadMindMaps = async () => {
+  const loadMindMaps = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/mindmaps/list");
@@ -147,7 +154,115 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedMindMapIds([]);
+      setSettingsReady(false);
+      setTagFilter([]);
+      setSortOption("name");
+      lastSavedPreferencesRef.current = null;
+
+      return;
+    }
+
+    let cancelled = false;
+
+    setSelectedMindMapIds([]);
+
+    const initializeSettings = async () => {
+      try {
+        const preferences =
+          await userSettingsService.getOpenProjectDialogSettings();
+
+        if (cancelled) {
+          return;
+        }
+
+        const normalizedTagFilter = normalizeTagsArray(preferences.tagFilter);
+        const resolvedSortOption: ProjectSortOption =
+          preferences.sortOption === "lastModified" ? "lastModified" : "name";
+
+        setTagFilter(normalizedTagFilter);
+        setSortOption(resolvedSortOption);
+        lastSavedPreferencesRef.current = {
+          tagFilter: [...normalizedTagFilter],
+          sortOption: resolvedSortOption,
+        };
+      } catch (error) {
+        logger.error("Error loading user settings:", error);
+
+        if (cancelled) {
+          return;
+        }
+
+        setTagFilter([]);
+        setSortOption("name");
+        lastSavedPreferencesRef.current = {
+          tagFilter: [],
+          sortOption: "name",
+        };
+      } finally {
+        if (!cancelled) {
+          setSettingsReady(true);
+          loadMindMaps();
+        }
+      }
+    };
+
+    initializeSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadMindMaps, open]);
+
+  useEffect(() => {
+    if (!open || !settingsReady) {
+      return;
+    }
+
+    const currentPreferences: OpenProjectDialogPreferences = {
+      tagFilter,
+      sortOption,
+    };
+
+    const lastSaved = lastSavedPreferencesRef.current;
+
+    if (
+      lastSaved &&
+      lastSaved.sortOption === currentPreferences.sortOption &&
+      areTagFiltersEqual(lastSaved.tagFilter, currentPreferences.tagFilter)
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const persistPreferences = async () => {
+      try {
+        await userSettingsService.saveOpenProjectDialogSettings(
+          currentPreferences,
+        );
+
+        if (!cancelled) {
+          lastSavedPreferencesRef.current = {
+            tagFilter: [...currentPreferences.tagFilter],
+            sortOption: currentPreferences.sortOption,
+          };
+        }
+      } catch (error) {
+        logger.error("Error saving user settings:", error);
+      }
+    };
+
+    persistPreferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, settingsReady, sortOption, tagFilter]);
 
   const handleMindMapSelect = (mindMapId: string) => {
     router.push(`/editor/${mindMapId}`);

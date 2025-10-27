@@ -45,6 +45,17 @@ export interface MindMapMetadata {
   tags?: string[];
 }
 
+export type UserSettingsSortOption = "name" | "lastModified";
+
+export interface OpenProjectDialogSettings {
+  tagFilter?: string[];
+  sortOption?: UserSettingsSortOption;
+}
+
+export interface UserSettings {
+  openProjectDialog?: OpenProjectDialogSettings;
+}
+
 export interface ShareMapping {
   id: string;
   ownerEmail: string;
@@ -134,6 +145,155 @@ export class StorageService {
       : `.${extension}`;
 
     return `public-shares/${encodeURIComponent(shareId)}.thumbnail${normalizedExtension}`;
+  }
+
+  private getUserSettingsBlobName(userPath: string): string {
+    return `${userPath}/user-settings/user-settings.json`;
+  }
+
+  private sanitizeUserSettingsData(input: unknown): UserSettings {
+    const sanitized: UserSettings = {};
+
+    if (!input || typeof input !== "object") {
+      return sanitized;
+    }
+
+    const raw = input as Record<string, unknown>;
+    const rawOpenProjectDialog = raw.openProjectDialog;
+
+    if (
+      rawOpenProjectDialog &&
+      typeof rawOpenProjectDialog === "object" &&
+      !Array.isArray(rawOpenProjectDialog)
+    ) {
+      const openProjectDialog: OpenProjectDialogSettings = {};
+      const dialogRecord = rawOpenProjectDialog as Record<string, unknown>;
+
+      if (Object.prototype.hasOwnProperty.call(dialogRecord, "tagFilter")) {
+        openProjectDialog.tagFilter = sanitizeTags(dialogRecord.tagFilter);
+      }
+
+      if (
+        dialogRecord.sortOption === "name" ||
+        dialogRecord.sortOption === "lastModified"
+      ) {
+        openProjectDialog.sortOption =
+          dialogRecord.sortOption as UserSettingsSortOption;
+      }
+
+      sanitized.openProjectDialog = openProjectDialog;
+    }
+
+    return sanitized;
+  }
+
+  private mergeUserSettings(
+    current: UserSettings,
+    updates: UserSettings,
+  ): UserSettings {
+    const merged: UserSettings = { ...current };
+
+    if (updates.openProjectDialog) {
+      const mergedOpenProjectDialog: OpenProjectDialogSettings = {
+        ...current.openProjectDialog,
+      };
+
+      if (updates.openProjectDialog.tagFilter !== undefined) {
+        mergedOpenProjectDialog.tagFilter = updates.openProjectDialog.tagFilter;
+      }
+
+      if (updates.openProjectDialog.sortOption !== undefined) {
+        mergedOpenProjectDialog.sortOption =
+          updates.openProjectDialog.sortOption;
+      }
+
+      merged.openProjectDialog = mergedOpenProjectDialog;
+    }
+
+    return merged;
+  }
+
+  private async persistUserSettings(
+    userEmail: string,
+    settings: UserSettings,
+  ): Promise<UserSettings> {
+    const containerClient = await this.getContainerClient();
+    const userPath = this.sanitizeEmailForPath(userEmail);
+    const blobClient = containerClient.getBlockBlobClient(
+      this.getUserSettingsBlobName(userPath),
+    );
+
+    const sanitized = this.sanitizeUserSettingsData(settings);
+    const hasOpenProjectSettings =
+      sanitized.openProjectDialog &&
+      (sanitized.openProjectDialog.tagFilter !== undefined ||
+        sanitized.openProjectDialog.sortOption !== undefined);
+
+    if (!hasOpenProjectSettings) {
+      await blobClient.deleteIfExists();
+
+      return {};
+    }
+
+    const payload = JSON.stringify({
+      openProjectDialog: {
+        tagFilter: sanitized.openProjectDialog?.tagFilter ?? [],
+        sortOption: sanitized.openProjectDialog?.sortOption ?? "name",
+      },
+    });
+
+    await blobClient.upload(payload, Buffer.byteLength(payload), {
+      blobHTTPHeaders: { blobContentType: "application/json" },
+    });
+
+    return {
+      openProjectDialog: {
+        tagFilter: sanitized.openProjectDialog?.tagFilter ?? [],
+        sortOption: sanitized.openProjectDialog?.sortOption ?? "name",
+      },
+    };
+  }
+
+  async loadUserSettings(userEmail: string): Promise<UserSettings> {
+    const containerClient = await this.getContainerClient();
+    const userPath = this.sanitizeEmailForPath(userEmail);
+    const blobClient = containerClient.getBlockBlobClient(
+      this.getUserSettingsBlobName(userPath),
+    );
+
+    try {
+      const download = await blobClient.download();
+      const content = await streamToText(
+        download.readableStreamBody as NodeJS.ReadableStream,
+      );
+      const parsed = JSON.parse(content);
+
+      return this.sanitizeUserSettingsData(parsed);
+    } catch (error: any) {
+      if (error?.statusCode === 404) {
+        return {};
+      }
+
+      logger.error(`Error loading user settings for ${userEmail}`, error);
+
+      return {};
+    }
+  }
+
+  async updateUserSettings(
+    userEmail: string,
+    updates: UserSettings,
+  ): Promise<UserSettings> {
+    const sanitizedUpdates = this.sanitizeUserSettingsData(updates);
+
+    if (!sanitizedUpdates.openProjectDialog) {
+      return this.loadUserSettings(userEmail);
+    }
+
+    const current = await this.loadUserSettings(userEmail);
+    const merged = this.mergeUserSettings(current, sanitizedUpdates);
+
+    return this.persistUserSettings(userEmail, merged);
   }
 
   private getThumbnailExtensionForContentType(contentType: string): string {
@@ -338,6 +498,18 @@ export class StorageService {
       );
 
       for await (const blob of blobs) {
+        if (!blob.name.endsWith(".json")) {
+          continue;
+        }
+
+        if (blob.name.endsWith(".shares.json")) {
+          continue;
+        }
+
+        if (blob.name.includes("/user-settings/")) {
+          continue;
+        }
+
         const blobClient = containerClient.getBlobClient(blob.name);
         const properties = await blobClient.getProperties();
         let tags: string[] | undefined;
