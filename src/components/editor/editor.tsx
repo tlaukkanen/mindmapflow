@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   Edge,
   MarkerType,
@@ -23,7 +23,7 @@ import { Menubar } from "./menubar";
 import { TextProperties } from "./nodes/base-node";
 import { GlobalSearchDialog } from "./global-search-dialog";
 import { useMindMapGlobalSearch } from "./hooks/use-global-search";
-import { useMindMapClipboard } from "./hooks/use-clipboard";
+import { useMindMapClipboard } from "./hooks/use-mindmap-clipboard";
 import { useMindMapNodeCreation } from "./hooks/use-node-creation";
 import { getDefaultTextProperties } from "./utils/text-properties";
 
@@ -59,11 +59,19 @@ import {
   updateSelectedNodeData,
 } from "@/utils/editor-utils";
 
+declare global {
+  interface Window {
+    __MINDMAPFLOW_BASE_TITLE__?: string;
+  }
+}
+
 const initialNodes: MindMapNode[] = sampleData.nodes;
 const initialEdges: Edge[] = sampleData.edges;
 const rootNodeId = "root";
 
 const NODE_HORIZONTAL_OFFSET = 240;
+const DEFAULT_DOCUMENT_TITLE = "MindMapFlow";
+const TITLE_CHANGE_EVENT = "mindmapflow:title-changed";
 
 export default function Editor() {
   const searchParams = useSearchParams();
@@ -193,6 +201,74 @@ export default function Editor() {
 
   // Derive selected node from selectedNodeId
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+
+  const mindmapTitle = useMemo(() => {
+    const rootNode =
+      nodes.find((node) => node.id === rootNodeId) ||
+      nodes.find((node) => (node.data?.depth ?? 0) === 0);
+
+    if (!rootNode || !rootNode.data) {
+      return undefined;
+    }
+
+    const candidate =
+      rootNode.data.resourceName?.trim() ||
+      rootNode.data.description?.trim() ||
+      undefined;
+
+    if (!candidate) {
+      return undefined;
+    }
+
+    const normalized = candidate
+      .split(/\r?\n/)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+      .join(" ");
+
+    return normalized.length > 0 ? normalized : undefined;
+  }, [nodes]);
+
+  const previousBaseTitleRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const baseTitle = mindmapTitle
+      ? `${DEFAULT_DOCUMENT_TITLE} - ${mindmapTitle}`
+      : DEFAULT_DOCUMENT_TITLE;
+
+    if (previousBaseTitleRef.current === baseTitle) {
+      // Ensure global state stays in sync even if title is unchanged
+      window.__MINDMAPFLOW_BASE_TITLE__ = baseTitle;
+
+      return;
+    }
+
+    previousBaseTitleRef.current = baseTitle;
+    window.__MINDMAPFLOW_BASE_TITLE__ = baseTitle;
+    document.title = baseTitle;
+    window.dispatchEvent(
+      new CustomEvent<string>(TITLE_CHANGE_EVENT, { detail: baseTitle }),
+    );
+  }, [mindmapTitle]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    return () => {
+      window.__MINDMAPFLOW_BASE_TITLE__ = DEFAULT_DOCUMENT_TITLE;
+      window.dispatchEvent(
+        new CustomEvent<string>(TITLE_CHANGE_EVENT, {
+          detail: DEFAULT_DOCUMENT_TITLE,
+        }),
+      );
+    };
+  }, []);
 
   const applySelection = useCallback(
     (

@@ -54,8 +54,9 @@ export default function Home() {
             <Skeleton
               aria-hidden
               baseColor="#e5e7eb"
-              className="block h-full w-full"
+              className="block h-auto w-full"
               containerClassName="absolute inset-0 pointer-events-none"
+              height={260}
               highlightColor="#f3f4f6"
             />
           ) : null}
@@ -65,7 +66,7 @@ export default function Home() {
               "block h-auto w-full object-contain transition-opacity duration-300",
               loadedImages.logo ? "opacity-100" : "opacity-0",
             )}
-            height={260}
+            height={loadedImages.logo ? 260 : 0}
             sizes="(max-width: 640px) 80vw, 480px"
             src="/mindmapflow_logo_with_text.png"
             width={480}

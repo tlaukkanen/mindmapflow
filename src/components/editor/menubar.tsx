@@ -59,6 +59,7 @@ export const Menubar = ({
   const [openProjectDialogOpen, setOpenProjectDialogOpen] = useState(false);
   const [manageSharesDialogOpen, setManageSharesDialogOpen] = useState(false);
   const [sharesRefreshToken, setSharesRefreshToken] = useState(0);
+  const [baseDocumentTitle, setBaseDocumentTitle] = useState("MindMapFlow");
   const projectMenuOpen = Boolean(anchorEl);
   const editMenuOpen = Boolean(editAnchorEl);
   const profileMenuOpen = Boolean(profileAchorEl);
@@ -66,6 +67,42 @@ export const Menubar = ({
   const { data: session } = useSession();
   const params = useParams();
   const mindMapId = (params?.id as string | undefined) ?? undefined;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const readBaseTitle = () => {
+      const current = window.__MINDMAPFLOW_BASE_TITLE__;
+
+      if (typeof current === "string" && current.trim().length > 0) {
+        return current;
+      }
+
+      return "MindMapFlow";
+    };
+
+    const handleTitleChange = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      const detail =
+        typeof customEvent.detail === "string" ? customEvent.detail : undefined;
+      const nextTitle =
+        detail && detail.trim().length > 0 ? detail : readBaseTitle();
+
+      setBaseDocumentTitle((prev) => (prev === nextTitle ? prev : nextTitle));
+    };
+
+    setBaseDocumentTitle(readBaseTitle());
+    window.addEventListener("mindmapflow:title-changed", handleTitleChange);
+
+    return () => {
+      window.removeEventListener(
+        "mindmapflow:title-changed",
+        handleTitleChange,
+      );
+    };
+  }, []);
 
   // Update saved status whenever hasUnsavedChanges changes
   useEffect(() => {
@@ -115,14 +152,16 @@ export const Menubar = ({
 
   // Update document title based on save status
   useEffect(() => {
-    const baseTitle = "MindMapFlow";
+    const title = !isSaved
+      ? `${baseDocumentTitle} (Unsaved Changes)`
+      : baseDocumentTitle;
 
-    document.title = !isSaved ? `${baseTitle} (Unsaved Changes)` : baseTitle;
+    document.title = title;
 
     return () => {
-      document.title = baseTitle;
+      document.title = baseDocumentTitle;
     };
-  }, [isSaved]);
+  }, [isSaved, baseDocumentTitle]);
 
   // Add beforeunload event handler
   useEffect(() => {
@@ -456,9 +495,6 @@ export const Menubar = ({
                 </MenuItem>
                 <Divider component="li" sx={{ my: 0.5 }} />
                 <MenuItem onClick={handleCopyAsImage}>Export as image</MenuItem>
-                <MenuItem disabled onClick={handleMenuClose}>
-                  Export (Coming later)
-                </MenuItem>
                 <Divider component="li" sx={{ my: 0.5 }} />
                 <MenuItem
                   aria-controls={
