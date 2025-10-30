@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Background,
   BackgroundVariant,
@@ -11,6 +12,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react";
+import { MdClose } from "react-icons/md";
 
 import rectangleNode from "./nodes/generic/rectangle-node";
 import commentNode from "./nodes/generic/comment-node";
@@ -26,6 +28,7 @@ import {
   getPaletteById,
   paletteToCssVariables,
 } from "@/config/palettes";
+import { EditorProvider } from "@/store/editor-context";
 
 type ShareStatus = "idle" | "loading" | "loaded" | "not-found" | "error";
 
@@ -245,6 +248,7 @@ interface SharedViewerProps {
 
 export function SharedViewer({ shareId }: SharedViewerProps) {
   const [title, setTitle] = useState<string>("Shared Mindmap");
+  const [showPromotionPanel, setShowPromotionPanel] = useState<boolean>(true);
 
   useEffect(() => {
     const pageTitle =
@@ -260,26 +264,69 @@ export function SharedViewer({ shareId }: SharedViewerProps) {
   }, [title]);
 
   return (
-    <ReactFlowProvider>
-      <div className="flex h-[100dvh] flex-col bg-canvas-background">
-        <header className="flex items-center gap-2 border-b border-panels-border bg-menuBar-background px-4 py-2 text-menuBar-text">
-          <Image
-            alt="MindMapFlow logo"
-            className="h-5 w-5 object-contain"
-            height={18}
-            src="/app_icon.svg"
-            width={18}
-          />
-          <span className="text-sm font-semibold">Shared Mindmap</span>
-          <span className="text-xs opacity-70">|</span>
-          <span className="text-sm font-semibold">{title}</span>
-          <span className="text-xs opacity-70">|</span>
-          <span className="text-xs opacity-70">read-only</span>
-        </header>
-        <div className="flex flex-1">
-          <SharedViewerCanvas shareId={shareId} onTitleChange={setTitle} />
+    <EditorProvider>
+      <ReactFlowProvider>
+        <div className="flex h-[100dvh] flex-col bg-canvas-background">
+          <header className="flex items-center gap-2 border-b border-panels-border bg-menuBar-background px-4 py-2 text-menuBar-text">
+            <Image
+              alt="MindMapFlow logo"
+              className="h-5 w-5 object-contain"
+              height={18}
+              src="/app_icon.svg"
+              width={18}
+            />
+            <span className="text-sm font-semibold">Shared Mindmap</span>
+            <span className="text-xs opacity-70">|</span>
+            <span className="text-sm font-semibold">{title}</span>
+            <span className="text-xs opacity-70">|</span>
+            <span className="text-xs opacity-70">read-only</span>
+          </header>
+          <div className="flex flex-1">
+            <SharedViewerCanvas shareId={shareId} onTitleChange={setTitle} />
+          </div>
+          {showPromotionPanel && (
+            <div className="pointer-events-none fixed bottom-5 right-5 z-50">
+              <div className="pointer-events-auto relative flex max-w-xs items-start gap-3 rounded-lg border border-panels-border bg-menuBar-background/95 p-4 text-menuBar-text shadow-lg backdrop-blur">
+                <button
+                  aria-label="Dismiss promotion panel"
+                  className="absolute right-2 top-2 rounded-full p-1 text-menuBar-text/70 transition hover:bg-panels-border/50 hover:text-menuBar-text bg-panels-border text-menuBar-text"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowPromotionPanel(false);
+                  }}
+                >
+                  <MdClose aria-hidden size={14} />
+                </button>
+                <Link
+                  className="flex flex-1 items-center gap-3 no-underline"
+                  href="/"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                >
+                  <Image
+                    alt="MindMapFlow logo"
+                    className="h-20 w-20 object-contain"
+                    height={48}
+                    src="/app_icon.svg"
+                    width={48}
+                  />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm text-white">MindMapFlow</span>
+                    <span className="text-xs text-menuBar-text/80">
+                      Create and collaborate on your own interactive mindmaps.
+                    </span>
+                    <span className="text-xs text-white/50">
+                      Explore MindMapFlow.com →
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    </ReactFlowProvider>
+      </ReactFlowProvider>
+    </EditorProvider>
   );
 }

@@ -18,6 +18,9 @@ interface KeyboardShortcutHandlers {
   onCtrlS?: () => void; // new handler for CTRL+s
   onAddNote?: () => void; // handler for creating a new note
   onOpenLinkDialog?: () => void; // handler for opening link dialog
+  onToggleBold?: () => boolean | void; // handler for toggling bold formatting
+  onToggleItalic?: () => boolean | void; // handler for toggling italic formatting
+  onToggleUnderline?: () => boolean | void; // handler for toggling underline formatting
 }
 
 export function useKeyboardShortcuts({
@@ -36,15 +39,51 @@ export function useKeyboardShortcuts({
   onCtrlS, // new handler
   onAddNote,
   onOpenLinkDialog,
+  onToggleBold,
+  onToggleItalic,
+  onToggleUnderline,
 }: KeyboardShortcutHandlers) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Handle CTRL+s for save
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
-        event.preventDefault();
-        onCtrlS?.();
+      if (event.ctrlKey || event.metaKey) {
+        const normalizedKey = event.key.toLowerCase();
 
-        return;
+        if (normalizedKey === "s") {
+          event.preventDefault();
+          onCtrlS?.();
+
+          return;
+        }
+
+        if (normalizedKey === "b") {
+          const handled = Boolean(onToggleBold?.());
+
+          if (handled) {
+            event.preventDefault();
+          }
+
+          return;
+        }
+
+        if (normalizedKey === "i") {
+          const handled = Boolean(onToggleItalic?.());
+
+          if (handled) {
+            event.preventDefault();
+          }
+
+          return;
+        }
+
+        if (normalizedKey === "u") {
+          const handled = Boolean(onToggleUnderline?.());
+
+          if (handled) {
+            event.preventDefault();
+          }
+
+          return;
+        }
       }
 
       // Allow Escape key even in input fields
@@ -127,9 +166,13 @@ export function useKeyboardShortcuts({
             event.preventDefault();
             onPaste?.();
           } else {
-            logger.debug(
-              `Unhandled keyboard shortcut: ${event.key} (ctrl: ${event.ctrlKey}, meta: ${event.metaKey})`,
-            );
+            const modifierKeys = new Set(["Control", "Shift", "Alt", "Meta"]);
+
+            if (!modifierKeys.has(event.key)) {
+              logger.debug(
+                `Unhandled keyboard shortcut: ${event.key} (ctrl: ${event.ctrlKey}, meta: ${event.metaKey})`,
+              );
+            }
           }
           break;
       }
@@ -150,6 +193,9 @@ export function useKeyboardShortcuts({
       onCtrlS,
       onAddNote,
       onOpenLinkDialog,
+      onToggleBold,
+      onToggleItalic,
+      onToggleUnderline,
     ],
   );
 

@@ -549,6 +549,67 @@ export default function Editor() {
     );
   };
 
+  const toggleSelectedTextStyle = useCallback(
+    (property: "bold" | "italic" | "underline") => {
+      let didToggle = false;
+
+      setNodes((prevNodes) => {
+        const nextNodes = prevNodes.map((node) => {
+          const nodeData = node.data;
+
+          if (!nodeData) {
+            return node;
+          }
+
+          const shouldToggle = nodeData.isEditing || node.selected;
+
+          if (!shouldToggle) {
+            return node;
+          }
+
+          const textProps: TextProperties = nodeData.textProperties ?? {};
+
+          didToggle = true;
+
+          return {
+            ...node,
+            data: {
+              ...nodeData,
+              textProperties: {
+                ...textProps,
+                [property]: !textProps[property],
+              },
+            },
+          };
+        });
+
+        return didToggle ? nextNodes : prevNodes;
+      });
+
+      if (didToggle) {
+        setHasUnsavedChanges(true);
+      }
+
+      return didToggle;
+    },
+    [setNodes, setHasUnsavedChanges],
+  );
+
+  const handleToggleBold = useCallback(
+    () => toggleSelectedTextStyle("bold"),
+    [toggleSelectedTextStyle],
+  );
+
+  const handleToggleItalic = useCallback(
+    () => toggleSelectedTextStyle("italic"),
+    [toggleSelectedTextStyle],
+  );
+
+  const handleToggleUnderline = useCallback(
+    () => toggleSelectedTextStyle("underline"),
+    [toggleSelectedTextStyle],
+  );
+
   const handleImportOutline = useCallback(
     (outline: string) => {
       if (!selectedNode || selectedNode.data.depth !== 0) {
@@ -1123,6 +1184,9 @@ export default function Editor() {
     onAddNote: handleAddNoteNode,
     onEscape: handleEscapeKey,
     onOpenLinkDialog: handleOpenLinkDialogShortcut,
+    onToggleBold: handleToggleBold,
+    onToggleItalic: handleToggleItalic,
+    onToggleUnderline: handleToggleUnderline,
   });
 
   return (
