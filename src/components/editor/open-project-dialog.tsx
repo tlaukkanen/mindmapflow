@@ -281,6 +281,14 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
     );
   };
 
+  const handleTagFilterAdd = useCallback((tag: string) => {
+    setTagFilter((prev) => {
+      const next = normalizeTagsArray([...prev, tag]);
+
+      return areTagFiltersEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
   const handleClone = async () => {
     if (selectedMindMapIds.length !== 1) return;
 
@@ -535,6 +543,10 @@ export function OpenProjectDialog({ open, onClose }: OpenProjectDialogProps) {
                                   label={tag}
                                   size="small"
                                   variant="outlined"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleTagFilterAdd(tag);
+                                  }}
                                 />
                               ))}
                             </Box>
