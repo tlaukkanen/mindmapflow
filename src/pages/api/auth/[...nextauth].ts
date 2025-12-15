@@ -3,7 +3,22 @@ import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 
 import { logger } from "@/services/logger";
+
 export const authOptions: NextAuthOptions = {
+  // Enable debug mode for troubleshooting
+  debug: process.env.NODE_ENV === "development",
+  // Custom logger for better troubleshooting
+  logger: {
+    error(code, metadata) {
+      logger.error(`NextAuth error: ${code}`, metadata);
+    },
+    warn(code) {
+      logger.warn(`NextAuth warning: ${code}`);
+    },
+    debug(code, metadata) {
+      logger.debug(`NextAuth debug: ${code}`, metadata);
+    },
+  },
   // Configure one or more authentication providers
   providers: [
     GithubProvider({
