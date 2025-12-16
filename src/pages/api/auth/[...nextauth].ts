@@ -3,7 +3,22 @@ import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 
 import { logger } from "@/services/logger";
+
 export const authOptions: NextAuthOptions = {
+  // Enable debug mode for troubleshooting
+  debug: process.env.NODE_ENV === "development",
+  // Custom logger for better troubleshooting
+  logger: {
+    error(code, metadata) {
+      logger.error(`NextAuth error: ${code}`, metadata);
+    },
+    warn(code) {
+      logger.warn(`NextAuth warning: ${code}`);
+    },
+    debug(code, metadata) {
+      logger.debug(`NextAuth debug: ${code}`, metadata);
+    },
+  },
   // Configure one or more authentication providers
   providers: [
     GithubProvider({
@@ -21,13 +36,25 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (user.email === process.env.ALLOWED_USERS) {
-        logger.info("User allowed to sign in");
+      logger.info(
+        `Sign in attempt: user=${user.email}, provider=${account?.provider}`,
+      );
+
+      const allowedUsersEnv = process.env.ALLOWED_USERS || "";
+      const allowedUsers = allowedUsersEnv
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter((email) => email.length > 0);
+
+      const userEmail = user.email?.toLowerCase() || "";
+
+      if (userEmail.length > 0 && allowedUsers.includes(userEmail)) {
+        logger.info(`User ${user.email} allowed to sign in`);
 
         return true;
       }
       logger.error(
-        `User ${user.email} not allowed to sign in as they are not in the allowed users list ${process.env.ALLOWED_USERS}`,
+        `User ${user.email} not allowed to sign in as they are not in the allowed users list`,
       );
       logger.error(`User object: ${JSON.stringify(user)}`);
       logger.error(`Account object: ${JSON.stringify(account)}`);
