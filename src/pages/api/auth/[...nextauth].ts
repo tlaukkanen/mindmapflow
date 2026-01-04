@@ -10,6 +10,18 @@ const hostName = new URL(process.env.NEXTAUTH_URL || "http://localhost:3000")
   .hostname;
 
 export const authOptions: NextAuthOptions = {
+  // Custom logger for better troubleshooting
+  logger: {
+    error(code, metadata) {
+      logger.error(`NextAuth error: ${code}`, metadata);
+    },
+    warn(code) {
+      logger.warn(`NextAuth warning: ${code}`);
+    },
+    debug(code, metadata) {
+      logger.debug(`NextAuth debug: ${code}`, metadata);
+    },
+  },
   // Configure one or more authentication providers
   providers: [
     GithubProvider({
